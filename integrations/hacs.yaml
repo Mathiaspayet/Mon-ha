@@ -1,0 +1,40 @@
+# Dépôts HACS installés, avec versions exactes — à réinstaller en premier lors d'une restauration.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+repositories:
+- name: card-mod
+  repo: thomasloven/lovelace-card-mod
+  category: lovelace
+  version: v4.2.1
+- name: Daikin Onecta
+  repo: jwillemsen/daikin_onecta
+  category: integration
+  version: v4.6.18
+- name: Delete files and folders
+  repo: chomupashchuk/delete-file-home-assistant
+  category: integration
+  version: '1.9'
+- name: HACS
+  repo: hacs/integration
+  category: integration
+  version: 2.0.5
+- name: mini-graph-card
+  repo: kalkih/mini-graph-card
+  category: lovelace
+  version: v0.13.0
+- name: Mushroom
+  repo: piitaya/lovelace-mushroom
+  category: lovelace
+  version: v5.2.2
+- name: Meteo France Weather Card
+  repo: Imbuzi/meteo-france-weather-card
+  category: lovelace
+  version: v1.15
+- name: Presence Simulation
+  repo: slashback100/presence_simulation
+  category: integration
+  version: v5.3
+- name: Smart thermostat (PID)
+  repo: ScratMan/HASmartThermostat
+  category: integration
+  version: 2024.12.0

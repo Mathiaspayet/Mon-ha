@@ -1,0 +1,31 @@
+# Clignotement toutes lumières pendant alarme déclenchée
+# script_id : clignotement_toutes_lumieres_pendant_alarme_declenchee  (entity_id : script.clignotement_toutes_lumieres_pendant_alarme_declenchee)
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+alias: Clignotement toutes lumières pendant alarme déclenchée
+sequence:
+- repeat:
+    while:
+    - condition: state
+      entity_id: alarm_control_panel.alarme_maison
+      state: triggered
+    sequence:
+    - service: light.turn_on
+      data: {}
+      target:
+        entity_id: light.toutes_les_lumieres
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 3
+        milliseconds: 0
+    - service: light.turn_off
+      data: {}
+      target:
+        entity_id: light.toutes_les_lumieres
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 3
+        milliseconds: 0
+mode: single

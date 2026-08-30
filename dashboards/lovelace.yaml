@@ -1,0 +1,805 @@
+# Tableau de bord par défaut « Domolaunaguet » (url_path: lovelace, mode storage).
+# 9 vues. Nécessite les 4 ressources listées dans dashboards/resources.yaml
+# (Mushroom, mini-graph-card, meteo-france-weather-card, card-mod).
+# Export Home Assistant du 2026-08-30.
+---
+title: Domolaunaguet
+views:
+- theme: Backend-selected
+  title: Général
+  path: general
+  icon: mdi:home
+  badges: []
+  cards:
+  - type: horizontal-stack
+    cards:
+    - type: gauge
+      entity: sensor.moyenne_temperature_interieure
+      name: 'Température intérieure '
+      unit: °C
+      min: 16
+      max: 30
+      needle: false
+      severity:
+        green: 18
+        yellow: 25
+        red: 27
+    - type: gauge
+      name: 'Température extérieure '
+      unit: °C
+      needle: false
+      max: 45
+      min: -10
+      severity:
+        green: 5
+        yellow: 24
+        red: 34
+      entity: sensor.moyenne_temperature_exterieure
+  - type: custom:meteo-france-weather-card
+    entity: weather.launaguet
+    rainChanceEntity: sensor.launaguet_rain_chance
+    snowChanceEntity: sensor.launaguet_snow_chance
+    thunderChanceEntity: sensor.launaguet_thunder_chance
+    uvEntity: sensor.launaguet_uv
+    icons: null
+    rainForecastEntity: sensor.launaguet_next_rain
+    cloudCoverEntity: sensor.launaguet_cloud_cover
+    freezeChanceEntity: weather.launaguet
+  - type: vertical-stack
+    cards:
+    - type: custom:mushroom-title-card
+      title: 'Volets '
+      alignment: start
+    - type: custom:mushroom-cover-card
+      entity: cover.tous_les_volets
+      show_position_control: false
+      show_buttons_control: true
+      fill_container: true
+      layout: vertical
+      show_tilt_position_control: false
+      primary_info: name
+      secondary_info: state
+      icon_type: none
+    - type: horizontal-stack
+      cards:
+      - type: custom:mushroom-cover-card
+        entity: cover.volets_rez_de_chaussee
+        show_position_control: false
+        show_tilt_position_control: false
+        show_buttons_control: true
+        primary_info: name
+        secondary_info: none
+        icon_type: none
+      - type: custom:mushroom-cover-card
+        entity: cover.volets_etage
+        show_position_control: false
+        show_buttons_control: true
+        secondary_info: none
+        icon_type: none
+  - type: custom:mushroom-cover-card
+    name: Porte de garage
+    show_position_control: false
+    show_buttons_control: true
+    fill_container: true
+    layout: vertical
+    entity: cover.porte_de_garage
+    icon: mdi:garage
+    icon_type: none
+  - type: custom:mushroom-title-card
+    title: 'Éclairage '
+    alignment: start
+  - type: horizontal-stack
+    cards:
+    - type: button
+      show_name: true
+      show_icon: true
+      tap_action:
+        action: call-service
+        service: light.turn_off
+        entity: light.toutes_les_lumieres
+        target:
+          entity_id: light.toutes_les_lumieres
+      name: Eteindre Toutes les lumières
+      icon_height: 40px
+    - type: markdown
+      content: '{% set n = states(''sensor.toutes'').split(''/'')[0] | int(0) %}## {% if n == 0 %}Aucune lumière allumée{%
+        elif n == 1 %}💡 1 lumière allumée{% else %}💡 {{ n }} lumières allumées{% endif %}'
+  - type: custom:mushroom-title-card
+    title: 'Automatisation '
+    alignment: start
+  - type: tile
+    features_position: bottom
+    vertical: true
+    entity: script.depart_maison
+    show_entity_picture: true
+    hide_state: true
+    tap_action:
+      action: perform-action
+      perform_action: script.depart_maison
+      target: {}
+    hold_action:
+      action: more-info
+    visibility:
+    - condition: state
+      entity: input_boolean.etat_depart_maison
+      state: 'off'
+  - type: tile
+    features_position: bottom
+    vertical: true
+    entity: script.retour_maison
+    show_entity_picture: true
+    hide_state: true
+    tap_action:
+      action: perform-action
+      perform_action: script.retour_maison
+      target: {}
+    hold_action:
+      action: more-info
+    visibility:
+    - condition: state
+      entity: input_boolean.etat_depart_maison
+      state: 'on'
+- theme: Backend-selected
+  title: Eclairage
+  path: eclairage
+  icon: ''
+  badges: []
+  cards:
+  - type: custom:mushroom-title-card
+    title: 'Rez de Chaussée '
+    alignment: start
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      entity: light.buanderie
+      secondary_info: none
+      fill_container: true
+    - type: custom:mushroom-light-card
+      entity: light.bureau
+      fill_container: true
+      secondary_info: none
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.salon_tele
+      show_brightness_control: true
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.prise_commandee_salon_tele
+      name: Prise Salon Télé
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.wc_rdc
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.entree_couloir
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      show_brightness_control: true
+      entity: light.salon_piano
+      secondary_info: none
+    - type: custom:mushroom-light-card
+      entity: light.ruban_led_salon_piano
+      show_brightness_control: true
+      show_color_control: false
+      show_color_temp_control: true
+      use_light_color: false
+      icon: mdi:led-strip-variant
+      secondary_info: none
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      show_brightness_control: true
+      entity: light.salle_a_manger
+      secondary_info: none
+    - type: custom:mushroom-light-card
+      entity: light.ruban_led_double_hauteur
+      show_brightness_control: true
+      show_color_control: false
+      show_color_temp_control: true
+      use_light_color: false
+      icon: mdi:led-strip-variant
+      secondary_info: none
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      show_brightness_control: true
+      entity: light.salon
+      secondary_info: none
+    - type: custom:mushroom-light-card
+      entity: light.ruban_led_salon
+      show_brightness_control: true
+      show_color_control: false
+      show_color_temp_control: true
+      use_light_color: false
+      icon: mdi:led-strip-variant
+      secondary_info: none
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.cuisine
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.luminaire_ilot
+      name: Bar cuisine
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.cellier
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.prise_commandee_salon_baie
+  - type: custom:mushroom-light-card
+    secondary_info: none
+    entity: light.eclairage_garage
+    name: 'Garage '
+  - type: custom:mushroom-title-card
+    title: Etage
+    alignment: start
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.chambre_parents
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.chambre_margaux
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.chambre_auguste
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.chambre_d_amis
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      entity: light.dressing
+      secondary_info: none
+    - type: custom:mushroom-light-card
+      entity: light.salle_d_eau
+      secondary_info: none
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.salle_de_bain
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.salle_de_bain_douche_baignoire
+      show_brightness_control: true
+  - type: horizontal-stack
+    cards:
+    - type: custom:mushroom-light-card
+      secondary_info: none
+      fill_container: true
+      entity: light.couloir_etage
+    - type: custom:mushroom-light-card
+      fill_container: true
+      secondary_info: none
+      entity: light.patio_exterieur
+  - type: custom:mushroom-light-card
+    entity: light.wc_etage
+    secondary_info: none
+  - type: custom:mushroom-title-card
+    title: Extérieur
+    alignment: start
+  - type: custom:mushroom-light-card
+    entity: light.porsche_et_travees
+    secondary_info: none
+  - type: custom:mushroom-light-card
+    entity: light.terrasse_exterieure
+    secondary_info: none
+  - type: custom:mushroom-light-card
+    secondary_info: none
+    entity: light.eclairage_jardin
+- title: volets
+  path: volets
+  visible:
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: 75888249744741fd83b1fff29e92fb09
+  badges: []
+  cards:
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_buanderie
+    fill_container: true
+    show_position_control: true
+    show_buttons_control: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_bureau
+    show_buttons_control: true
+    show_position_control: true
+    fill_container: true
+    name: Bureau
+    primary_info: name
+    secondary_info: state
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_salon_tele
+    name: Salon Télé
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_salle_d_eau
+    name: Salle d'eau
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_salle_de_bain
+    name: Salle de bain
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_chambre_parentale
+    name: Chambre parents
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_chambre_auguste
+    name: Chambre Auguste
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: custom:mushroom-cover-card
+    entity: cover.volet_chambre_margaux
+    name: Chambre Margaux
+    show_position_control: true
+    show_buttons_control: true
+    fill_container: true
+    layout: horizontal
+  - type: entities
+    entities:
+    - cover.porte_de_garage
+- title: Alarme
+  path: alarme
+  visible:
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: 75888249744741fd83b1fff29e92fb09
+  badges: []
+  cards:
+  - type: custom:mushroom-alarm-control-panel-card
+    entity: alarm_control_panel.alarme_maison
+    states:
+    - armed_night
+    - armed_vacation
+    layout: horizontal
+    show_keypad: true
+    hide_state: false
+    fill_container: false
+  - type: logbook
+    title: 'Historique des fenêtres et détecteurs '
+    hours_to_show: 72
+    target:
+      entity_id:
+      - sensor.openstate_tydom_fenetre_buanderie
+      - sensor.openstate_tydom_fenetre_bureau
+      - sensor.openstate_tydom_ouvrant_droit
+      - sensor.openstate_tydom_ouvrant_droit_5
+      - sensor.openstate_tydom_ouvrant_droit_4
+      - sensor.openstate_tydom_ouvrant_droit_2
+      - sensor.openstate_tydom_ouvrant_droit_3
+      - sensor.openstate_tydom_ouvrant_droit_7
+      - sensor.openstate_tydom_baie_vitree_droit
+      - sensor.openstate_tydom_baie_vitree_gauche
+      - binary_sensor.capteur_cuisine
+      - binary_sensor.capteur_porche
+      - binary_sensor.capteur_salon_piano
+      - switch.sirene_exterieure
+      - binary_sensor.capteur_garage
+      - binary_sensor.capteur_patio
+      - binary_sensor.capteur_couloir_etage
+  - type: entities
+    entities:
+    - entity: sensor.openstate_tydom_baie_vitree_gauche
+      name: 'Baie vitrée gauche '
+    - entity: sensor.openstate_tydom_baie_vitree_droit
+    - entity: sensor.openstate_tydom_fenetre_buanderie
+    - entity: sensor.openstate_tydom_fenetre_bureau
+    - entity: sensor.openstate_tydom_ouvrant_droit
+    - entity: sensor.openstate_tydom_ouvrant_droit_7
+    - entity: sensor.openstate_tydom_ouvrant_droit_3
+    - entity: sensor.openstate_tydom_ouvrant_droit_2
+    - entity: sensor.openstate_tydom_ouvrant_droit_4
+    - entity: sensor.openstate_tydom_ouvrant_droit_5
+      name: Fenêtre chambre Margaux
+    - entity: sensor.openstate_tydom_ouvrant_droit_6
+  - type: entities
+    entities:
+    - entity: binary_sensor.capteur_cuisine
+    - entity: binary_sensor.capteur_salon_piano
+    - entity: binary_sensor.capteur_porche
+    - entity: binary_sensor.capteur_couloir_etage
+    - entity: binary_sensor.capteur_patio
+    - entity: binary_sensor.capteur_garage
+    title: Capteur  Alarme
+    show_header_toggle: true
+    state_color: true
+  - type: entities
+    entities:
+    - switch.blocage_porte_de_garage
+  - type: entities
+    entities:
+    - switch.presence_simulation
+- theme: Backend-selected
+  title: thermostat
+  path: thermostat
+  visible:
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: 75888249744741fd83b1fff29e92fb09
+  badges: []
+  cards:
+  - features:
+    - type: target-temperature
+    - style: icons
+      type: climate-hvac-modes
+    - style: icons
+      type: climate-fan-modes
+    type: tile
+    entity: climate.clim_chambre_room_temperature
+    name: 'Climatisation chambre '
+    icon: mdi:air-conditioner
+    hide_state: false
+    vertical: false
+    show_entity_picture: true
+  - features:
+    - type: target-temperature
+    - style: icons
+      type: climate-hvac-modes
+    - style: icons
+      type: climate-fan-modes
+    type: tile
+    entity: climate.clim_couloir_etage_room_temperature
+    name: 'Climatisation couloir étage '
+    icon: mdi:air-conditioner
+    hide_state: false
+    vertical: false
+    show_entity_picture: true
+  - features:
+    - type: target-temperature
+    type: tile
+    vertical: false
+    show_entity_picture: false
+    hide_state: false
+    entity: climate.thermostat_salle_d_eau
+    state_content:
+    - current_temperature
+    - state
+  - features:
+    - type: target-temperature
+    type: tile
+    entity: climate.thermostat_salle_de_bain
+    show_entity_picture: false
+    state_content:
+    - state
+    - current_temperature
+  - features:
+    - type: target-temperature
+    type: tile
+    entity: climate.thermostat_chambre_amis
+    show_entity_picture: false
+    state_content:
+    - state
+    - current_temperature
+  - features:
+    - type: target-temperature
+    type: tile
+    entity: climate.thermostat_chambre_auguste
+    show_entity_picture: false
+    state_content:
+    - state
+    - current_temperature
+  - features:
+    - type: target-temperature
+    type: tile
+    entity: climate.thermostat_chambre_margaux
+    show_entity_picture: false
+    state_content:
+    - state
+    - current_temperature
+  - features:
+    - type: target-temperature
+    type: tile
+    entity: climate.thermostat
+    show_entity_picture: false
+    state_content:
+    - state
+    - current_temperature
+  - type: entities
+    entities:
+    - entity: sensor.pourcentage_de_chauffe_chambre_auguste
+    - entity: sensor.pourcentage_de_chauffe_chambre_margaux
+    - entity: sensor.pourcentage_de_chauffe
+    - entity: sensor.pourcentage_de_chauffe_chambre_patio
+    - entity: sensor.pourcentage_de_chauffe_salle_d_eau
+    - entity: sensor.pourcentage_de_chauffe_salle_de_bain
+- theme: Backend-selected
+  title: Températures
+  path: temperature-et-luminosite
+  subview: false
+  badges: []
+  cards:
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.moyenne_temperature_exterieure
+    hours_to_show: 24
+    name: Température extérieure
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    smoothing: false
+    color_thresholds_transition: smooth
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 5
+      color: '#f39c12'
+    - value: 20
+      color: '#d35400'
+    - value: 30
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_salle_d_eau
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    smoothing: false
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_interrupteur
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_chambre_auguste
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_chambre_margaux
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_chambre_amis
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_salle_d_eau_2
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_mur_chauffant
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+  - type: custom:mini-graph-card
+    entities:
+    - sensor.temperature_salle_de_bain
+    hours_to_show: 24
+    points_per_hour: 60
+    line_width: 2
+    hour24: true
+    show:
+      labels: true
+      extrema: true
+    color_thresholds:
+    - value: 20
+      color: '#f39c12'
+    - value: 21
+      color: '#d35400'
+    - value: 21.5
+      color: '#c0392b'
+- theme: Backend-selected
+  title: Camera
+  path: sonnette
+  visible:
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  - user: 75888249744741fd83b1fff29e92fb09
+  badges: []
+  cards:
+  - show_state: false
+    show_name: false
+    camera_view: live
+    fit_mode: cover
+    type: picture-entity
+    entity: camera.interphone_sub
+    camera_image: camera.interphone_sub
+  - show_state: false
+    show_name: false
+    camera_view: live
+    fit_mode: cover
+    type: picture-entity
+    entity: camera.entree_garage_fluide
+    camera_image: camera.interphone_sub
+  - show_state: false
+    show_name: true
+    camera_view: auto
+    fit_mode: cover
+    type: picture-entity
+    entity: camera.127_0_0_1
+  type: masonry
+- theme: Backend-selected
+  title: 'Ventilation '
+  icon: ''
+  visible:
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  badges: []
+  cards:
+  - type: entities
+    entities:
+    - switch.vmc_cote_jardi
+    - switch.vmc_cote_rue
+- title: Chaudière
+  path: chaudiere
+  visible:
+  - user: de2bac17c649429ebd85a96acdd97504
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  - user: 8a9339aeb54646aeacc522aa37e6382a
+  badges: []
+  cards:
+  - type: entities
+    entities:
+    - binary_sensor.erreur_generale_chaudiere
+    - binary_sensor.etat_marche_arret_h1
+    - sensor.temperature_h1_actuelle
+    - sensor.temperature_h1_consigne
+  - type: entities
+    entities:
+    - binary_sensor.etat_ecs
+    - binary_sensor.etat_marche_arret_ecs
+    - sensor.temperature_ecs_actuelle
+    - sensor.temperature_ecs_consigne
+  - type: entities
+    entities:
+    - entity: sensor.pourcentage_de_modulation_chauffage
+    - entity: binary_sensor.etat_marche_arret_mode_ete
+  - type: entities
+    entities:
+    - entity: binary_sensor.etat_flamme_chaudiere_2
+      secondary_info: last-updated
+  - type: entities
+    entities:
+    - entity: sensor.pression_eau_chaudiere
+    - entity: sensor.pression_chaudiere_en_bar
+  - type: entities
+    entities:
+    - entity: switch.switch_ecs
+    - entity: switch.marche_arret_ecs
+    - entity: switch.switch_mode_ete
+  - type: entities
+    entities:
+    - switch.marche_arret_h1
+  - type: entities
+    entities:
+    - entity: binary_sensor.etat_vannne_chambre_ami
+    - entity: binary_sensor.etat_vannne_chambre_auguste
+    - entity: binary_sensor.etat_chaffage_h1
+    - entity: binary_sensor.etat_vannne_chambre_parents
+    - entity: binary_sensor.etat_chauffage_h2

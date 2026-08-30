@@ -1,0 +1,65 @@
+# 20 zones, AUCUN étage défini (constat H5 de l'audit).
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+floors: []
+areas:
+- area_id: buanderie
+  name: Buanderie
+  floor_id: null
+- area_id: bureau
+  name: Bureau
+  floor_id: null
+- area_id: cabanon
+  name: Cabanon
+  floor_id: null
+- area_id: cellier
+  name: Cellier
+  floor_id: null
+- area_id: chambre_auguste
+  name: Chambre Auguste
+  floor_id: null
+- area_id: chambre
+  name: Chambre d'amis
+  floor_id: null
+- area_id: chambre_margaux
+  name: Chambre Margaux
+  floor_id: null
+- area_id: chambre_parentale
+  name: Chambre parentale
+  floor_id: null
+- area_id: couloir_etage
+  name: Couloir Etage
+  floor_id: null
+- area_id: cuisine
+  name: Cuisine
+  floor_id: null
+- area_id: entree
+  name: Entrée
+  floor_id: null
+- area_id: exterieur
+  name: Extérieur
+  floor_id: null
+- area_id: salle_d_eau
+  name: Salle d'eau
+  floor_id: null
+- area_id: salle_de_bain
+  name: Salle de bain
+  floor_id: null
+- area_id: salle_a_manger
+  name: Salle à manger
+  floor_id: null
+- area_id: salon
+  name: Salon
+  floor_id: null
+- area_id: salon_piano
+  name: Salon Piano
+  floor_id: null
+- area_id: salon_tele
+  name: Salon Télé
+  floor_id: null
+- area_id: wc_rdc
+  name: WC RDC
+  floor_id: null
+- area_id: wc_etage
+  name: WC étage
+  floor_id: null

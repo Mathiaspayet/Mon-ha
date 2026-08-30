@@ -1,0 +1,11 @@
+# Ressources Lovelace (cartes personnalisées servies par HACS).
+---
+resources:
+- url: /hacsfiles/lovelace-mushroom/mushroom.js?hacstag=444350375522
+  type: module
+- url: /hacsfiles/mini-graph-card/mini-graph-card-bundle.js?hacstag=1512800620130
+  type: module
+- url: /hacsfiles/meteo-france-weather-card/meteo-france-weather-card.js?hacstag=194824532115
+  type: module
+- url: /hacsfiles/lovelace-card-mod/card-mod.js?hacstag=190927524421
+  type: module

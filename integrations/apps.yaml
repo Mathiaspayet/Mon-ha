@@ -1,0 +1,22 @@
+# Apps (ex-add-ons) installées sur le Supervisor.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+apps:
+- name: Mosquitto broker
+  version: 7.1.0
+- name: tydom2mqtt
+  version: 3.5.3
+- name: go2rtc
+  version: 1.9.14
+- name: MyElectricalData
+  version: 0.13.4
+- name: File editor
+  version: 6.1.0
+- name: Samba share
+  version: 12.10.0
+- name: WireGuard
+  version: 0.13.0
+- name: Home Assistant MCP Server
+  version: 8.3.0
+- name: Nabu Casa - Webhook Proxy for HA MCP
+  version: 3.0.2

@@ -1,0 +1,43 @@
+# Inventaire des 42 entrées de configuration (34 chargées, 8 ignorées).
+# Les entrées « ignored » sont des découvertes écartées volontairement — comportement normal.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+loaded:
+- hassio (Supervisor)
+- hacs
+- mqtt (Mosquitto broker)
+- sun
+- bluetooth
+- knx (Automatic)
+- dlna_dms (StockageReseau)
+- cast (Google Cast)
+- mobile_app (iPhone Marine)
+- mobile_app (Pixel 9a)
+- mobile_app (I10_Pro)
+- group x5
+- moon
+- meteo_france (Launaguet)
+- generic (Derniere capture)
+- waze_travel_time (Temps de trajet vers RTE)
+- presence_simulation
+- reolink (Interphone)
+- reolink (Entree garage)
+- min_max x2
+- rpi_power
+- daikin_onecta
+- synology_dsm (192.168.0.100)
+- google_cloud
+- go2rtc
+- backup
+- analytics
+- raspberry_pi
+- mcp_proxy (MCP Webhook Proxy)
+ignored:
+- ibeacon
+- led_ble
+- oralb
+- upnp (MikroTik Router)
+- ipp (Brother HL-L2375DW)
+- synology_dsm (BigNas 192.168.0.24)
+- reolink (entree 192.168.0.31)
+- reolink (camera1 192.168.0.30)

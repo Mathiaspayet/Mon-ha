@@ -1,0 +1,47 @@
+# Éclairage automatique entrée la nuit.
+# entity_id : automation.eclairage_automatique_entree_la_nuit
+# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+---
+id: '1684321117748'
+alias: Éclairage automatique entrée la nuit.
+description: ''
+triggers:
+- entity_id:
+  - binary_sensor.capteur_porche
+  from: 'off'
+  to: 'on'
+  trigger: state
+- trigger: state
+  entity_id:
+  - binary_sensor.entree_garage_intrusion_area_1_person
+  from:
+  - 'off'
+  to:
+  - 'on'
+conditions:
+- condition: or
+  conditions:
+  - condition: sun
+    after: sunset
+  - condition: sun
+    before: sunrise
+actions:
+- data: {}
+  target:
+    entity_id:
+    - light.porsche_et_travees
+    - light.ruban_led_double_hauteur
+    - light.ruban_led_salon
+    - light.ruban_led_salon_piano
+  action: light.turn_on
+- delay:
+    hours: 0
+    minutes: 10
+    seconds: 0
+    milliseconds: 0
+- data: {}
+  target:
+    entity_id:
+    - light.porsche_et_travees
+  action: light.turn_off
+mode: single

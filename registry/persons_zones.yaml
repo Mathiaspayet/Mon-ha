@@ -1,0 +1,20 @@
+# Personnes et zones.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+persons:
+- entity_id: person.domolaunaguet
+  name: Mathias
+  device_trackers:
+  - device_tracker.pixel_9a
+- entity_id: person.marine
+  name: Marine
+  device_trackers:
+  - device_tracker.iphone_marine
+- entity_id: person.invite
+  name: invite
+- entity_id: person.voyage
+  name: Voyage
+zones:
+- entity_id: zone.domolaunaguet
+  name: Domolaunaguet
+  note: Coordonnées GPS volontairement non exportées (dépôt public).

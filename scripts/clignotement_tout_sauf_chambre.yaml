@@ -1,0 +1,31 @@
+# Clignotement toutes lumières sauf enfants pendant alarme silencieuse
+# script_id : clignotement_tout_sauf_chambre  (entity_id : script.clignotement_tout_sauf_chambre)
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+alias: Clignotement toutes lumières sauf enfants pendant alarme silencieuse
+sequence:
+- repeat:
+    while:
+    - condition: state
+      entity_id: alarm_control_panel.alarme_maison
+      state: pending
+    sequence:
+    - service: light.turn_on
+      data: {}
+      target:
+        entity_id: light.toutes_les_lumieres_sauf_chambres_enfants_amis
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 8
+        milliseconds: 0
+    - service: light.turn_off
+      data: {}
+      target:
+        entity_id: light.toutes_les_lumieres_sauf_chambres_enfants_amis
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 8
+        milliseconds: 0
+mode: single

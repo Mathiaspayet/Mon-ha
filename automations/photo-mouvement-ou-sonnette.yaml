@@ -1,0 +1,46 @@
+# Prendre une photo en cas de mouvement ou sonnette 
+# entity_id : automation.notification_si_mouvement
+# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+---
+id: '1680770329206'
+alias: 'Prendre une photo en cas de mouvement ou sonnette '
+description: ''
+mode: single
+triggers:
+- entity_id:
+  - binary_sensor.interphone_person
+  from: 'off'
+  to: 'on'
+  trigger: state
+- entity_id:
+  - binary_sensor.interphone_visitor
+  from: 'off'
+  to: 'on'
+  trigger: state
+- entity_id:
+  - input_boolean.sirene
+  from: 'off'
+  to: 'on'
+  trigger: state
+actions:
+- service: camera.snapshot
+  data:
+    filename: /config/www/sonette/capture/capture_interphone.jpg
+    entity_id: camera.interphone_main
+- service: camera.snapshot
+  data:
+    entity_id: camera.interphone_main
+    filename: /config/www/sonette/capture/Archive/capture_interphone_{{ now().strftime("%Hh%Mmin%Ssec_%d-%m-%Y")
+      }}.jpg
+- delay:
+    hours: 0
+    minutes: 0
+    seconds: 2
+    milliseconds: 0
+- service: delete.files_in_folder
+  data:
+    folder: /config/www/sonette/capture/Archive/
+    only_extensions:
+    - .jpg
+    time: 864000
+conditions: []

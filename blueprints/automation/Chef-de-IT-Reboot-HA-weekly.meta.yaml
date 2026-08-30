@@ -1,0 +1,25 @@
+# Métadonnées du blueprint utilisé par automation.reboot_ha_host.
+# Le corps du blueprint n'est pas lisible via l'API : le réimporter depuis source_url.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+path: Chef-de-IT/Reboot-HA-weekly.yaml
+domain: automation
+name: Reboot HA host
+description: Automated weekly reboot of the entire Home Asistant OS host by Chef de IT
+author: Chef de IT
+source_url: https://gist.github.com/Chef-de-IT/2a4cdb7a3739e121daac76df3e30e780
+inputs:
+  reboot_day:
+    default: tue
+    options:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sat
+    - sun
+  reboot_time:
+    default: 04:00:00
+used_by:
+- automation.reboot_ha_host

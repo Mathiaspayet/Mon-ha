@@ -1,0 +1,41 @@
+# Alarme / detection alarme vacances
+# entity_id : automation.declenchement_de_l_alarme_jour
+# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+---
+id: 245912083de3423eb112b0df72230e20
+alias: Alarme / detection alarme vacances
+description: ''
+triggers:
+- entity_id:
+  - binary_sensor.capteur_cuisine
+  from: 'off'
+  to: 'on'
+  trigger: state
+- entity_id:
+  - binary_sensor.capteur_salon_piano
+  from: 'off'
+  to: 'on'
+  trigger: state
+- entity_id:
+  - binary_sensor.capteur_garage
+  from: 'off'
+  to: 'on'
+  trigger: state
+  enabled: true
+- entity_id:
+  - binary_sensor.capteur_patio
+  from: 'off'
+  to: 'on'
+  enabled: false
+  trigger: state
+conditions:
+- condition: state
+  entity_id: alarm_control_panel.alarme_maison
+  state: armed_vacation
+actions:
+- target:
+    entity_id: alarm_control_panel.alarme_maison
+  data: {}
+  action: alarm_control_panel.alarm_trigger
+- action: notify.mobile_app_pixel_9a
+  data: {}

@@ -1,0 +1,24 @@
+# Secrets Home Assistant — ne jamais versionner
+secrets.yaml
+known_devices.yaml
+*.key
+*.pem
+*.crt
+
+# Bases de données et runtime
+home-assistant_v2.db*
+*.db
+*.db-shm
+*.db-wal
+.storage/
+*.log
+tts/
+deps/
+
+# Sauvegardes
+backups/
+*.tar
+
+# Système
+.DS_Store
+__pycache__/

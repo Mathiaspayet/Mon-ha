@@ -1,0 +1,10 @@
+# Helpers input_number (mode storage).
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+slide:
+  name: slide
+  min: 0
+  max: 100
+  step: 1
+  unit_of_measurement: '%'
+  mode: slider

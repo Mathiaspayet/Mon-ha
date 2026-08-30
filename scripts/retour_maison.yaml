@@ -1,0 +1,35 @@
+# Retour Maison
+# script_id : retour_maison  (entity_id : script.retour_maison)
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+alias: Retour Maison
+sequence:
+- target:
+    entity_id:
+    - alarm_control_panel.alarme_maison
+    device_id: []
+    area_id: []
+  data:
+    code: '1234'
+  action: alarm_control_panel.alarm_disarm
+- target:
+    entity_id:
+    - switch.presence_simulation
+    device_id: []
+    area_id: []
+  data: {}
+  action: switch.turn_off
+- target:
+    entity_id:
+    - switch.blocage_porte_de_garage
+    device_id: []
+    area_id: []
+  data: {}
+  action: switch.turn_off
+- action: input_boolean.turn_off
+  metadata: {}
+  data: {}
+  target:
+    entity_id: input_boolean.etat_depart_maison
+mode: single
+icon: mdi:home-import-outline

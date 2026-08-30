@@ -1,0 +1,115 @@
+# Helpers de type « flow » (group, min_max) — reconstitués depuis les attributs des entités,
+# car leur énumération directe exige le composant ha_mcp_tools, non installé.
+# À recréer via Paramètres > Appareils et services > Aides.
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+group_helpers:
+  Toutes les Lumières:
+    entity_id: light.toutes_les_lumieres
+    type: light
+    members:
+    - light.buanderie
+    - light.bureau
+    - light.cellier
+    - light.chambre_auguste
+    - light.chambre_d_amis
+    - light.chambre_margaux
+    - light.chambre_parents
+    - light.entree_couloir
+    - light.luminaire_ilot
+    - light.patio_exterieur
+    - light.porsche_et_travees
+    - light.prise_commandee_salon_baie
+    - light.prise_commandee_salon_tele
+    - light.ruban_led_double_hauteur
+    - light.dressing
+    - light.cuisine
+    - light.couloir_etage
+    - light.salle_de_bain
+    - light.salle_de_bain_douche_baignoire
+    - light.salle_d_eau
+    - light.salon
+    - light.salon_tele
+    - light.salon_piano
+    - light.wc_etage
+    - light.wc_rdc
+    - light.terrasse_exterieure
+    - light.salle_a_manger
+    - light.eclairage_garage
+    - light.ruban_led_salon
+    - light.ruban_led_salon_piano
+  Toutes les lumières sauf chambres enfants amis:
+    entity_id: light.toutes_les_lumieres_sauf_chambres_enfants_amis
+    type: light
+    members:
+    - light.buanderie
+    - light.bureau
+    - light.cellier
+    - light.chambre_parents
+    - light.couloir_etage
+    - light.cuisine
+    - light.dressing
+    - light.entree_couloir
+    - light.luminaire_ilot
+    - light.patio_exterieur
+    - light.porsche_et_travees
+    - light.prise_commandee_salon_baie
+    - light.prise_commandee_salon_tele
+    - light.ruban_led_double_hauteur
+    - light.salle_a_manger
+    - light.salle_d_eau
+    - light.salle_de_bain
+    - light.salle_de_bain_douche_baignoire
+    - light.salon
+    - light.salon_tele
+    - light.salon_piano
+    - light.terrasse_exterieure
+    - light.wc_etage
+    - light.wc_rdc
+    - light.ruban_led_salon_piano
+    - light.ruban_led_salon
+  Tous les volets:
+    entity_id: cover.tous_les_volets
+    type: cover
+    members:
+    - cover.volet_buanderie
+    - cover.volet_chambre_auguste
+    - cover.volet_chambre_parentale
+    - cover.volet_bureau
+    - cover.volet_chambre_margaux
+    - cover.volet_salle_d_eau
+    - cover.volet_salle_de_bain
+    - cover.volet_salon_tele
+  Volets étage:
+    entity_id: cover.volets_etage
+    type: cover
+    members:
+    - cover.volet_chambre_auguste
+    - cover.volet_chambre_margaux
+    - cover.volet_chambre_parentale
+    - cover.volet_salle_d_eau
+    - cover.volet_salle_de_bain
+  Volets Rez de Chaussée:
+    entity_id: cover.volets_rez_de_chaussee
+    type: cover
+    members:
+    - cover.volet_buanderie
+    - cover.volet_bureau
+    - cover.volet_salon_tele
+min_max_helpers:
+  Moyenne température intérieure:
+    entity_id: sensor.moyenne_temperature_interieure
+    members:
+    - sensor.temperature_chambre_amis
+    - sensor.temperature_chambre_auguste
+    - sensor.temperature_chambre_margaux
+    - sensor.temperature_interrupteur
+    - sensor.temperature_salle_d_eau_2
+    - sensor.temperature_salle_d_eau
+    - sensor.temperature_salle_de_bain
+  Moyenne température extérieure:
+    entity_id: sensor.moyenne_temperature_exterieure
+    members:
+    - sensor.clim_chambre_climatecontrol_outdoor_temperature
+    - sensor.pression_eau_chaudiere
+    - sensor.temperature_exterieure_meteo_france

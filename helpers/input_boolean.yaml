@@ -1,0 +1,13 @@
+# Helpers input_boolean (mode storage).
+# NOTE : input_boolean.sirene est référencé par l'automatisation
+#        photo-mouvement-ou-sonnette mais N'EXISTE PLUS ici (entité orpheline).
+# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+---
+volets_automatiques:
+  name: 'Volets automatiques '
+  icon: mdi:window-shutter-auto
+lumieres_automatiques:
+  name: Lumières automatiques
+  icon: mdi:lightbulb-auto
+etat_depart_maison:
+  name: État depart maison

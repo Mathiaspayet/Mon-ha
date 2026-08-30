@@ -1,0 +1,64 @@
+# Forçage chauffage salle de bain
+# entity_id : automation.forcage_chauffage_salle_de_bain
+# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+---
+id: '1671181697200'
+alias: Forçage chauffage salle de bain
+description: 'Allume le chauffage de la salle d''eau quand la lumière est allumée depuis 2 min, l''éteint
+  1 h après extinction de la lumière.
+
+
+  Réécrit sans delay ni wait_for_trigger : chaque décision est recalculée à partir du last_changed de
+  la lumière, donc un redémarrage de HA ne peut plus laisser le chauffage allumé indéfiniment. Le déclencheur
+  de rattrapage (démarrage HA + toutes les 15 min) rattrape tout état incohérent.
+
+
+  La VMC (switch.vmc_cote_jardi) a été retirée des cibles : le relais KNX ne sait qu''arrêter le caisson,
+  pas le booster, et la couper priverait la cuisine et la salle d''eau de ventilation.'
+triggers:
+- entity_id: light.salle_d_eau
+  for: 00:02:00
+  id: allumer
+  to: 'on'
+  trigger: state
+- entity_id: light.salle_d_eau
+  for: 01:00:00
+  id: eteindre
+  to: 'off'
+  trigger: state
+- event: start
+  id: rattrapage
+  trigger: homeassistant
+- id: rattrapage
+  minutes: /15
+  trigger: time_pattern
+conditions: []
+actions:
+- choose:
+  - alias: Lumière allumée depuis 2 min — chauffage en marche
+    conditions:
+    - condition: trigger
+      id: allumer
+    sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.forcage_chauffage_salle_d_eau_2
+  - alias: Lumière éteinte depuis 1 h — arrêt, y compris en rattrapage
+    conditions:
+    - condition: or
+      conditions:
+      - condition: trigger
+        id: eteindre
+      - condition: and
+        conditions:
+        - condition: trigger
+          id: rattrapage
+        - condition: state
+          entity_id: light.salle_d_eau
+          for: 01:00:00
+          state: 'off'
+    sequence:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.forcage_chauffage_salle_d_eau_2
+mode: single
