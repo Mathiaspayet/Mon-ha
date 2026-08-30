@@ -15,8 +15,10 @@ avant toute modification issue de l'audit.
 
 Ce dépôt est **public**. Deux éléments sensibles y figurent en clair, en connaissance de cause :
 
-- **Le code de désarmement de l'alarme** (`1234`), dans `scripts/depart_maison.yaml` et
-  `scripts/retour_maison.yaml`. **À changer dans Home Assistant, puis ici.**
+- **Le code de désarmement de l'alarme** (`1234`), dans trois fichiers :
+  `config/configuration.yaml` (bloc `alarm_control_panel`, la source),
+  `scripts/depart_maison.yaml` et `scripts/retour_maison.yaml`.
+  **À changer dans Home Assistant, puis ici.**
 - Le plan de la maison, les prénoms, et la liste des capteurs qui gardent chaque accès.
 
 Les coordonnées GPS de la zone « domicile » n'ont volontairement pas été exportées.
@@ -25,6 +27,7 @@ Aucun mot de passe de caméra, jeton d'API ou contenu de `secrets.yaml` ne figur
 ## Contenu
 
 ```
+config/          fichiers YAML bruts de /config (configuration.yaml)
 automations/     14 automatisations, une par fichier
 scripts/          4 scripts
 dashboards/       tableau de bord « Domolaunaguet » (9 vues) + ressources Lovelace
@@ -35,21 +38,24 @@ blueprints/       métadonnées du blueprint utilisé
 docs/             rapport d'audit du 29 août 2026
 ```
 
-## Ce qui n'est pas ici
+## Ce qui n'est pas encore ici
 
-L'export passe par l'API Home Assistant. Les outils fichiers du serveur MCP exigent l'entrée
-**« HA-MCP File & YAML Tools »**, non installée sur l'instance — ces éléments ne sont donc pas
-récupérables pour l'instant :
+L'entrée **HA-MCP File & YAML Tools** a été installée le 30 août, ce qui a rendu
+`configuration.yaml` lisible — il est désormais dans `config/`.
 
-- `configuration.yaml` et les fichiers `packages/*.yaml` — dont **toute la configuration KNX**
-  (adresses de groupe, thermostats, volets, chaudière). C'est le manque le plus important.
-- Les capteurs `template:` définis en YAML
-- `custom_components/`, `themes/`, `www/`
-- `secrets.yaml` (jamais à versionner, voir `.gitignore`)
+Deux fichiers inclus restent hors de portée : la liste blanche des outils MCP couvre
+`configuration.yaml`, `automations.yaml`, `scripts.yaml`, `scenes.yaml`, `packages/*.yaml`,
+`www/`, `themes/`, `custom_templates/`, `dashboards/` et `blueprints/`, mais pas les
+autres fichiers à la racine de `/config` :
 
-**Pour compléter l'export** : dans Home Assistant, Paramètres → Appareils et services →
-*HA-MCP Custom Component* → « Ajouter une entrée » → **HA-MCP File & YAML Tools**.
-Les fichiers bruts deviennent alors lisibles et pourront être ajoutés ici.
+| Fichier | Contenu |
+|---|---|
+| `knx.yaml` | **Toute la configuration KNX** — thermostats, volets, chaudière, capteurs |
+| `commandline.yaml` | Intégration `command_line` |
+
+Voir `config/README.md` pour les deux façons de les récupérer.
+
+Non versionnés volontairement : `secrets.yaml` et `googlecloud.json` (clé de service).
 
 Trois éléments restent partiels côté API : les helpers de type *flow* (groupes, moyennes) sont
 reconstitués depuis les attributs des entités plutôt que depuis leur configuration ; le corps du

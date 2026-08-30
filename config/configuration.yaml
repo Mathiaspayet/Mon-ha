@@ -1,0 +1,84 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+#accès aux themes
+frontend:
+  themes: !include_dir_merge_named themes
+
+delete:
+
+tts:
+  - platform: google_cloud
+    key_file: googlecloud.json
+    language: fr-FR
+    gender: male
+    voice: fr-FR-Wavenet-D
+    encoding: mp3
+    speed: 1.1
+    pitch: -1.0
+    text_type: text
+    profiles:
+      - telephony-class-application
+
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+knx: !include knx.yaml
+command_line: !include commandline.yaml
+
+
+template:
+  - sensor:
+      - name: "Pression Chaudiere en Bar"
+        unit_of_measurement: "Bar"
+        state: "{{ (states('sensor.pression_eau_chaudiere_2') | float(0) / 100000) | round(2) }}"
+        availability: "{{ states('sensor.pression_eau_chaudiere_2') not in ['unavailable', 'unknown', 'none'] }}"
+
+      - name: température extérieure Météo france
+        unit_of_measurement: "°C"
+        state: "{{state_attr('weather.launaguet','temperature')}}"
+
+      - name: "toutes"
+        state: >
+          {% set domain = 'light' %}
+          {% set state = 'on' %}
+          {% set light = namespace(is_light=0, is_on=0) %}
+          {%- set entities = (states[domain]| map(attribute='entity_id') | list ) -%}
+          {%- for entity in entities -%}
+            {% if not ( is_state_attr(entity,'type','browser_mod') or is_state(entity,'unavailable') or is_state_attr(entity,'friendly_name','Toutes les Lumières') or is_state_attr(entity,'friendly_name','Toutes les lumières sauf chambres enfants amis') or is_state_attr(entity,'friendly_name','Interphone Infra red lights in night mode')) %}
+              {% set light.is_light = light.is_light + 1 %}
+              {% if is_state(entity,'on') %}
+                {% set light.is_on = light.is_on + 1 %}
+              {%- endif %}
+            {%- endif %}
+          {%- endfor -%}
+          {{light.is_on}}/{{light.is_light}}
+        attributes:
+          friendly_name: >
+            {% set domain = 'light' %}
+            {% set state = 'on' %}
+            {% set lights = namespace(on="") %}
+            {%- set entities = (states[domain]| map(attribute='entity_id') | list ) -%}
+            {%- for entity in entities -%}
+              {% if not ( is_state_attr(entity,'type','browser_mod') or is_state(entity,'unavailable') or is_state_attr(entity,'friendly_name','Toutes les Lumières') or is_state_attr(entity,'friendly_name','Toutes les lumières sauf chambres enfants amis') or is_state_attr(entity,'friendly_name','Interphone Infra red lights in night mode')) %}
+                {% if is_state(entity,'on') %}
+                  {%- if lights.on == '' %}
+                    {% set lights.on = state_attr(entity,'friendly_name') %}
+                  {% else %}
+                    {% set lights.on = lights.on + "\n" + state_attr(entity,'friendly_name') %}
+                  {%- endif %}
+                {%- endif %}
+              {%- endif %}
+            {%- endfor -%}
+            {{ lights.on}}
+
+alarm_control_panel:
+  - platform: manual
+    name: Alarme_maison
+    code: "1234"
+    arming_time: 30 #Le temps en secondes de l'état d'armement avant d'effectuer un changement d'état.
+    delay_time: 60 #Le temps en secondes de l'état «en attente» avant le déclenchement de l'alarme.
+    trigger_time: 600 #Le temps en secondes de l'état «déclenché» pendant lequel l'alarme se déclenche.
+    disarmed:
+      trigger_time: 0
