@@ -27,7 +27,7 @@ Aucun mot de passe de caméra, jeton d'API ou contenu de `secrets.yaml` ne figur
 ## Contenu
 
 ```
-config/          fichiers YAML bruts de /config (configuration.yaml)
+config/          fichiers YAML bruts : configuration.yaml, knx.yaml, commandline.yaml
 automations/     14 automatisations, une par fichier
 scripts/          4 scripts
 dashboards/       tableau de bord « Domolaunaguet » (9 vues) + ressources Lovelace
@@ -38,28 +38,18 @@ blueprints/       métadonnées du blueprint utilisé
 docs/             rapport d'audit du 29 août 2026
 ```
 
-## Ce qui n'est pas encore ici
+## Couverture
 
-L'entrée **HA-MCP File & YAML Tools** a été installée le 30 août, ce qui a rendu
-`configuration.yaml` lisible — il est désormais dans `config/`.
+L'export est complet pour tout ce que Home Assistant expose. Les fichiers YAML bruts
+sont dans `config/` : `configuration.yaml`, `knx.yaml` (136 entités KNX) et
+`commandline.yaml`.
 
-Deux fichiers inclus restent hors de portée : la liste blanche des outils MCP couvre
-`configuration.yaml`, `automations.yaml`, `scripts.yaml`, `scenes.yaml`, `packages/*.yaml`,
-`www/`, `themes/`, `custom_templates/`, `dashboards/` et `blueprints/`, mais pas les
-autres fichiers à la racine de `/config` :
-
-| Fichier | Contenu |
-|---|---|
-| `knx.yaml` | **Toute la configuration KNX** — thermostats, volets, chaudière, capteurs |
-| `commandline.yaml` | Intégration `command_line` |
-
-Voir `config/README.md` pour les deux façons de les récupérer.
-
-Non versionnés volontairement : `secrets.yaml` et `googlecloud.json` (clé de service).
+Non versionnés volontairement : `secrets.yaml` et `googlecloud.json` (clé de service) —
+tous deux également bloqués en lecture par les outils MCP.
 
 Trois éléments restent partiels côté API : les helpers de type *flow* (groupes, moyennes) sont
 reconstitués depuis les attributs des entités plutôt que depuis leur configuration ; le corps du
-blueprint n'est pas exposé (seules ses métadonnées et son `source_url` le sont) ; la scène
+blueprint n'est pas exposé (seuls ses métadonnées et son `source_url` le sont) ; la scène
 `switch_presence_simulation_scene` est générée automatiquement par l'intégration Presence
 Simulation et n'a pas été exportée.
 

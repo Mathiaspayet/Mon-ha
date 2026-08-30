@@ -1,32 +1,32 @@
 # Fichiers YAML bruts de `/config`
 
-Copie conforme des fichiers de configuration lus sur l'instance Home Assistant.
+Copie conforme des fichiers de configuration lus sur l'instance Home Assistant,
+via l'entrée **HA-MCP File & YAML Tools** (répertoires personnalisés : `knx.yaml`,
+`commandline.yaml`).
 
-## Présent
+| Fichier | Taille source | Modifié | Contenu |
+|---|---|---|---|
+| `configuration.yaml` | 3 571 o | 2026-08-06 | Point d'entrée : inclusions, 3 capteurs template, TTS, panneau d'alarme |
+| `knx.yaml` | 14 487 o | 2024-11-29 | **136 entités KNX** |
+| `commandline.yaml` | 246 o | 2023-06-14 | Capteur `command_line` (température CPU) |
 
-- `configuration.yaml` — lu le 2026-08-30, 3 571 octets, modifié le 2026-08-06
+`knx.yaml` sur l'instance utilise des fins de ligne CRLF ; la copie ici est en LF.
+Le contenu est identique, sans incidence pour Home Assistant.
 
-## Encore manquant
+## Répartition de `knx.yaml`
 
-`configuration.yaml` référence deux fichiers inclus qui ne sont **pas** lisibles par
-les outils MCP : leur liste blanche couvre `configuration.yaml`, `automations.yaml`,
-`scripts.yaml`, `scenes.yaml`, `secrets.yaml`, `packages/*.yaml`, `www/`, `themes/`,
-`custom_templates/`, `dashboards/`, `blueprints/` — mais pas les autres fichiers
-placés à la racine de `/config`.
-
-| Fichier | Contenu | Pourquoi il compte |
-|---|---|---|
-| `knx.yaml` | Toute la configuration KNX | Définit thermostats, volets, chaudière, capteurs — l'essentiel du parc d'entités |
-| `commandline.yaml` | Intégration `command_line` | Capteurs et commandes shell |
-
-Pour les débloquer : ouvrir la page de réglages de l'add-on **Home Assistant MCP Server**
-et ajouter `/config` aux répertoires autorisés. L'URL de cette page figure dans les
-journaux de démarrage de l'add-on, sous la forme `/private_<jeton>/settings`.
-
-Autre voie, sans réglage : les copier à la main depuis l'add-on **File editor** ou le
-partage **Samba**, tous deux déjà installés.
+| Domaine | Entités |
+|---|---|
+| `binary_sensor` | 49 |
+| `light` | 31 |
+| `sensor` | 30 |
+| `switch` | 11 |
+| `cover` | 9 |
+| `climate` | 6 |
 
 ## Non versionné volontairement
 
 - `secrets.yaml` — jamais dans un dépôt, a fortiori public (voir `.gitignore`)
 - `googlecloud.json` — clé de compte de service Google Cloud, référencée par le bloc `tts:`
+
+Ces deux fichiers sont d'ailleurs bloqués en lecture par les outils MCP eux-mêmes.
