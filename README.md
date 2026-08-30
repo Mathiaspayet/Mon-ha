@@ -67,10 +67,12 @@ Ordre à respecter pour reconstruire depuis zéro :
 5. Importer **scripts** puis **automatisations** (les automatisations appellent les scripts)
 6. Déclarer les **ressources Lovelace**, puis importer le tableau de bord
 
-## Audit
+## Diagnostics
 
-`docs/audit-2026-08-29.html` — revue complète : 4 constats critiques, 6 de fiabilité,
-9 d'hygiène, 9 pistes d'amélioration et un plan d'action en 3 phases.
+| Document | Date | Contenu |
+|---|---|---|
+| `docs/diagnostic-2026-08-30.html` | 30 août | **À jour.** Refait avec `knx.yaml` en main : 5 critiques, 8 fiabilité, 9 hygiène, 3 corrections au précédent |
+| `docs/audit-2026-08-29.html` | 29 août | Premier passage, conservé pour l'historique. Trois de ses conclusions sont corrigées par le suivant |
 
-Les correctifs n'ont **pas** encore été appliqués : le contenu de ce dépôt reflète l'état
-du système *avant* intervention.
+Les correctifs n'ont **pas** encore été appliqués : ce dépôt reflète l'état du système
+*avant* intervention. C'est le point de départ.

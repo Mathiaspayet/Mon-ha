@@ -1,0 +1,690 @@
+<title>Contre-visite Domolaunaguet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#EFF1EC;
+  --card:#FAFBF8;
+  --sunk:#E4E8DF;
+  --ink:#16211A;
+  --ink-2:#3D4A42;
+  --muted:#65706A;
+  --rule:#D2D8CD;
+  --rule-2:#BFC7B9;
+  --accent:#2F6B45;
+  --accent-soft:#DCE8DF;
+  --crit:#9E2B25;
+  --crit-soft:#F2DEDC;
+  --warn:#9A6714;
+  --warn-soft:#F3E7D2;
+  --info:#3B5C79;
+  --info-soft:#DEE7EF;
+  --good:#2F6B45;
+  --shadow:0 1px 0 rgba(22,33,26,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131711;
+    --card:#1A1F18;
+    --sunk:#232A21;
+    --ink:#E7EBE2;
+    --ink-2:#C2CABB;
+    --muted:#8E998B;
+    --rule:#2C3529;
+    --rule-2:#3C4738;
+    --accent:#77C193;
+    --accent-soft:#1F3327;
+    --crit:#E5847B;
+    --crit-soft:#3A2321;
+    --warn:#D9A857;
+    --warn-soft:#382D1A;
+    --info:#8FB4D2;
+    --info-soft:#1E2C38;
+    --good:#77C193;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131711;
+  --card:#1A1F18;
+  --sunk:#232A21;
+  --ink:#E7EBE2;
+  --ink-2:#C2CABB;
+  --muted:#8E998B;
+  --rule:#2C3529;
+  --rule-2:#3C4738;
+  --accent:#77C193;
+  --accent-soft:#1F3327;
+  --crit:#E5847B;
+  --crit-soft:#3A2321;
+  --warn:#D9A857;
+  --warn-soft:#382D1A;
+  --info:#8FB4D2;
+  --info-soft:#1E2C38;
+  --good:#77C193;
+  --shadow:none;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  font-size:16.5px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 96px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding:56px 0 26px;margin-bottom:0}
+.eyebrow{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;
+}
+.eyebrow .dot{width:4px;height:4px;background:var(--rule-2);border-radius:50%}
+h1{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;
+  font-size:clamp(38px,7vw,68px);line-height:.98;letter-spacing:-.025em;
+  margin:0 0 18px;text-wrap:balance;
+}
+.lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:60ch;margin:0}
+
+.specs{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0 0;
+}
+.spec{background:var(--paper);padding:14px 16px}
+.spec dt{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 5px;
+}
+.spec dd{
+  margin:0;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);
+}
+
+/* ---------- immediate alert ---------- */
+.now{
+  margin:44px 0 0;border:1px solid var(--crit);border-left:4px solid var(--crit);
+  background:var(--crit-soft);padding:22px 24px;
+}
+.now h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--crit);margin:0 0 10px;
+}
+.now p{margin:0 0 10px;color:var(--ink)}
+.now p:last-child{margin-bottom:0}
+
+/* ---------- scorecard ---------- */
+.scores{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:44px 0 0;
+}
+.score{background:var(--card);padding:18px 16px 16px}
+.score .n{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:40px;
+  line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;
+}
+.score .l{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  display:block;margin-top:7px;
+}
+.score.c .n{color:var(--crit)} .score.f .n{color:var(--warn)}
+.score.h .n{color:var(--info)} .score.a .n{color:var(--accent)}
+
+/* ---------- sections ---------- */
+section.block{margin-top:64px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:8px}
+.sechead h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:clamp(22px,3.4vw,30px);
+  letter-spacing:-.02em;margin:0;flex:1;text-wrap:balance;
+}
+.sechead .count{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.secnote{color:var(--muted);font-size:15.5px;margin:14px 0 30px;max-width:66ch}
+
+/* ---------- finding ---------- */
+.finding{
+  display:grid;grid-template-columns:96px 1fr;gap:0;
+  background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--rule-2);
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.finding.crit{border-left-color:var(--crit)}
+.finding.warn{border-left-color:var(--warn)}
+.finding.info{border-left-color:var(--info)}
+.finding.good{border-left-color:var(--accent)}
+.rail{padding:20px 0 20px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.rail .id{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:17px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;
+}
+.finding.crit .rail .id{color:var(--crit)}
+.finding.warn .rail .id{color:var(--warn)}
+.finding.info .rail .id{color:var(--info)}
+.finding.good .rail .id{color:var(--accent)}
+.chip{
+  font-family:"Chivo",system-ui,sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;white-space:nowrap;
+}
+.chip.crit{background:var(--crit-soft);color:var(--crit)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.good{background:var(--accent-soft);color:var(--accent)}
+.fbody{padding:20px 22px 20px 8px;min-width:0}
+.fbody h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:18.5px;
+  line-height:1.3;letter-spacing:-.012em;margin:0 0 10px;text-wrap:balance;
+}
+.fbody p{margin:0 0 11px}
+.fbody p:last-child{margin-bottom:0}
+.fbody ul{margin:0 0 11px;padding-left:19px}
+.fbody li{margin-bottom:5px}
+.fbody li::marker{color:var(--rule-2)}
+
+code,.mono{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.855em;
+  background:var(--sunk);padding:1px 5px;border-radius:2px;
+  word-break:break-word;
+}
+.fix{
+  border-top:1px dashed var(--rule-2);padding-top:11px;margin-top:13px !important;
+  font-size:15.5px;color:var(--ink-2);
+}
+.fix b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:4px;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);margin:0 0 11px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  background:var(--sunk);white-space:nowrap;
+}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- plan ---------- */
+.phase{border-top:1px solid var(--ink);padding-top:18px;margin-top:30px}
+.phase h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:15px;
+  letter-spacing:.03em;margin:0 0 4px;
+}
+.phase .when{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+}
+.phase ol{margin:0;padding-left:20px}
+.phase li{margin-bottom:7px}
+.phase li::marker{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:500}
+
+footer{
+  margin-top:72px;border-top:2px solid var(--ink);padding-top:18px;
+  font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px;
+  font-family:"Chivo",system-ui,sans-serif;
+}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:0 18px 72px}
+  .finding{grid-template-columns:1fr}
+  .rail{flex-direction:row;align-items:center;padding:16px 18px 0}
+  .fbody{padding:14px 18px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Contre-visite</span><span class="dot"></span>
+    <span>30 août 2026</span><span class="dot"></span>
+    <span>Home Assistant 2026.8.3</span><span class="dot"></span>
+    <span>Config complète en main</span>
+  </div>
+  <h1>Contre-visite Domolaunaguet</h1>
+  <p class="lede">Diagnostic refait de zéro, 24 h après le premier audit. Cette fois avec <code>knx.yaml</code> et <code>configuration.yaml</code> sous les yeux : 136 entités KNX que je ne pouvais qu'observer de l'extérieur la première fois. Vingt-deux constats, trois corrections à l'audit précédent.</p>
+
+  <dl class="specs">
+    <div class="spec"><dt>Entités</dt><dd>509 · 83 mortes</dd></div>
+    <div class="spec"><dt>Entités KNX</dt><dd>136</dd></div>
+    <div class="spec"><dt>Intégrations</dt><dd>35 / 43</dd></div>
+    <div class="spec"><dt>Apps</dt><dd>7 <span style="color:var(--crit)">(−2)</span></dd></div>
+    <div class="spec"><dt>Tickets réparation</dt><dd>0 <span style="color:var(--good)">(−1)</span></dd></div>
+    <div class="spec"><dt>Historique</dt><dd>11 jours</dd></div>
+  </dl>
+</header>
+
+<div class="now">
+  <h2>⚠ Toujours en attente depuis hier</h2>
+  <p><b>L'alarme est encore en <code>armed_vacation</code> avec Marine à la maison.</b> État inchangé en 24 h : <code>armed_vacation</code>, simulation de présence active, <code>input_boolean.etat_depart_maison</code> à <code>on</code>, blocage du garage actif — et <code>person.marine</code> toujours <code>home</code> (Mathias <code>not_home</code>).</p>
+  <p>Aucune fausse alarme ne s'est déclenchée entre-temps, donc soit les détecteurs cuisine / salon piano / garage n'ont pas été franchis, soit c'est le téléphone de Marine qui est à la maison sans elle. Dans le premier cas le risque reste entier ; dans le second il n'y a rien à faire. C'est le seul point de ce rapport que je ne peux pas trancher à distance.</p>
+</div>
+
+<div class="scores">
+  <div class="score c"><span class="n">5</span><span class="l">Critiques</span></div>
+  <div class="score f"><span class="n">8</span><span class="l">Fiabilité</span></div>
+  <div class="score h"><span class="n">9</span><span class="l">Hygiène</span></div>
+  <div class="score a"><span class="n">3</span><span class="l">Corrections</span></div>
+</div>
+
+<!-- ============ CHANGEMENTS ============ -->
+<section class="block">
+  <div class="sechead"><h2>Ce qui a changé en 24 heures</h2><span class="count">6 mouvements</span></div>
+  <p class="secnote">Le système n'est pas resté immobile entre les deux passages. Deux mouvements sont de mon fait, quatre non.</p>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th>Mouvement</th><th>Origine</th><th>Effet</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sauvegarde du 30/08 réussie</b> à 03 h 07</td><td>Automatique</td><td>Le ticket <code>automatic_backup_failed</code> a disparu — 0 réparation en attente. L'échec du 29 était ponctuel.</td></tr>
+      <tr><td><b>WireGuard désinstallé</b></td><td>Inconnue</td><td>Ton accès VPN distant n'existe plus. Voir C3.</td></tr>
+      <tr><td><b>go2rtc (l'App) désinstallé</b></td><td>Inconnue</td><td>Sans conséquence : l'intégration <code>go2rtc</code> intégrée à HA reste chargée et prend le relais. Le bruit caméra dans les journaux a d'ailleurs chuté.</td></tr>
+      <tr><td>Add-on MCP <b>8.3.0 → 8.4.0</b></td><td>Auto-update</td><td>Le jeu d'outils exposés a changé — voir H8.</td></tr>
+      <tr><td>Intégration <b>ha_mcp_tools</b> installée</td><td>Moi</td><td>C'est ce qui a rendu <code>configuration.yaml</code> et <code>knx.yaml</code> lisibles. 43 entrées de configuration, 10 dépôts HACS.</td></tr>
+      <tr><td>Redémarrage HA + redémarrage de l'add-on MCP</td><td>Moi</td><td>Aucun effet de bord observé : 35 intégrations chargées, 8 ignorées, comme avant.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ CRITIQUE ============ -->
+<section class="block">
+  <div class="sechead"><h2>Critique</h2><span class="count">5 constats</span></div>
+  <p class="secnote">Fonctions que tu crois actives et qui ne le sont pas. Aucune n'a bougé depuis hier, et une s'est ajoutée.</p>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C1</span><span class="chip crit">Critique</span></div>
+    <div class="fbody">
+      <h3>Six automatisations appellent une notification vide — et s'arrêtent dessus</h3>
+      <p>Inchangé. Toutes appellent <code>notify.mobile_app_pixel_9a</code> avec <code>data: {}</code>, alors que <code>message</code> est <b>obligatoire</b> dans le schéma du service : l'appel lève une erreur et <b>interrompt le reste de la séquence</b>.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Automatisation</th><th>Position</th><th>Conséquence</th></tr></thead>
+        <tbody>
+          <tr><td>Sonette quand qqn sonne</td><td class="num">1 / 8</td><td>Toute la sonnerie est morte.</td></tr>
+          <tr><td>Garage / Alerte porte restée ouverte</td><td class="num">1 / 3</td><td>Aucune alerte, à personne.</td></tr>
+          <tr><td>Alarme / déclenchement Sonore et visuelle</td><td class="num">3 / 3</td><td>Sirène OK, pas de notification.</td></tr>
+          <tr><td>Alarme / détection Nuit</td><td class="num">2 / 2</td><td>Alarme déclenchée, pas de notification.</td></tr>
+          <tr><td>Alarme / détection vacances</td><td class="num">2 / 2</td><td>Alarme déclenchée, pas de notification.</td></tr>
+          <tr><td>Alarme / déclenchement silencieuse</td><td class="num">2 / 2</td><td>Aucune notification — tout l'intérêt d'une alarme silencieuse.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Aucune de ces six n'a été déclenchée depuis l'audit : les compteurs <code>last_triggered</code> sont identiques à hier. Le bug est donc intact et non observé.</p>
+      <p class="fix"><b>Correctif</b> Un script <code>script.alerte_famille</code> avec <code>message</code> et <code>title</code> en champs obligatoires, appelé par les six. Corrige à la racine et met enfin les trois téléphones dans la boucle (aujourd'hui seule Marine reçoit quoi que ce soit, et uniquement là où l'appel vide n'est pas en première position).</p>
+    </div>
+  </article>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C2</span><span class="chip crit">Critique</span></div>
+    <div class="fbody">
+      <h3>La sonnette pilote un Sonos qui n'existe plus</h3>
+      <p>Inchangé. <code>media_player.salle_a_manger</code> renvoie 404 et le domaine <code>sonos</code> n'est plus enregistré. Cinq des huit actions de <i>Sonette quand qqn sonne</i> visent ce matériel disparu.</p>
+      <p>Dernier déclenchement : 8 août. Trois semaines que la sonnette est muette.</p>
+      <p class="fix"><b>Correctif</b> Rebâtir le carillon sur <code>cast</code> (chargé) ou en TTS Google Cloud (configuré), et retirer le motif <code>snapshot</code>/<code>restore</code> propre à Sonos.</p>
+    </div>
+  </article>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C3</span><span class="chip crit">Critique</span></div>
+    <div class="fbody">
+      <h3>WireGuard a disparu — ton accès distant avec</h3>
+      <p><b>Nouveau.</b> Hier l'instance comptait 9 Apps, dont <code>WireGuard 0.13.0</code>. Aujourd'hui il en reste 7, et WireGuard n'y est plus. L'App a été désinstallée entre les deux passages.</p>
+      <p>C'était ton tunnel VPN vers la maison. Rien ne le remplace : Home Assistant Cloud n'est pas connecté (<code>logged_in: false</code>), et le seul accès distant restant est le proxy webhook Nabu Casa, qui ne sert que le serveur MCP — pas ton interface.</p>
+      <p>Note : WireGuard avait <code>auto_update: true</code> et une mise à jour 0.13.0 → 0.14.0 en attente au moment de l'audit. Une désinstallation n'est pas un comportement normal d'auto-update, mais la coïncidence mérite d'être vérifiée.</p>
+      <p class="fix"><b>Correctif</b> D'abord confirmer que ce n'est pas volontaire de ta part. Si non, réinstaller WireGuard et restaurer sa configuration depuis la sauvegarde du 28 ou du 30 août — les clés et la liste des pairs y sont. À faire avant de te retrouver loin de chez toi.</p>
+    </div>
+  </article>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C4</span><span class="chip crit">Critique</span></div>
+    <div class="fbody">
+      <h3>Un déclencheur pointe sur un helper supprimé</h3>
+      <p>Inchangé. <code>input_boolean.sirene</code> est <code>unavailable</code> et ne figure pas parmi les trois helpers <code>input_boolean</code> réellement enregistrés — le helper a été supprimé, l'entrée de registre est restée. C'est un des trois déclencheurs de <i>Prendre une photo en cas de mouvement ou sonnette</i>, et il ne se déclenchera plus jamais.</p>
+      <p class="fix"><b>Correctif</b> Trancher l'intention : si l'idée était de capturer une image au déclenchement de l'alarme, brancher le déclencheur sur <code>alarm_control_panel.alarme_maison</code> → <code>triggered</code>, ce qui est à la fois plus direct et plus fiable. Sinon, retirer le déclencheur.</p>
+    </div>
+  </article>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C5</span><span class="chip crit">Critique</span></div>
+    <div class="fbody">
+      <h3>Les sauvegardes tiennent à un seul fil</h3>
+      <p><b>Requalifié.</b> L'échec du 29 août est résolu : celle du 30 à 03 h 07 s'est terminée en <code>completed</code> et le ticket de réparation a disparu. C'était donc ponctuel — très probablement le NAS injoignable cette nuit-là.</p>
+      <p>La faiblesse structurelle, elle, est intacte :</p>
+      <ul>
+        <li><b>Destination unique</b> — tout part vers l'agent <code>synology_dsm</code>. Le NAS ne répond pas une nuit ? Pas de sauvegarde, et tu ne l'apprends que par un ticket que rien ne te notifie.</li>
+        <li><b>Aucune copie locale</b> — <code>hassio.local</code> n'est pas dans les destinations automatiques.</li>
+        <li><b>Non chiffrées</b> — <code>protected: false</code>. Elles contiennent la base, les jetons et <code>secrets.yaml</code>, en clair sur le NAS.</li>
+      </ul>
+      <p>Le sujet devient plus sensible depuis C3 : c'est dans ces sauvegardes que se trouve la configuration WireGuard à restaurer.</p>
+      <p class="fix"><b>Correctif</b> Ajouter <code>hassio.local</code> en seconde destination, activer le chiffrement, et surveiller <code>event.backup_sauvegarde_automatique</code> — son attribut <code>event_type</code> passe à <code>completed</code> en cas de succès, ce qui donne un déclencheur d'alerte immédiat en cas d'échec.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ============ FIABILITE ============ -->
+<section class="block">
+  <div class="sechead"><h2>Fiabilité</h2><span class="count">8 constats</span></div>
+  <p class="secnote">Six repris de l'audit, deux nouveaux — issus de la lecture de <code>knx.yaml</code>, qui n'était pas accessible la première fois.</p>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F1</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Sept interrupteurs KNX pilotent à l'aveugle</h3>
+      <p><b>Nouveau.</b> Sept des onze <code>switch</code> de <code>knx.yaml</code> n'ont pas de <code>state_address</code>. Home Assistant envoie l'ordre sur le bus et considère qu'il a réussi : l'état affiché est une supposition, jamais une lecture. Si l'actionneur ne reçoit pas, ne répond pas, ou est piloté depuis un bouton mural, HA ment sans le savoir.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Interrupteur</th><th>Adresse</th><th>Pourquoi ça compte ici</th></tr></thead>
+        <tbody>
+          <tr><td>Blocage Porte de garage</td><td class="num">16/0/8</td><td>Piloté par le script <i>Depart maison</i>. Un blocage qui n'a pas pris s'affiche quand même « activé ».</td></tr>
+          <tr><td>Forcage Chauffage Salle d'eau</td><td class="num">12/4/0</td><td>Le retour existe pourtant : <code>binary_sensor</code> « Etat chauffage salle d'eau » lit <code>12/4/1</code>. Il n'est simplement pas câblé au switch.</td></tr>
+          <tr><td>switch H1 · Switch H2 · Switch ECS · Switch Mode été</td><td class="num">17/1/0-3</td><td>Même cas : les quatre <code>binary_sensor</code> « Etat Marche arret… » lisent exactement ces adresses. Le retour est disponible, non raccordé.</td></tr>
+          <tr><td>Toutes lumières sauf enfants</td><td class="num">6/6/0</td><td>Scène d'ambiance, impact faible.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Le cas de la chaudière est le plus net : tu as déjà les adresses d'état, elles alimentent des capteurs binaires séparés affichés sur le tableau de bord « Chaudière ». Il ne manque qu'une ligne par entité.</p>
+      <p class="fix"><b>Correctif</b> Ajouter <code>state_address</code> sur les cinq entités où l'adresse de retour existe déjà (<code>12/4/1</code>, <code>17/1/0</code>, <code>17/1/1</code>, <code>17/1/2</code>, <code>17/1/3</code>). Les <code>binary_sensor</code> correspondants deviennent alors redondants et peuvent être retirés — ce qui règle au passage une partie de F2.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F2</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Onze adresses de groupe sont lues deux fois</h3>
+      <p><b>Nouveau.</b> Onze adresses apparaissent dans deux entités distinctes, ce qui double le trafic bus pour la même valeur :</p>
+      <ul>
+        <li><b>Six sondes de température</b> — <code>3/1/0</code>, <code>7/1/0</code>, <code>8/1/0</code>, <code>9/1/0</code>, <code>10/1/0</code>, <code>11/1/0</code> : lues une fois comme <code>sensor</code>, une fois comme <code>temperature_address</code> du thermostat correspondant.</li>
+        <li><b>Quatre états chaudière</b> — <code>17/1/0</code> à <code>17/1/3</code> : le <code>binary_sensor</code> et le <code>switch</code> visent la même adresse (voir F1).</li>
+        <li><b>Position du garage</b> — <code>16/0/2</code> : lue par un <code>sensor</code> et par <code>position_state_address</code> du <code>cover</code>.</li>
+      </ul>
+      <p>Ce n'est pas un bug : les valeurs sont justes. Mais sur un bus qui met déjà 2 secondes à ne pas répondre à une quinzaine d'adresses (H2), alléger le trafic n'est pas gratuit.</p>
+      <p class="fix"><b>Correctif</b> Supprimer les <code>sensor</code> doublons dont la valeur est déjà exposée par l'attribut <code>current_temperature</code> du thermostat — sauf ceux consommés par un graphe du tableau de bord « Températures », qu'il faudra repointer d'abord. Même logique pour la position du garage.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F3</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Le bouclage ECS se déclenche sur chaque changement d'attribut de lumière</h3>
+      <p>Inchangé. Le déclencheur liste cinq entités sans <code>to:</code> ni <code>from:</code> : il réagit à tout changement, attributs compris. Les traces montraient deux déclenchements sur <code>light.dressing</code> à une seconde d'intervalle.</p>
+      <p>Avec <code>mode: single</code> et 19 minutes de délais dans les actions, l'automatisation passe l'essentiel de son temps occupée à ignorer des déclencheurs. Le <code>delay</code> final de 15 min est un anti-rebond artisanal.</p>
+      <p class="fix"><b>Correctif</b> Ajouter <code>from: "off"</code> / <code>to: "on"</code> sur les déclencheurs de lumière, et remplacer le délai de garde par un helper <code>timer</code> testé en condition — un <code>delay</code> ne survit pas à un redémarrage, et peut laisser la pompe allumée.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F4</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>L'alerte « garage resté ouvert » surveille le mouvement, pas la porte</h3>
+      <p>Inchangé. Le déclencheur est l'absence de mouvement pendant 15 minutes, avec la porte ouverte en simple condition. Une ouverture sans détection — télécommande depuis la voiture, angle mort, détecteur en défaut — ne produit aucune alerte. La description annonce d'ailleurs « Plus de 30min » pour un délai réglé à 15.</p>
+      <p class="fix"><b>Correctif</b> Déclencher sur <code>cover.porte_de_garage</code> à <code>open</code> pendant 15 minutes. Le capteur de mouvement sort du circuit, la condition d'état devient inutile.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F5</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>L'éclairage d'entrée ignore les mouvements pendant 10 minutes</h3>
+      <p>Inchangé sur le fond. <code>mode: single</code> avec un <code>delay</code> de 10 minutes : tout nouveau mouvement pendant ce délai est ignoré et la minuterie ne repart pas. Cas d'école pour <code>mode: restart</code>.</p>
+      <p>Second point : l'automatisation allume quatre lumières et n'en éteint qu'une. Hier <code>light.ruban_led_double_hauteur</code> était encore allumé en pleine journée ; aujourd'hui il est éteint, donc la preuve directe est tombée — mais le déséquilibre dans la configuration, lui, est toujours là.</p>
+      <p class="fix"><b>Correctif</b> <code>mode: restart</code>, et étendre l'extinction aux quatre entités ou documenter pourquoi les rubans doivent rester allumés.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F6</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Un seul chemin éteint la sirène extérieure</h3>
+      <p>Inchangé. <i>Alarme / éteindre la sirene</i> ne se déclenche que sur <code>triggered</code> → <code>disarmed</code>. Tout autre chemin laisse <code>switch.sirene_exterieure</code> allumé : réarmement direct depuis l'état déclenché, ou retour du panneau après les 600 secondes de <code>trigger_time</code> configurées dans <code>configuration.yaml</code>.</p>
+      <p>Ce dernier cas est réel : le panneau manuel repasse tout seul à l'état armé après 10 minutes, sans jamais passer par <code>disarmed</code>. La sirène, elle, resterait allumée.</p>
+      <p class="fix"><b>Correctif</b> Déclencher sur <code>from: "triggered"</code> sans préciser l'état d'arrivée, et ajouter un filet de sécurité sur <code>switch.sirene_exterieure</code> à <code>on</code> depuis 11 minutes.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F7</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Le forçage du chauffage est désactivé depuis deux ans</h3>
+      <p>Inchangé. <code>automation.forcage_chauffage_salle_de_bain</code> est à <code>off</code>, dernier déclenchement le 16 janvier 2024. Sa description décrit pourtant une réécriture soignée — suppression des <code>delay</code>, rattrapage au démarrage et toutes les 15 minutes. Du bon travail mis en sommeil.</p>
+      <p>Elle cible <code>switch.forcage_chauffage_salle_d_eau_2</code>, la version vivante ; <code>switch.forcage_chauffage_salle_d_eau</code> sans suffixe est un orphelin <code>unavailable</code> (voir H1). Et son alias parle de « salle de bain » pour une action sur la « salle d'eau ».</p>
+      <p class="fix"><b>Correctif</b> Réactiver et renommer, ou supprimer. En l'état c'est du code mort qui donne l'illusion d'une fonction disponible.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">F8</span><span class="chip warn">Fiabilité</span></div>
+    <div class="fbody">
+      <h3>Le mode nuit de l'alarme n'a jamais servi</h3>
+      <p>Inchangé. <i>Alarme / détection Nuit</i> conditionne tout sur <code>armed_night</code> ; dernier déclenchement le 17 août 2024. Les armements réels passent par <code>armed_vacation</code>.</p>
+      <p>Elle surveille les mêmes quatre capteurs que l'automatisation vacances, avec une divergence : le capteur patio est <b>actif</b> côté nuit, <b>désactivé</b> côté vacances. Intentionnel ou oubli ?</p>
+      <p class="fix"><b>Correctif</b> Fusionner les deux automatisations avec une condition sur la liste des états armés, ou intégrer le mode nuit au quotidien. Et harmoniser le patio.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ============ HYGIENE ============ -->
+<section class="block">
+  <div class="sechead"><h2>Hygiène &amp; dette technique</h2><span class="count">9 constats</span></div>
+  <p class="secnote">Rien ne casse aujourd'hui. Une échéance est datée, et deux constats gagnent une explication que je n'avais pas hier.</p>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H1</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>83 entités mortes — et maintenant on sait pourquoi</h3>
+      <p>Le chiffre n'a pas bougé, mais <code>knx.yaml</code> explique le plus gros bloc. Le motif est systématique : <b>une entité vivante suffixée <code>_2</code>, et son identifiant d'origine resté orphelin</b>.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Orphelin (<code>unavailable</code>)</th><th>Jumeau vivant</th><th>Valeur</th></tr></thead>
+        <tbody>
+          <tr><td><code>binary_sensor.etat_flamme_chaudiere</code></td><td><code>…_2</code></td><td class="num">off</td></tr>
+          <tr><td><code>switch.forcage_chauffage_salle_d_eau</code></td><td><code>…_2</code></td><td class="num">off</td></tr>
+          <tr><td><code>sensor.temperature_depart_h1_actuelle</code> et <code>_2</code></td><td>—</td><td class="num">les deux morts</td></tr>
+        </tbody>
+      </table></div>
+      <p>Ça arrive quand une entité YAML est retirée puis remise : Home Assistant conserve l'ancienne entrée de registre et attribue un identifiant suffixé à la nouvelle. Les trois autres blocs sont plus simples : <b>7 capteurs System Monitor</b> (intégration absente des 43 entrées de configuration), <b>~24 diagnostics Daikin</b> (bruit pur), et <b>3 restes de tests</b> — <code>light.ruban_led_test</code>, « Diag volet test 1 », « Position volet test 1 ».</p>
+      <p class="fix"><b>Correctif</b> Purger les orphelins du registre entité par entité, en vérifiant à chaque fois qu'aucun tableau de bord ni automatisation ne les référence. Le tableau de bord « Chaudière » utilise déjà les jumeaux <code>_2</code>, donc le terrain est dégagé de ce côté.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H2</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Tempête KNX : la cause est identifiée, ligne par ligne</h3>
+      <p>C'est l'apport principal de cette contre-visite. Hier je pouvais nommer les adresses qui expirent sans savoir à quoi elles correspondaient. <code>knx.yaml</code> les identifie toutes :</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Adresses</th><th>Entité dans <code>knx.yaml</code></th><th>Clé</th></tr></thead>
+        <tbody>
+          <tr><td class="num">3/1/4 · 7/1/4 · 8/1/4<br>9/1/4 · 10/1/4 · 11/1/4</td><td>Les 6 thermostats</td><td><code>operation_mode_state_address</code></td></tr>
+          <tr><td class="num">1/2/10 · 1/2/12</td><td>Etat Jour/nuit · Etat alimentation 24 V</td><td><code>state_address</code></td></tr>
+          <tr><td class="num">0/0/1 · 0/0/2 · 0/4/1 · 0/4/2</td><td>Compteurs de la passerelle</td><td><code>state_address</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>Ces actionneurs émettent mais n'implémentent pas la lecture sur demande. Chaque tentative bloque le bus 2 secondes pour rien. Le rythme est stable : environ <b>1 000 avertissements par jour</b>, soit la moitié du volume total des journaux.</p>
+      <p class="fix"><b>Correctif</b> Ajouter <code>sync_state: false</code> sur ces entités précises — pas globalement, pour ne pas priver de synchronisation celles qui répondent correctement. Douze lignes à ajouter dans <code>knx.yaml</code>, désormais versionné.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H3</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Échéance datée : l'import de statistiques casse en HA 2026.11</h3>
+      <p>Inchangé, et le rythme non plus : environ <b>860 avertissements par jour</b>, à parts égales entre <code>recorder/import_statistics</code> appelé sans <code>unit_class</code> et sans <code>mean_type</code>. Les deux annoncent la même chose — <i>« will stop working in HA Core 2026.11 »</i>.</p>
+      <p>Le seul composant qui importe des statistiques externes est <b>MyElectricalData 0.13.4</b>, qui alimente ton historique Enedis. Sans mise à jour d'ici novembre, l'import s'arrête.</p>
+      <p class="fix"><b>Correctif</b> Suivre les versions de MyElectricalData et mettre à jour avant HA 2026.11. Si rien ne vient, ouvrir un ticket en amont — l'échéance est publique.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H4</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Un identifiant de pression porte une température</h3>
+      <p>Hier je signalais une incohérence de nommage sans pouvoir l'expliquer. Voici le détail :</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Identifiant</th><th>Nom affiché</th><th>Valeur</th><th>Adresse</th></tr></thead>
+        <tbody>
+          <tr><td><code>sensor.pression_eau_chaudiere</code></td><td>Température extérieure issue chaudiere</td><td class="num">31,4 °C</td><td class="num">17/0/8</td></tr>
+          <tr><td><code>sensor.pression_eau_chaudiere_2</code></td><td>pression eau chaudiere</td><td class="num">128 942 Pa</td><td class="num">17/0/0</td></tr>
+        </tbody>
+      </table></div>
+      <p>L'identifiant « pression » est donc attaché au capteur de <b>température extérieure</b>, et la vraie pression vit sous le suffixe <code>_2</code>. Le reste de la configuration s'en accommode correctement : le capteur template <i>Pression Chaudiere en Bar</i> lit bien <code>_2</code> et affiche 1,29 bar ; la moyenne de température extérieure inclut bien <code>sensor.pression_eau_chaudiere</code>, ce qui est sémantiquement juste et visuellement déroutant.</p>
+      <p>Rien n'est cassé. Mais quiconque relit cette configuration dans six mois — toi compris — perdra dix minutes à chaque fois.</p>
+      <p class="fix"><b>Correctif</b> Renommer les identifiants, après analyse d'impact : trois consommateurs connus (le template <i>Pression Chaudiere en Bar</i>, le helper <i>Moyenne température extérieure</i>, la vue « Chaudière » du tableau de bord). Tous les trois sont dans le dépôt, donc vérifiables avant de toucher quoi que ce soit.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H5</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Treize fautes de frappe et trois espaces parasites dans les noms KNX</h3>
+      <p><b>Nouveau</b> — invisible sans le fichier. Les noms KNX deviennent les noms affichés dans Home Assistant, et servent de base aux identifiants d'entité.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Écrit</th><th>Attendu</th><th>Occurrences</th></tr></thead>
+        <tbody>
+          <tr><td>dépasement</td><td>dépassement</td><td class="num">2</td></tr>
+          <tr><td>vannne</td><td>vanne</td><td class="num">4</td></tr>
+          <tr><td>Sallon télé</td><td>Salon télé</td><td class="num">2</td></tr>
+          <tr><td>Cuorant</td><td>Courant</td><td class="num">1</td></tr>
+          <tr><td>SAlle de bain</td><td>Salle de bain</td><td class="num">1</td></tr>
+          <tr><td>rédémarrage</td><td>redémarrage</td><td class="num">1</td></tr>
+          <tr><td>évennement</td><td>événement</td><td class="num">1</td></tr>
+          <tr><td>coté jardi</td><td>côté jardin</td><td class="num">1</td></tr>
+        </tbody>
+      </table></div>
+      <p>Trois noms se terminent par une espace : <code>"Etat Jour=1/nuit=0 "</code>, <code>"VMC coté jardi "</code>, <code>"Sirène Extérieure "</code>. Invisible à l'écran, mais présent dans les recherches et les comparaisons de chaînes.</p>
+      <p class="fix"><b>Correctif</b> À faire en même temps que H4, jamais séparément : chaque correction de nom peut déplacer un identifiant d'entité. Le premier nom contient aussi <code>=</code> et <code>/</code>, caractères qui n'ont rien à faire dans un nom d'entité.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H6</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Vingt zones, zéro étage</h3>
+      <p>Inchangé. Les 20 zones sont bien nommées mais aucune n'est rattachée à un étage. La structure est pourtant dans les noms : « WC RDC » et « WC étage », « Volets Rez de Chaussée » et « Volets étage », « Couloir Etage ».</p>
+      <p class="fix"><b>Correctif</b> Créer deux étages et y répartir les zones. Débloque les cibles <code>floor_id</code> : « éteins tout à l'étage » devient une action au lieu d'une liste d'entités à maintenir.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H7</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Onze jours d'historique</h3>
+      <p>Le recorder tourne sur SQLite, 198 Mio, plus ancienne donnée au 19 août — la rétention par défaut. C'est court pour une installation qui suit chauffage, chaudière et consommation électrique : impossible de comparer deux semaines, encore moins deux saisons.</p>
+      <p class="fix"><b>Correctif</b> Porter <code>purge_keep_days</code> à 30 et exclure les entités bruyantes sans intérêt historique — diagnostics Daikin, capteurs RateLimit, flux caméra. Le disque n'est pas un souci : 14,7 Go utilisés sur 458.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H8</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Des outils MCP se sont désactivés en cours de route</h3>
+      <p><b>Nouveau.</b> Après la montée en 8.4.0, trois outils que j'utilisais hier ne répondent plus : <code>ha_search</code>, <code>ha_get_overview</code> et <code>ha_manage_backup</code> renvoient <code>RESOURCE_NOT_FOUND</code>, alors que la documentation des autres outils continue de les citer.</p>
+      <p>Conséquence concrète pour ce rapport : je ne peux plus énumérer les entités par état. Le chiffre de 83 entités indisponibles est repris de l'audit d'hier et vérifié par sondage sur 28 entités — toutes toujours mortes — et non recompté exhaustivement.</p>
+      <p class="fix"><b>Correctif</b> Dans la page de réglages de l'add-on, onglet des outils : vérifier que ces trois-là sont bien cochés. Si le passage en 8.4.0 a réinitialisé la liste, d'autres outils peuvent être concernés.</p>
+    </div>
+  </article>
+
+  <article class="finding info">
+    <div class="rail"><span class="id">H9</span><span class="chip info">Hygiène</span></div>
+    <div class="fbody">
+      <h3>Les caméras se sont calmées</h3>
+      <p>Amélioration. Sur les neuf jours précédents, les erreurs caméra tournaient autour de 21 par jour (<code>stream</code>, <code>go2rtc</code>, <code>reolink_aio</code>). Sur les 22 dernières heures : 9 occurrences, soit environ 10 par jour. Le retrait de l'App go2rtc au profit de l'intégration intégrée y est probablement pour quelque chose.</p>
+      <p>Le mot de passe caméra que je signalais hier dans les journaux go2rtc n'apparaît plus dans la fenêtre courante — cette App ne tourne plus.</p>
+      <p class="fix"><b>Correctif</b> Rien d'urgent. Garder le réflexe de purger les URL RTSP avant tout partage de journaux, et vérifier le firmware de l'interphone (<code>update.entree_garage_micrologiciel</code>, actuellement indisponible).</p>
+    </div>
+  </article>
+</section>
+
+<!-- ============ CORRECTIONS ============ -->
+<section class="block">
+  <div class="sechead"><h2>Corrections à l'audit du 29 août</h2><span class="count">3 rectificatifs</span></div>
+  <p class="secnote">Trois affirmations du premier rapport ne tiennent plus après vérification. Le rapport d'hier reste dans le dépôt sous <code>docs/audit-2026-08-29.html</code> ; ces corrections le remplacent.</p>
+
+  <article class="finding good">
+    <div class="rail"><span class="id">R1</span><span class="chip good">Correction</span></div>
+    <div class="fbody">
+      <h3>« Plus aucune supervision du Raspberry Pi » était faux</h3>
+      <p>J'avais conclu, en voyant les 7 capteurs System Monitor morts, que la supervision matérielle avait disparu. En réalité <code>commandline.yaml</code> définit un capteur de température CPU parfaitement fonctionnel : <code>sensor.cpu_temperature</code> affiche <b>71,6 °C</b>.</p>
+      <p>Ce qui manque réellement : RAM, disque, swap, charge et dernier démarrage. La température, la métrique la plus critique sur un Pi 4, est couverte. À 71,6 °C on reste sous le seuil de throttling (≈ 80 °C), mais c'est chaud — à surveiller l'été.</p>
+    </div>
+  </article>
+
+  <article class="finding good">
+    <div class="rail"><span class="id">R2</span><span class="chip good">Correction</span></div>
+    <div class="fbody">
+      <h3><code>commandline.yaml</code> n'est pas cassé</h3>
+      <p>J'avais soupçonné ce fichier d'utiliser un format obsolète de l'intégration <code>command_line</code> et d'être ignoré au chargement. Vérification faite, le capteur remonte une valeur : le format est accepté. Aucune action requise.</p>
+    </div>
+  </article>
+
+  <article class="finding good">
+    <div class="rail"><span class="id">R3</span><span class="chip good">Correction</span></div>
+    <div class="fbody">
+      <h3>L'échec de sauvegarde était ponctuel, pas structurel</h3>
+      <p>Je l'avais classé en critique sur la foi d'un ticket de réparation. Celle du 30 août a réussi et le ticket a disparu. La destination unique et l'absence de chiffrement restent des faiblesses réelles — elles sont désormais en C5 — mais le mécanisme fonctionne.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ============ PLAN ============ -->
+<section class="block">
+  <div class="sechead"><h2>Plan d'action révisé</h2><span class="count">3 phases</span></div>
+  <p class="secnote">Réordonné selon les découvertes de cette contre-visite. La phase 1 gagne WireGuard, la phase 3 gagne les correctifs KNX désormais chiffrables.</p>
+
+  <div class="phase">
+    <h3>Phase 1 — Rétablir ce qui protège la maison</h3>
+    <p class="when">Aujourd'hui · une heure</p>
+    <ol>
+      <li>Trancher l'état alarme / présence (encadré en tête).</li>
+      <li>Confirmer si la disparition de WireGuard est volontaire ; sinon le réinstaller depuis la sauvegarde <b>(C3)</b>.</li>
+      <li>Créer <code>script.alerte_famille</code> et l'appeler dans les six automatisations <b>(C1)</b>.</li>
+      <li>Ajouter <code>hassio.local</code> en seconde destination de sauvegarde et activer le chiffrement <b>(C5)</b>.</li>
+      <li>Retirer ou recréer <code>input_boolean.sirene</code> <b>(C4)</b>.</li>
+    </ol>
+  </div>
+
+  <div class="phase">
+    <h3>Phase 2 — Corriger les automatisations qui mentent sur leur état</h3>
+    <p class="when">Cette semaine · deux à trois heures</p>
+    <ol>
+      <li>Câbler les <code>state_address</code> manquants sur les cinq interrupteurs KNX où l'adresse existe déjà <b>(F1)</b>.</li>
+      <li>Reconstruire la sonnette sur une sortie audio existante <b>(C2)</b>.</li>
+      <li>Basculer l'alerte garage sur l'état de la porte <b>(F4)</b>.</li>
+      <li>Passer l'éclairage d'entrée en <code>mode: restart</code> et compléter l'extinction <b>(F5)</b>.</li>
+      <li>Élargir les conditions d'extinction de la sirène, y compris le retour après 600 s <b>(F6)</b>.</li>
+      <li>Qualifier les déclencheurs du bouclage ECS <b>(F3)</b>.</li>
+      <li>Trancher le sort du forçage chauffage et du mode nuit <b>(F7, F8)</b>.</li>
+    </ol>
+  </div>
+
+  <div class="phase">
+    <h3>Phase 3 — Réduire le bruit et préparer la suite</h3>
+    <p class="when">Ce mois-ci · au fil de l'eau</p>
+    <ol>
+      <li>Ajouter <code>sync_state: false</code> sur les 12 adresses KNX muettes <b>(H2)</b>.</li>
+      <li>Réactiver les trois outils MCP désactivés <b>(H8)</b>.</li>
+      <li>Purger les entités orphelines et réinstaller System Monitor <b>(H1)</b>.</li>
+      <li>Supprimer les lectures d'adresses en double <b>(F2)</b>.</li>
+      <li>Corriger identifiants croisés et fautes de frappe, en une seule passe <b>(H4, H5)</b>.</li>
+      <li>Créer les deux étages <b>(H6)</b>, porter la rétention à 30 jours <b>(H7)</b>.</li>
+      <li>Monter le tableau de bord Énergie, et garder MyElectricalData à l'œil avant HA 2026.11 <b>(H3)</b>.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <span>Domolaunaguet · Launaguet (31)</span>
+  <span>Contre-visite du 30 août 2026</span>
+  <span>509 entités · 136 KNX · 14 automatisations</span>
+  <span>Fenêtre de journaux : 29 – 30 août, 1 926 lignes</span>
+  <span>Config versionnée : Mathiaspayet/Mon-ha</span>
+</footer>
+
+</div>
