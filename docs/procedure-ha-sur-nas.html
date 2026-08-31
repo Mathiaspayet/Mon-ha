@@ -363,9 +363,14 @@ pre code{background:none;padding:0;font-size:inherit}
     <p>Tu es dans <code>docker/homeassistant</code>, l'archive du 31 août est déjà décompressée et tu vois <code>homeassistant.tar.gz</code> (124,9 Mo). C'est lui qui contient ton <code>/config</code>.</p>
     <ol>
       <li><b>Supprime le dossier <code>config</code> vide</b> créé lors de la fausse manœuvre — clic droit → <b>Supprimer</b>.</li>
-      <li><b>Clic droit sur <code>homeassistant.tar.gz</code> → Extraire → Extraire ici.</b> Compte deux à trois minutes, c'est 125 Mo compressés.</li>
-      <li>Un dossier <b><code>data</code></b> apparaît. <b>Clic droit → Renommer → <code>config</code></b>.</li>
+      <li><b>Clic droit sur <code>homeassistant.tar.gz</code> → Extraire → Extraire ici.</b> Deux à trois minutes.</li>
+      <li>Tu obtiens <code>homeassistant.tar</code> (319 Mo) et <code>homeassistant.json</code>. <b>Recommence : clic droit sur <code>homeassistant.tar</code> → Extraire → Extraire ici.</b></li>
+      <li>Un dossier <b><code>data</code></b> apparaît enfin. <b>Clic droit → Renommer → <code>config</code></b>.</li>
     </ol>
+    <div class="warn-box">
+      <b>Deux extractions, pas une</b>
+      Le format de sauvegarde Home Assistant est une archive dans une archive. DSM ne décompresse que la couche gzip au premier passage et laisse le <code>.tar</code> interne intact — c'est lui qui contient réellement la configuration. Si tu t'arrêtes après la première extraction, le dossier <code>config</code> restera vide et le conteneur démarrera sur une installation neuve, sans ton KNX.
+    </div>
     <p>Renommer plutôt que copier évite de déplacer 400 Mo pour rien.</p>
     <div class="check">
       <b>Vérification</b>
@@ -422,13 +427,17 @@ pre code{background:none;padding:0;font-size:inherit}
   <!-- 5 -->
   <div class="step">
     <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Créer le projet dans Container Manager</h3><span class="dur">10 min</span></div>
-    <p>Ouvre <b>Container Manager → Projet → Créer</b>. Nom : <code>homeassistant</code>. Chemin : <code>/volume1/docker/homeassistant</code>. Source : <b>Créer un docker-compose.yml</b>. Colle ceci :</p>
+    <div class="warn-box">
+      <b>Vérifie ton numéro de volume</b>
+      Sur cette installation les partages sont sur <b><code>volume2</code></b>, pas <code>volume1</code>. Pour t'en assurer : clic droit sur le dossier <code>config</code> dans File Station → <b>Propriétés</b> → ligne <b>Emplacement</b>. Un mauvais numéro donne l'erreur <code>Bind mount failed: ... does not exist</code> au démarrage.
+    </div>
+    <p>Ouvre <b>Container Manager → Projet → Créer</b>. Nom : <code>homeassistant</code>. Chemin : <code>/volume2/docker/homeassistant</code>. Source : <b>Créer un docker-compose.yml</b>. Colle ceci :</p>
     <pre><code>services:
   homeassistant:
     container_name: homeassistant
     image: ghcr.io/home-assistant/home-assistant:stable
     volumes:
-      - /volume1/docker/homeassistant/config:/config
+      - /volume2/docker/homeassistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=Europe/Paris
@@ -491,7 +500,7 @@ pre code{background:none;padding:0;font-size:inherit}
       <li><b>Le Pi repart normalement</b> — tu reprends là où tu en étais. Ce conteneur reste en réserve, à l'arrêt, prêt à redémarrer en cas de nouvelle panne. C'est un plan de secours qui ne coûte rien à garder.</li>
       <li><b>Le Pi ne repart pas</b> — cette installation devient ton système principal. Il faudra alors récupérer les fonctions portées par les add-ons : Mosquitto, tydom2mqtt et MyElectricalData se relancent en conteneurs séparés sur ce même NAS. C'est une autre procédure, plus longue, qu'on écrira le moment venu.</li>
     </ul>
-    <p>Dans les deux cas, garde ce dossier <code>/volume1/docker/homeassistant</code>. Il ne gêne personne et il t'a déjà sauvé une fois.</p>
+    <p>Dans les deux cas, garde ce dossier <code>/volume2/docker/homeassistant</code>. Il ne gêne personne et il t'a déjà sauvé une fois.</p>
   </div>
 </section>
 
