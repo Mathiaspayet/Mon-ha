@@ -300,19 +300,19 @@ pre code{background:none;padding:0;font-size:inherit}
     <span>Container Manager</span>
   </div>
   <h1>Domolaunaguet sur NAS</h1>
-  <p class="lede">Remonter Home Assistant sur le Synology pendant que le Raspberry Pi est hors service, en restaurant la sauvegarde du 31 août. Objectif : retrouver le pilotage KNX et l'alarme, accessibles à distance par le reverse proxy DSM.</p>
+  <p class="lede">Remonter Home Assistant sur le Synology pendant que le Raspberry Pi est hors service, en restaurant la sauvegarde du 31 août. Objectif : retrouver le pilotage KNX et l'alarme, accessibles à distance par le reverse proxy DSM. Tout se fait depuis File Station et Container Manager — aucune ligne de commande.</p>
 
   <dl class="specs">
     <div class="spec"><dt>Durée</dt><dd>≈ 1 h</dd></div>
     <div class="spec"><dt>Réversible</dt><dd>Oui</dd></div>
     <div class="spec"><dt>Touche au Pi</dt><dd>Non</dd></div>
-    <div class="spec"><dt>Étapes</dt><dd>8</dd></div>
+    <div class="spec"><dt>Étapes</dt><dd>7 · sans SSH</dd></div>
   </dl>
 </header>
 
 <div class="now">
   <h2>⚠ Les deux règles à ne pas enfreindre</h2>
-  <p><b>1. Jamais deux instances en même temps.</b> Le jour où le Pi redémarre, il se reconnectera au bus KNX et relancera ses automatisations. Deux Home Assistant pilotant la même chaudière, le même bouclage ECS et la même alarme, c'est la garantie de comportements erratiques. Avant de rallumer le Pi : arrêter ce conteneur. C'est l'étape 8.</p>
+  <p><b>1. Jamais deux instances en même temps.</b> Le jour où le Pi redémarre, il se reconnectera au bus KNX et relancera ses automatisations. Deux Home Assistant pilotant la même chaudière, le même bouclage ECS et la même alarme, c'est la garantie de comportements erratiques. Avant de rallumer le Pi : arrêter ce conteneur. C'est l'étape 7.</p>
   <p><b>2. Neutraliser avant le premier démarrage.</b> La sauvegarde du 31 août contient l'alarme en <code>armed_vacation</code> et 14 automatisations actives. Démarrée telle quelle avec quelqu'un à la maison, la première détection en cuisine déclenche la sirène extérieure. L'étape 3 règle ça — <b>ne la saute pas</b>.</p>
 </div>
 
@@ -341,85 +341,87 @@ pre code{background:none;padding:0;font-size:inherit}
 </section>
 
 <section class="block">
-  <div class="sechead"><h2>Procédure</h2><span class="count">8 étapes</span></div>
+  <div class="sechead"><h2>Procédure</h2><span class="count">7 étapes</span></div>
 
   <!-- 1 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Préparer le dossier et récupérer la sauvegarde</h3><span class="dur">10 min</span></div>
-    <p>Connecte-toi en SSH sur le NAS (<code>ssh ton_compte@192.168.0.100</code>), puis passe root avec <code>sudo -i</code>.</p>
-    <pre><code>mkdir -p /volume1/docker/homeassistant/config
-cd /volume1/docker/homeassistant</code></pre>
-    <p>Les sauvegardes natives de Home Assistant sont dans le dossier partagé <code>surveillance/ha_backup_domolaunaguet/</code>, sur ce même NAS. Copie la plus récente :</p>
-    <pre><code>cp "/volume1/surveillance/ha_backup_domolaunaguet/Automatic_backup_2026.8.3_2026-08-31_04.48_39003374.tar" \
-   /volume1/docker/homeassistant/backup.tar</code></pre>
+    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Afficher les fichiers cachés dans File Station</h3><span class="dur">1 min</span></div>
     <div class="warn-box">
-      <b>Bien prendre celle du 31 août</b>
-      C'est la plus récente — <b>170,6 Mo</b>, écrite ce matin à 04 h 49. Le fait qu'elle existe prouve que le système était encore parfaitement sain à cette heure-là.
-      <br><br>
-      Ne pas confondre avec les archives <code>Samba_Backup_2024_*</code> trouvées ailleurs sur le NAS : celles-là datent d'août <b>2024</b> et restaureraient une installation vieille de deux ans.
+      <b>À faire en premier, sinon la suite est impossible</b>
+      Le dossier <code>.storage</code>, qu'il faudra modifier à l'étape 3, commence par un point : File Station le masque par défaut. Tu ne le verras tout simplement pas.
     </div>
+    <p>Dans <b>File Station</b>, bouton <b>Paramètres</b> en haut de la fenêtre → onglet <b>Général</b> → coche <b>« Afficher les fichiers et dossiers cachés »</b> → OK.</p>
     <div class="check">
       <b>Vérification</b>
-      <code>ls -lh /volume1/docker/homeassistant/backup.tar</code> doit afficher environ <b>170 Mo</b>.
+      De retour dans <code>docker/homeassistant</code>, tu dois maintenant voir apparaître <code>@PaxHeader</code> et les autres éléments discrets.
     </div>
   </div>
 
   <!-- 2 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 2</span><h3>Extraire la configuration</h3><span class="dur">5 min</span></div>
-    <p>Une sauvegarde Home Assistant est une archive contenant elle-même une archive. Regarde d'abord ce qu'il y a dedans :</p>
-    <pre><code>cd /volume1/docker/homeassistant
-tar -tf backup.tar</code></pre>
-    <p>Tu dois voir <code>backup.json</code> et <code>homeassistant.tar.gz</code>. Tes sauvegardes ne sont pas chiffrées (<code>protected: false</code>), donc aucun mot de passe n'est nécessaire — c'est une bonne nouvelle aujourd'hui.</p>
-    <pre><code>tar -xf backup.tar
-tar -xzf homeassistant.tar.gz
-cp -a data/. config/
-rm -rf data homeassistant.tar.gz backup.json</code></pre>
-    <p>Le dossier <code>data/</code> de l'archive <b>est</b> le répertoire <code>/config</code> de Home Assistant.</p>
-    <p>Allège maintenant l'installation — la base de données historique pèse le plus lourd et n'a aucun intérêt pour un dépannage. Elle sera recréée vide au démarrage :</p>
-    <pre><code>cd config
-rm -f home-assistant_v2.db*</code></pre>
+    <div class="step-head"><span class="step-num">ÉTAPE 2</span><h3>Extraire la configuration</h3><span class="dur">10 min</span></div>
+    <p>Tu es dans <code>docker/homeassistant</code>, l'archive du 31 août est déjà décompressée et tu vois <code>homeassistant.tar.gz</code> (124,9 Mo). C'est lui qui contient ton <code>/config</code>.</p>
+    <ol>
+      <li><b>Supprime le dossier <code>config</code> vide</b> créé lors de la fausse manœuvre — clic droit → <b>Supprimer</b>.</li>
+      <li><b>Clic droit sur <code>homeassistant.tar.gz</code> → Extraire → Extraire ici.</b> Compte deux à trois minutes, c'est 125 Mo compressés.</li>
+      <li>Un dossier <b><code>data</code></b> apparaît. <b>Clic droit → Renommer → <code>config</code></b>.</li>
+    </ol>
+    <p>Renommer plutôt que copier évite de déplacer 400 Mo pour rien.</p>
     <div class="check">
       <b>Vérification</b>
-      <code>ls</code> doit montrer <code>configuration.yaml</code>, <code>knx.yaml</code>, <code>automations.yaml</code>, <code>custom_components/</code> et <code>.storage/</code>.
-      Si <code>knx.yaml</code> n'est pas là, quelque chose s'est mal passé — arrête-toi et reprends l'extraction.
+      Ouvre <code>config</code>. Tu dois y trouver <code>configuration.yaml</code>, <code>knx.yaml</code>, <code>automations.yaml</code>, le dossier <code>custom_components</code> et le dossier <code>.storage</code>.
+      <br><br>
+      Si <code>knx.yaml</code> manque, arrête-toi : ce n'est pas la bonne archive.
     </div>
+    <p><b>Allège maintenant l'installation.</b> Dans <code>config</code>, sélectionne les trois fichiers de base de données et supprime-les — ils pèsent le plus lourd et ne servent à rien pour du dépannage. Home Assistant les recréera vides :</p>
+    <ul>
+      <li><code>home-assistant_v2.db</code></li>
+      <li><code>home-assistant_v2.db-shm</code></li>
+      <li><code>home-assistant_v2.db-wal</code></li>
+    </ul>
+    <p>Sur un NAS à 2 Go de RAM, ce n'est pas un détail.</p>
   </div>
 
   <!-- 3 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 3</span><h3>Neutraliser l'alarme et les automatisations</h3><span class="dur">2 min</span></div>
+    <div class="step-head"><span class="step-num">ÉTAPE 3</span><h3>Neutraliser l'alarme et les automatisations</h3><span class="dur">5 min</span></div>
     <div class="warn-box">
-      <b>Étape critique</b>
-      Sans ça, Home Assistant démarre avec l'alarme armée en mode vacances et 14 automatisations actives. La première détection de mouvement en cuisine, salon piano ou garage déclenche la sirène extérieure.
+      <b>Étape critique — ne pas sauter</b>
+      La sauvegarde contient l'alarme armée en mode vacances et 14 automatisations actives. Démarrée telle quelle avec quelqu'un à la maison, la première détection de mouvement en cuisine, salon piano ou garage déclenche la sirène extérieure.
     </div>
-    <p>Toujours dans <code>/volume1/docker/homeassistant/config</code> :</p>
-    <pre><code># aucun état ne sera restauré — l'alarme démarre désarmée
-rm -f .storage/core.restore_state
 
-# aucune automatisation ne se déclenchera au premier démarrage
-mv automations.yaml automations.yaml.original
-echo "[]" > automations.yaml</code></pre>
-    <p>Les automatisations sont mises de côté, pas perdues. On les remet à l'étape 7, une fois que tu auras vérifié que tout répond correctement.</p>
-  </div>
+    <p><b>a) Supprimer l'état restauré.</b> Entre dans le dossier <code>config/.storage</code> — visible depuis l'étape 1. Trouve le fichier <b><code>core.restore_state</code></b> et supprime-le. Aucun état ne sera restauré au démarrage : l'alarme partira désarmée.</p>
 
-  <!-- 4 -->
-  <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Autoriser le reverse proxy</h3><span class="dur">3 min</span></div>
-    <p>Ton <code>configuration.yaml</code> n'a aucun bloc <code>http:</code> — jusqu'ici tu passais par WireGuard, en direct. Derrière un reverse proxy, Home Assistant refuse les connexions s'il n'est pas explicitement configuré pour lui faire confiance. C'est l'erreur que tout le monde rencontre au premier essai.</p>
-    <p>Ajoute ce bloc à la fin de <code>config/configuration.yaml</code> :</p>
+    <p><b>b) Couper les automatisations et autoriser le reverse proxy.</b> Remonte dans <code>config</code>, <b>clic droit sur <code>configuration.yaml</code> → Ouvrir avec l'éditeur de texte</b>.</p>
+
+    <p>Trouve cette ligne :</p>
+    <pre><code>automation: !include automations.yaml</code></pre>
+    <p>et ajoute un <code>#</code> devant pour la mettre en commentaire :</p>
+    <pre><code># automation: !include automations.yaml</code></pre>
+    <p>Rien n'est supprimé : on retirera le <code>#</code> à l'étape 6, une fois le KNX vérifié.</p>
+
+    <p>Puis, <b>tout à la fin du même fichier</b>, ajoute ce bloc :</p>
     <pre><code>http:
   use_x_forwarded_for: true
   trusted_proxies:
     - 127.0.0.1
     - ::1
     - 192.168.0.0/24</code></pre>
-    <p>Tu peux le faire depuis File Station (clic droit → Ouvrir avec l'éditeur de texte) plutôt qu'en ligne de commande.</p>
+    <p>Sans lui, Home Assistant refusera les connexions venant de ton reverse proxy. C'est l'erreur que tout le monde rencontre au premier essai — jusqu'ici tu passais par WireGuard en direct, donc ce bloc n'a jamais existé chez toi.</p>
+
+    <p><b>Enregistre</b> et ferme l'éditeur.</p>
+
+    <div class="check">
+      <b>Vérification</b>
+      Rouvre <code>configuration.yaml</code> : la ligne <code>automation:</code> doit bien commencer par <code>#</code>, et le bloc <code>http:</code> doit être présent, aligné tout à gauche comme les autres blocs de premier niveau.
+      <br><br>
+      Attention à l'indentation : en YAML, deux espaces de trop et le fichier ne se charge plus.
+    </div>
   </div>
 
   <!-- 5 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 5</span><h3>Créer le projet dans Container Manager</h3><span class="dur">10 min</span></div>
+    <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Créer le projet dans Container Manager</h3><span class="dur">10 min</span></div>
     <p>Ouvre <b>Container Manager → Projet → Créer</b>. Nom : <code>homeassistant</code>. Chemin : <code>/volume1/docker/homeassistant</code>. Source : <b>Créer un docker-compose.yml</b>. Colle ceci :</p>
     <pre><code>services:
   homeassistant:
@@ -441,7 +443,7 @@ echo "[]" > automations.yaml</code></pre>
 
   <!-- 6 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Premier démarrage et vérifications</h3><span class="dur">10 min</span></div>
+    <div class="step-head"><span class="step-num">ÉTAPE 5</span><h3>Premier démarrage et vérifications</h3><span class="dur">10 min</span></div>
     <p>Home Assistant met deux à trois minutes à démarrer la première fois. Ouvre ensuite :</p>
     <pre><code>http://192.168.0.100:8123</code></pre>
     <p>Connecte-toi avec <b>tes identifiants habituels</b> — la base des comptes vient de la sauvegarde, rien n'a changé.</p>
@@ -459,7 +461,7 @@ echo "[]" > automations.yaml</code></pre>
 
   <!-- 7 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 7</span><h3>Reverse proxy DSM, puis réactivation des automatisations</h3><span class="dur">15 min</span></div>
+    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Reverse proxy DSM, puis réactivation des automatisations</h3><span class="dur">15 min</span></div>
     <p><b>Panneau de configuration → Portail de connexion → Reverse Proxy → Créer</b></p>
     <ul>
       <li><b>Source</b> — Protocole : HTTPS · Nom d'hôte : ton sous-domaine · Port : 443</li>
@@ -469,10 +471,8 @@ echo "[]" > automations.yaml</code></pre>
       <b>Onglet « En-tête personnalisé »</b>
       Clique sur <b>Créer → WebSocket</b> pour appliquer le préréglage. L'interface de Home Assistant fonctionne entièrement en WebSocket : sans ces en-têtes, la page se charge puis reste figée sur le logo. C'est le second piège classique, après <code>trusted_proxies</code>.
     </div>
-    <p>Teste depuis l'extérieur. Une fois que l'accès distant fonctionne <b>et</b> que le KNX répond correctement, remets tes automatisations :</p>
-    <pre><code>cd /volume1/docker/homeassistant/config
-mv automations.yaml.original automations.yaml</code></pre>
-    <p>Puis, dans Home Assistant : <b>Outils de développement → YAML → Recharger les automatisations</b>. Inutile de redémarrer le conteneur.</p>
+    <p>Teste depuis l'extérieur. Une fois que l'accès distant fonctionne <b>et</b> que le KNX répond correctement, remets tes automatisations : rouvre <code>configuration.yaml</code> dans l'éditeur de File Station et <b>retire le <code>#</code></b> devant la ligne <code>automation:</code>, puis enregistre.</p>
+    <p>Ensuite, dans Home Assistant : <b>Outils de développement → YAML → Recharger les automatisations</b>. Inutile de redémarrer le conteneur.</p>
     <div class="check">
       <b>Vérification finale</b>
       Paramètres → Automatisations : tu dois retrouver tes 14 automatisations. Souviens-toi que six d'entre elles contiennent le bug de notification vide identifié à l'audit — elles s'interrompront sur cette action, exactement comme sur le Pi. Rien de nouveau, mais ne t'en étonne pas.
@@ -481,7 +481,7 @@ mv automations.yaml.original automations.yaml</code></pre>
 
   <!-- 8 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 8</span><h3>Le jour où le Pi revient</h3><span class="dur">5 min</span></div>
+    <div class="step-head"><span class="step-num">ÉTAPE 7</span><h3>Le jour où le Pi revient</h3><span class="dur">5 min</span></div>
     <div class="warn-box">
       <b>Avant de rebrancher le Pi</b>
       Arrête ce conteneur. Container Manager → Projet → <code>homeassistant</code> → <b>Arrêter</b>. Sinon les deux instances piloteront simultanément la même chaudière, le même bouclage ECS et la même alarme.
