@@ -1,0 +1,497 @@
+<title>Domolaunaguet sur NAS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#EFF1EC;
+  --card:#FAFBF8;
+  --sunk:#E4E8DF;
+  --ink:#16211A;
+  --ink-2:#3D4A42;
+  --muted:#65706A;
+  --rule:#D2D8CD;
+  --rule-2:#BFC7B9;
+  --accent:#2F6B45;
+  --accent-soft:#DCE8DF;
+  --crit:#9E2B25;
+  --crit-soft:#F2DEDC;
+  --warn:#9A6714;
+  --warn-soft:#F3E7D2;
+  --info:#3B5C79;
+  --info-soft:#DEE7EF;
+  --good:#2F6B45;
+  --shadow:0 1px 0 rgba(22,33,26,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131711;
+    --card:#1A1F18;
+    --sunk:#232A21;
+    --ink:#E7EBE2;
+    --ink-2:#C2CABB;
+    --muted:#8E998B;
+    --rule:#2C3529;
+    --rule-2:#3C4738;
+    --accent:#77C193;
+    --accent-soft:#1F3327;
+    --crit:#E5847B;
+    --crit-soft:#3A2321;
+    --warn:#D9A857;
+    --warn-soft:#382D1A;
+    --info:#8FB4D2;
+    --info-soft:#1E2C38;
+    --good:#77C193;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131711;
+  --card:#1A1F18;
+  --sunk:#232A21;
+  --ink:#E7EBE2;
+  --ink-2:#C2CABB;
+  --muted:#8E998B;
+  --rule:#2C3529;
+  --rule-2:#3C4738;
+  --accent:#77C193;
+  --accent-soft:#1F3327;
+  --crit:#E5847B;
+  --crit-soft:#3A2321;
+  --warn:#D9A857;
+  --warn-soft:#382D1A;
+  --info:#8FB4D2;
+  --info-soft:#1E2C38;
+  --good:#77C193;
+  --shadow:none;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  font-size:16.5px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 96px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding:56px 0 26px;margin-bottom:0}
+.eyebrow{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;
+}
+.eyebrow .dot{width:4px;height:4px;background:var(--rule-2);border-radius:50%}
+h1{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;
+  font-size:clamp(38px,7vw,68px);line-height:.98;letter-spacing:-.025em;
+  margin:0 0 18px;text-wrap:balance;
+}
+.lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:60ch;margin:0}
+
+.specs{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0 0;
+}
+.spec{background:var(--paper);padding:14px 16px}
+.spec dt{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 5px;
+}
+.spec dd{
+  margin:0;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);
+}
+
+/* ---------- immediate alert ---------- */
+.now{
+  margin:44px 0 0;border:1px solid var(--crit);border-left:4px solid var(--crit);
+  background:var(--crit-soft);padding:22px 24px;
+}
+.now h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--crit);margin:0 0 10px;
+}
+.now p{margin:0 0 10px;color:var(--ink)}
+.now p:last-child{margin-bottom:0}
+
+/* ---------- scorecard ---------- */
+.scores{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:44px 0 0;
+}
+.score{background:var(--card);padding:18px 16px 16px}
+.score .n{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:40px;
+  line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;
+}
+.score .l{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  display:block;margin-top:7px;
+}
+.score.c .n{color:var(--crit)} .score.f .n{color:var(--warn)}
+.score.h .n{color:var(--info)} .score.a .n{color:var(--accent)}
+
+/* ---------- sections ---------- */
+section.block{margin-top:64px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:8px}
+.sechead h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:clamp(22px,3.4vw,30px);
+  letter-spacing:-.02em;margin:0;flex:1;text-wrap:balance;
+}
+.sechead .count{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.secnote{color:var(--muted);font-size:15.5px;margin:14px 0 30px;max-width:66ch}
+
+/* ---------- finding ---------- */
+.finding{
+  display:grid;grid-template-columns:96px 1fr;gap:0;
+  background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--rule-2);
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.finding.crit{border-left-color:var(--crit)}
+.finding.warn{border-left-color:var(--warn)}
+.finding.info{border-left-color:var(--info)}
+.finding.good{border-left-color:var(--accent)}
+.rail{padding:20px 0 20px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.rail .id{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:17px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;
+}
+.finding.crit .rail .id{color:var(--crit)}
+.finding.warn .rail .id{color:var(--warn)}
+.finding.info .rail .id{color:var(--info)}
+.finding.good .rail .id{color:var(--accent)}
+.chip{
+  font-family:"Chivo",system-ui,sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;white-space:nowrap;
+}
+.chip.crit{background:var(--crit-soft);color:var(--crit)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.good{background:var(--accent-soft);color:var(--accent)}
+.fbody{padding:20px 22px 20px 8px;min-width:0}
+.fbody h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:18.5px;
+  line-height:1.3;letter-spacing:-.012em;margin:0 0 10px;text-wrap:balance;
+}
+.fbody p{margin:0 0 11px}
+.fbody p:last-child{margin-bottom:0}
+.fbody ul{margin:0 0 11px;padding-left:19px}
+.fbody li{margin-bottom:5px}
+.fbody li::marker{color:var(--rule-2)}
+
+code,.mono{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.855em;
+  background:var(--sunk);padding:1px 5px;border-radius:2px;
+  word-break:break-word;
+}
+.fix{
+  border-top:1px dashed var(--rule-2);padding-top:11px;margin-top:13px !important;
+  font-size:15.5px;color:var(--ink-2);
+}
+.fix b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:4px;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);margin:0 0 11px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  background:var(--sunk);white-space:nowrap;
+}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- plan ---------- */
+.phase{border-top:1px solid var(--ink);padding-top:18px;margin-top:30px}
+.phase h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:15px;
+  letter-spacing:.03em;margin:0 0 4px;
+}
+.phase .when{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+}
+.phase ol{margin:0;padding-left:20px}
+.phase li{margin-bottom:7px}
+.phase li::marker{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:500}
+
+footer{
+  margin-top:72px;border-top:2px solid var(--ink);padding-top:18px;
+  font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px;
+  font-family:"Chivo",system-ui,sans-serif;
+}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:0 18px 72px}
+  .finding{grid-template-columns:1fr}
+  .rail{flex-direction:row;align-items:center;padding:16px 18px 0}
+  .fbody{padding:14px 18px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+/* --- composants propres au mode opératoire --- */
+.step{border-top:1px solid var(--ink);padding-top:20px;margin-top:38px}
+.step-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.step-num{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.1em;color:var(--accent);white-space:nowrap;
+}
+.step h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:22px;
+  letter-spacing:-.015em;margin:0;flex:1;text-wrap:balance;
+}
+.step .dur{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;
+  color:var(--muted);white-space:nowrap;
+}
+pre{
+  background:var(--sunk);border:1px solid var(--rule);padding:14px 16px;
+  overflow-x:auto;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:13px;line-height:1.6;margin:0 0 14px;
+}
+pre code{background:none;padding:0;font-size:inherit}
+.warn-box{
+  border:1px solid var(--warn);border-left:4px solid var(--warn);
+  background:var(--warn-soft);padding:16px 18px;margin:0 0 14px;
+}
+.warn-box b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--warn);
+  display:block;margin-bottom:6px;
+}
+.check{
+  border:1px solid var(--accent);border-left:4px solid var(--accent);
+  background:var(--accent-soft);padding:16px 18px;margin:0 0 14px;
+}
+.check b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:6px;
+}
+.check ul,.warn-box ul{margin:8px 0 0;padding-left:19px}
+.step p{margin:0 0 14px}
+.step ul{margin:0 0 14px;padding-left:20px}
+.step li{margin-bottom:6px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Mode opératoire</span><span class="dot"></span>
+    <span>Synology DS218+</span><span class="dot"></span>
+    <span>192.168.0.100</span><span class="dot"></span>
+    <span>Container Manager</span>
+  </div>
+  <h1>Domolaunaguet sur NAS</h1>
+  <p class="lede">Remonter Home Assistant sur le Synology pendant que le Raspberry Pi est hors service, en restaurant la sauvegarde du 30 août. Objectif : retrouver le pilotage KNX et l'alarme, accessibles à distance par le reverse proxy DSM.</p>
+
+  <dl class="specs">
+    <div class="spec"><dt>Durée</dt><dd>≈ 1 h</dd></div>
+    <div class="spec"><dt>Réversible</dt><dd>Oui</dd></div>
+    <div class="spec"><dt>Touche au Pi</dt><dd>Non</dd></div>
+    <div class="spec"><dt>Étapes</dt><dd>8</dd></div>
+  </dl>
+</header>
+
+<div class="now">
+  <h2>⚠ Les deux règles à ne pas enfreindre</h2>
+  <p><b>1. Jamais deux instances en même temps.</b> Le jour où le Pi redémarre, il se reconnectera au bus KNX et relancera ses automatisations. Deux Home Assistant pilotant la même chaudière, le même bouclage ECS et la même alarme, c'est la garantie de comportements erratiques. Avant de rallumer le Pi : arrêter ce conteneur. C'est l'étape 8.</p>
+  <p><b>2. Neutraliser avant le premier démarrage.</b> La sauvegarde contient l'alarme en <code>armed_vacation</code> et 14 automatisations actives. Démarrée telle quelle avec quelqu'un à la maison, la première détection en cuisine déclenche la sirène extérieure. L'étape 3 règle ça — <b>ne la saute pas</b>.</p>
+</div>
+
+<section class="block">
+  <div class="sechead"><h2>Ce que tu retrouveras, et ce qui manquera</h2><span class="count">à savoir avant</span></div>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th>Fonction</th><th>État</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><b>KNX</b> — 136 entités, lumières, volets, thermostats, chaudière</td><td style="color:var(--good)"><b>✓ Fonctionne</b></td><td>La passerelle KNX/IP est un boîtier physique sur le réseau, indépendante du Pi</td></tr>
+      <tr><td><b>Alarme</b></td><td style="color:var(--good)"><b>✓ Fonctionne</b></td><td>Panneau <code>manual</code>, du pur logiciel défini dans <code>configuration.yaml</code></td></tr>
+      <tr><td><b>Automatisations et scripts</b></td><td style="color:var(--good)"><b>✓ Fonctionne</b></td><td>Restaurés depuis <code>.storage</code>, avec les groupes et helpers dont ils dépendent</td></tr>
+      <tr><td><b>Tableau de bord</b> et cartes HACS</td><td style="color:var(--good)"><b>✓ Fonctionne</b></td><td>Mushroom, mini-graph-card et card-mod vivent dans <code>www/community/</code>, inclus dans la sauvegarde</td></tr>
+      <tr><td>Tes identifiants de connexion</td><td style="color:var(--good)"><b>✓ Inchangés</b></td><td>La base des comptes est dans <code>.storage/auth</code></td></tr>
+      <tr><td><b>Capteurs de fenêtres Tydom</b></td><td style="color:var(--crit)"><b>✗ Absent</b></td><td>Fournis par l'add-on <code>tydom2mqtt</code> — les add-ons sont propres au Superviseur, ils ne suivent pas</td></tr>
+      <tr><td><b>Conso Enedis</b></td><td style="color:var(--crit)"><b>✗ Absent</b></td><td>Idem, add-on MyElectricalData</td></tr>
+      <tr><td>Intégration MQTT</td><td style="color:var(--warn)"><b>⚠ En erreur</b></td><td>Elle cherchera le broker Mosquitto, qui ne tourne plus. Sans gravité — à désactiver après démarrage</td></tr>
+      <tr><td>Caméras Reolink</td><td style="color:var(--warn)"><b>⚠ À vérifier</b></td><td>Devraient marcher (elles sont sur le réseau), mais sans go2rtc les flux peuvent être capricieux</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="warn-box">
+    <b>Mémoire</b>
+    Un DS218+ sort d'usine avec 2 Go de RAM. Home Assistant en demande 500 Mo à 1 Go. Ça passe, mais si tu fais déjà tourner d'autres conteneurs — Plex, Portainer, autre — surveille l'onglet Ressources de DSM après démarrage. Si ça sature, l'étape 2 explique comment repartir sans la base de données historique, ce qui allège nettement.
+  </div>
+</section>
+
+<section class="block">
+  <div class="sechead"><h2>Procédure</h2><span class="count">8 étapes</span></div>
+
+  <!-- 1 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Préparer le dossier et récupérer la sauvegarde</h3><span class="dur">10 min</span></div>
+    <p>Connecte-toi en SSH sur le NAS (<code>ssh ton_compte@192.168.0.100</code>), puis passe root avec <code>sudo -i</code>.</p>
+    <pre><code>mkdir -p /volume1/docker/homeassistant/config
+cd /volume1/docker/homeassistant</code></pre>
+    <p>Copie ensuite le <code>.tar</code> de la sauvegarde du 30 août depuis BigNas vers ce dossier. Le plus simple est de passer par <b>File Station</b> : monte BigNas en dossier distant, ou télécharge puis re-téléverse le fichier. Renomme-le <code>backup.tar</code> pour la suite.</p>
+    <div class="check">
+      <b>Vérification</b>
+      <code>ls -lh /volume1/docker/homeassistant/backup.tar</code> doit afficher un fichier d'environ <b>175 Mo</b>.
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 2</span><h3>Extraire la configuration</h3><span class="dur">5 min</span></div>
+    <p>Une sauvegarde Home Assistant est une archive contenant elle-même une archive. Regarde d'abord ce qu'il y a dedans :</p>
+    <pre><code>cd /volume1/docker/homeassistant
+tar -tf backup.tar</code></pre>
+    <p>Tu dois voir <code>backup.json</code> et <code>homeassistant.tar.gz</code>. Tes sauvegardes ne sont pas chiffrées (<code>protected: false</code>), donc aucun mot de passe n'est nécessaire — c'est une bonne nouvelle aujourd'hui.</p>
+    <pre><code>tar -xf backup.tar
+tar -xzf homeassistant.tar.gz
+cp -a data/. config/
+rm -rf data homeassistant.tar.gz backup.json</code></pre>
+    <p>Le dossier <code>data/</code> de l'archive <b>est</b> le répertoire <code>/config</code> de Home Assistant.</p>
+    <p>Allège maintenant l'installation — la base de données historique pèse le plus lourd et n'a aucun intérêt pour un dépannage. Elle sera recréée vide au démarrage :</p>
+    <pre><code>cd config
+rm -f home-assistant_v2.db*</code></pre>
+    <div class="check">
+      <b>Vérification</b>
+      <code>ls</code> doit montrer <code>configuration.yaml</code>, <code>knx.yaml</code>, <code>automations.yaml</code>, <code>custom_components/</code> et <code>.storage/</code>.
+      Si <code>knx.yaml</code> n'est pas là, quelque chose s'est mal passé — arrête-toi et reprends l'extraction.
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 3</span><h3>Neutraliser l'alarme et les automatisations</h3><span class="dur">2 min</span></div>
+    <div class="warn-box">
+      <b>Étape critique</b>
+      Sans ça, Home Assistant démarre avec l'alarme armée en mode vacances et 14 automatisations actives. La première détection de mouvement en cuisine, salon piano ou garage déclenche la sirène extérieure.
+    </div>
+    <p>Toujours dans <code>/volume1/docker/homeassistant/config</code> :</p>
+    <pre><code># aucun état ne sera restauré — l'alarme démarre désarmée
+rm -f .storage/core.restore_state
+
+# aucune automatisation ne se déclenchera au premier démarrage
+mv automations.yaml automations.yaml.original
+echo "[]" > automations.yaml</code></pre>
+    <p>Les automatisations sont mises de côté, pas perdues. On les remet à l'étape 7, une fois que tu auras vérifié que tout répond correctement.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Autoriser le reverse proxy</h3><span class="dur">3 min</span></div>
+    <p>Ton <code>configuration.yaml</code> n'a aucun bloc <code>http:</code> — jusqu'ici tu passais par WireGuard, en direct. Derrière un reverse proxy, Home Assistant refuse les connexions s'il n'est pas explicitement configuré pour lui faire confiance. C'est l'erreur que tout le monde rencontre au premier essai.</p>
+    <p>Ajoute ce bloc à la fin de <code>config/configuration.yaml</code> :</p>
+    <pre><code>http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+    - 192.168.0.0/24</code></pre>
+    <p>Tu peux le faire depuis File Station (clic droit → Ouvrir avec l'éditeur de texte) plutôt qu'en ligne de commande.</p>
+  </div>
+
+  <!-- 5 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 5</span><h3>Créer le projet dans Container Manager</h3><span class="dur">10 min</span></div>
+    <p>Ouvre <b>Container Manager → Projet → Créer</b>. Nom : <code>homeassistant</code>. Chemin : <code>/volume1/docker/homeassistant</code>. Source : <b>Créer un docker-compose.yml</b>. Colle ceci :</p>
+    <pre><code>services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - /volume1/docker/homeassistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Paris
+    restart: unless-stopped
+    network_mode: host</code></pre>
+    <div class="warn-box">
+      <b>network_mode: host — non négociable</b>
+      La découverte de ta passerelle KNX/IP utilise du multicast, qui ne traverse pas le réseau bridge de Docker. En mode bridge, ton KNX ne remontera jamais. C'est la cause numéro un d'échec de cette installation.
+    </div>
+    <p>Lance la construction. Le téléchargement de l'image fait environ 1,5 Go — compte cinq à quinze minutes selon ta connexion.</p>
+  </div>
+
+  <!-- 6 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Premier démarrage et vérifications</h3><span class="dur">10 min</span></div>
+    <p>Home Assistant met deux à trois minutes à démarrer la première fois. Ouvre ensuite :</p>
+    <pre><code>http://192.168.0.100:8123</code></pre>
+    <p>Connecte-toi avec <b>tes identifiants habituels</b> — la base des comptes vient de la sauvegarde, rien n'a changé.</p>
+    <div class="check">
+      <b>Vérifications, dans cet ordre</b>
+      <ul>
+        <li><b>L'alarme est désarmée.</b> Regarde <code>alarm_control_panel.alarme_maison</code> — elle doit être sur <code>disarmed</code>. Si ce n'est pas le cas, désarme-la immédiatement avec ton code.</li>
+        <li><b>Le KNX répond.</b> Paramètres → Appareils et services → KNX. Puis teste concrètement : allume une lumière depuis l'interface et vérifie qu'elle s'allume vraiment.</li>
+        <li><b>Les températures remontent.</b> Regarde un thermostat — s'il affiche une température actuelle, le bus communique dans les deux sens.</li>
+        <li><b>Désactive l'intégration MQTT</b>, qui cherche un broker absent et polluera tes journaux.</li>
+      </ul>
+    </div>
+    <p>Si le KNX ne remonte pas : vérifie que le conteneur est bien en mode <code>host</code>, et qu'aucune autre instance ne tient le tunnel — la plupart des passerelles KNX/IP n'acceptent qu'un nombre limité de connexions simultanées. Le Pi étant éteint, la voie devrait être libre.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 7</span><h3>Reverse proxy DSM, puis réactivation des automatisations</h3><span class="dur">15 min</span></div>
+    <p><b>Panneau de configuration → Portail de connexion → Reverse Proxy → Créer</b></p>
+    <ul>
+      <li><b>Source</b> — Protocole : HTTPS · Nom d'hôte : ton sous-domaine · Port : 443</li>
+      <li><b>Destination</b> — Protocole : HTTP · Nom d'hôte : <code>localhost</code> · Port : <code>8123</code></li>
+    </ul>
+    <div class="warn-box">
+      <b>Onglet « En-tête personnalisé »</b>
+      Clique sur <b>Créer → WebSocket</b> pour appliquer le préréglage. L'interface de Home Assistant fonctionne entièrement en WebSocket : sans ces en-têtes, la page se charge puis reste figée sur le logo. C'est le second piège classique, après <code>trusted_proxies</code>.
+    </div>
+    <p>Teste depuis l'extérieur. Une fois que l'accès distant fonctionne <b>et</b> que le KNX répond correctement, remets tes automatisations :</p>
+    <pre><code>cd /volume1/docker/homeassistant/config
+mv automations.yaml.original automations.yaml</code></pre>
+    <p>Puis, dans Home Assistant : <b>Outils de développement → YAML → Recharger les automatisations</b>. Inutile de redémarrer le conteneur.</p>
+    <div class="check">
+      <b>Vérification finale</b>
+      Paramètres → Automatisations : tu dois retrouver tes 14 automatisations. Souviens-toi que six d'entre elles contiennent le bug de notification vide identifié à l'audit — elles s'interrompront sur cette action, exactement comme sur le Pi. Rien de nouveau, mais ne t'en étonne pas.
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 8</span><h3>Le jour où le Pi revient</h3><span class="dur">5 min</span></div>
+    <div class="warn-box">
+      <b>Avant de rebrancher le Pi</b>
+      Arrête ce conteneur. Container Manager → Projet → <code>homeassistant</code> → <b>Arrêter</b>. Sinon les deux instances piloteront simultanément la même chaudière, le même bouclage ECS et la même alarme.
+    </div>
+    <p>Ensuite, deux cas :</p>
+    <ul>
+      <li><b>Le Pi repart normalement</b> — tu reprends là où tu en étais. Ce conteneur reste en réserve, à l'arrêt, prêt à redémarrer en cas de nouvelle panne. C'est un plan de secours qui ne coûte rien à garder.</li>
+      <li><b>Le Pi ne repart pas</b> — cette installation devient ton système principal. Il faudra alors récupérer les fonctions portées par les add-ons : Mosquitto, tydom2mqtt et MyElectricalData se relancent en conteneurs séparés sur ce même NAS. C'est une autre procédure, plus longue, qu'on écrira le moment venu.</li>
+    </ul>
+    <p>Dans les deux cas, garde ce dossier <code>/volume1/docker/homeassistant</code>. Il ne gêne personne et il t'a déjà sauvé une fois.</p>
+  </div>
+</section>
+
+<footer>
+  <span>Domolaunaguet · Launaguet (31)</span>
+  <span>Mode opératoire du 31 août 2026</span>
+  <span>Sauvegarde source : 30 août, 03 h 07</span>
+  <span>Config de référence : Mathiaspayet/Mon-ha</span>
+</footer>
+
+</div>
