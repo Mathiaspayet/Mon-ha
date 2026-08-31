@@ -307,13 +307,14 @@ pre code{background:none;padding:0;font-size:inherit}
     <div class="spec"><dt>Adresse NAS</dt><dd>100.97.47.47</dd></div>
     <div class="spec"><dt>Port</dt><dd>8123</dd></div>
     <div class="spec"><dt>Étapes</dt><dd>6</dd></div>
+    <div class="spec"><dt>Prérequis</dt><dd>Tailscale ×2</dd></div>
   </dl>
 </header>
 
-<div class="now">
-  <h2>⚠ À faire avant tout : débloquer ton adresse IP</h2>
-  <p>Les tentatives précédentes ont déclenché le blocage automatique de Home Assistant. Tant qu'il est actif, <b>toute nouvelle tentative échouera</b>, quelle que soit la méthode — et chaque essai supplémentaire prolonge le blocage.</p>
-  <p>C'est l'étape 1, et sauter directement à l'étape 3 ne mènera nulle part.</p>
+<div class="now" style="border-color:var(--accent);background:var(--accent-soft)">
+  <h2 style="color:var(--accent)">Aucun blocage à lever</h2>
+  <p>Les tentatives précédentes ont laissé neuf lignes <code>[http.ban] Login attempt or request with invalid authentication</code> dans le journal. Ce sont de <b>simples traces d'échec</b>, pas des bannissements : Home Assistant ne bannit une adresse que si un seuil a été configuré, et il est désactivé par défaut.</p>
+  <p>Vérification faite, aucun fichier <code>ip_bans.yaml</code> n'existe dans <code>config/</code>. <b>Rien ne bloque</b> — tu peux enchaîner directement.</p>
 </div>
 
 <section class="block">
@@ -321,13 +322,15 @@ pre code{background:none;padding:0;font-size:inherit}
 
   <!-- 1 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Lever le blocage d'adresse IP</h3><span class="dur">3 min</span></div>
-    <p>Depuis un navigateur, sur <code>http://100.97.47.47:8123</code> :</p>
-    <p><b>Paramètres → Système → Réseau → section « Blocage d'adresses IP »</b>. Déplie-la et supprime l'adresse de ton téléphone si elle y figure — elle ressemble à <code>92.184.109.167</code>, l'adresse publique de ton opérateur mobile.</p>
-    <p>Si la section est vide, vérifie aussi dans File Station qu'aucun fichier <code>ip_bans.yaml</code> ne traîne dans <code>docker/homeassistant/config</code>. S'il existe, supprime-le et redémarre le conteneur.</p>
+    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Vérifier que Tailscale est actif des deux côtés</h3><span class="dur">2 min</span></div>
+    <p>C'est un réseau privé : le NAS et le téléphone doivent tous deux y être connectés. Un seul des deux ne sert à rien.</p>
+    <ul>
+      <li><b>Sur le téléphone</b> — ouvre l'app Tailscale, l'interrupteur doit indiquer <i>Connected</i>.</li>
+      <li><b>Le NAS doit figurer dans la liste des machines</b>, avec son adresse <code>100.97.47.47</code>. Tu peux la copier directement depuis là.</li>
+    </ul>
     <div class="check">
-      <b>Pourquoi c'est en premier</b>
-      Le journal montrait neuf tentatives rejetées en cinquante secondes. Le composant <code>http.ban</code> bannit après plusieurs échecs, et le symptôme devient identique à un problème de configuration : « impossible de se connecter », sans autre explication.
+      <b>Test préalable</b>
+      Depuis le navigateur du téléphone, ouvre <code>http://100.97.47.47:8123</code>. Si la page de connexion Home Assistant s'affiche, le tunnel fonctionne et l'app n'aura aucune raison d'échouer.
     </div>
   </div>
 
