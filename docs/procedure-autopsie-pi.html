@@ -1,0 +1,409 @@
+<title>Autopsie du Raspberry Pi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#EFF1EC;
+  --card:#FAFBF8;
+  --sunk:#E4E8DF;
+  --ink:#16211A;
+  --ink-2:#3D4A42;
+  --muted:#65706A;
+  --rule:#D2D8CD;
+  --rule-2:#BFC7B9;
+  --accent:#2F6B45;
+  --accent-soft:#DCE8DF;
+  --crit:#9E2B25;
+  --crit-soft:#F2DEDC;
+  --warn:#9A6714;
+  --warn-soft:#F3E7D2;
+  --info:#3B5C79;
+  --info-soft:#DEE7EF;
+  --good:#2F6B45;
+  --shadow:0 1px 0 rgba(22,33,26,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131711;
+    --card:#1A1F18;
+    --sunk:#232A21;
+    --ink:#E7EBE2;
+    --ink-2:#C2CABB;
+    --muted:#8E998B;
+    --rule:#2C3529;
+    --rule-2:#3C4738;
+    --accent:#77C193;
+    --accent-soft:#1F3327;
+    --crit:#E5847B;
+    --crit-soft:#3A2321;
+    --warn:#D9A857;
+    --warn-soft:#382D1A;
+    --info:#8FB4D2;
+    --info-soft:#1E2C38;
+    --good:#77C193;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131711;
+  --card:#1A1F18;
+  --sunk:#232A21;
+  --ink:#E7EBE2;
+  --ink-2:#C2CABB;
+  --muted:#8E998B;
+  --rule:#2C3529;
+  --rule-2:#3C4738;
+  --accent:#77C193;
+  --accent-soft:#1F3327;
+  --crit:#E5847B;
+  --crit-soft:#3A2321;
+  --warn:#D9A857;
+  --warn-soft:#382D1A;
+  --info:#8FB4D2;
+  --info-soft:#1E2C38;
+  --good:#77C193;
+  --shadow:none;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  font-size:16.5px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 96px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding:56px 0 26px;margin-bottom:0}
+.eyebrow{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;
+}
+.eyebrow .dot{width:4px;height:4px;background:var(--rule-2);border-radius:50%}
+h1{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;
+  font-size:clamp(38px,7vw,68px);line-height:.98;letter-spacing:-.025em;
+  margin:0 0 18px;text-wrap:balance;
+}
+.lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:60ch;margin:0}
+
+.specs{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0 0;
+}
+.spec{background:var(--paper);padding:14px 16px}
+.spec dt{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 5px;
+}
+.spec dd{
+  margin:0;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);
+}
+
+/* ---------- immediate alert ---------- */
+.now{
+  margin:44px 0 0;border:1px solid var(--crit);border-left:4px solid var(--crit);
+  background:var(--crit-soft);padding:22px 24px;
+}
+.now h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--crit);margin:0 0 10px;
+}
+.now p{margin:0 0 10px;color:var(--ink)}
+.now p:last-child{margin-bottom:0}
+
+/* ---------- scorecard ---------- */
+.scores{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:44px 0 0;
+}
+.score{background:var(--card);padding:18px 16px 16px}
+.score .n{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:40px;
+  line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;
+}
+.score .l{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  display:block;margin-top:7px;
+}
+.score.c .n{color:var(--crit)} .score.f .n{color:var(--warn)}
+.score.h .n{color:var(--info)} .score.a .n{color:var(--accent)}
+
+/* ---------- sections ---------- */
+section.block{margin-top:64px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:8px}
+.sechead h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:clamp(22px,3.4vw,30px);
+  letter-spacing:-.02em;margin:0;flex:1;text-wrap:balance;
+}
+.sechead .count{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.secnote{color:var(--muted);font-size:15.5px;margin:14px 0 30px;max-width:66ch}
+
+/* ---------- finding ---------- */
+.finding{
+  display:grid;grid-template-columns:96px 1fr;gap:0;
+  background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--rule-2);
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.finding.crit{border-left-color:var(--crit)}
+.finding.warn{border-left-color:var(--warn)}
+.finding.info{border-left-color:var(--info)}
+.finding.good{border-left-color:var(--accent)}
+.rail{padding:20px 0 20px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.rail .id{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:17px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;
+}
+.finding.crit .rail .id{color:var(--crit)}
+.finding.warn .rail .id{color:var(--warn)}
+.finding.info .rail .id{color:var(--info)}
+.finding.good .rail .id{color:var(--accent)}
+.chip{
+  font-family:"Chivo",system-ui,sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;white-space:nowrap;
+}
+.chip.crit{background:var(--crit-soft);color:var(--crit)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.good{background:var(--accent-soft);color:var(--accent)}
+.fbody{padding:20px 22px 20px 8px;min-width:0}
+.fbody h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:18.5px;
+  line-height:1.3;letter-spacing:-.012em;margin:0 0 10px;text-wrap:balance;
+}
+.fbody p{margin:0 0 11px}
+.fbody p:last-child{margin-bottom:0}
+.fbody ul{margin:0 0 11px;padding-left:19px}
+.fbody li{margin-bottom:5px}
+.fbody li::marker{color:var(--rule-2)}
+
+code,.mono{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.855em;
+  background:var(--sunk);padding:1px 5px;border-radius:2px;
+  word-break:break-word;
+}
+.fix{
+  border-top:1px dashed var(--rule-2);padding-top:11px;margin-top:13px !important;
+  font-size:15.5px;color:var(--ink-2);
+}
+.fix b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:4px;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);margin:0 0 11px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  background:var(--sunk);white-space:nowrap;
+}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- plan ---------- */
+.phase{border-top:1px solid var(--ink);padding-top:18px;margin-top:30px}
+.phase h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:15px;
+  letter-spacing:.03em;margin:0 0 4px;
+}
+.phase .when{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+}
+.phase ol{margin:0;padding-left:20px}
+.phase li{margin-bottom:7px}
+.phase li::marker{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:500}
+
+footer{
+  margin-top:72px;border-top:2px solid var(--ink);padding-top:18px;
+  font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px;
+  font-family:"Chivo",system-ui,sans-serif;
+}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:0 18px 72px}
+  .finding{grid-template-columns:1fr}
+  .rail{flex-direction:row;align-items:center;padding:16px 18px 0}
+  .fbody{padding:14px 18px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+/* --- composants propres au mode opératoire --- */
+.step{border-top:1px solid var(--ink);padding-top:20px;margin-top:38px}
+.step-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.step-num{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.1em;color:var(--accent);white-space:nowrap;
+}
+.step h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:22px;
+  letter-spacing:-.015em;margin:0;flex:1;text-wrap:balance;
+}
+.step .dur{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;
+  color:var(--muted);white-space:nowrap;
+}
+pre{
+  background:var(--sunk);border:1px solid var(--rule);padding:14px 16px;
+  overflow-x:auto;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:13px;line-height:1.6;margin:0 0 14px;
+}
+pre code{background:none;padding:0;font-size:inherit}
+.warn-box{
+  border:1px solid var(--warn);border-left:4px solid var(--warn);
+  background:var(--warn-soft);padding:16px 18px;margin:0 0 14px;
+}
+.warn-box b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--warn);
+  display:block;margin-bottom:6px;
+}
+.check{
+  border:1px solid var(--accent);border-left:4px solid var(--accent);
+  background:var(--accent-soft);padding:16px 18px;margin:0 0 14px;
+}
+.check b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:6px;
+}
+.check ul,.warn-box ul{margin:8px 0 0;padding-left:19px}
+.step p{margin:0 0 14px}
+.step ul{margin:0 0 14px;padding-left:20px}
+.step li{margin-bottom:6px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Mode opératoire</span><span class="dot"></span>
+    <span>Au redémarrage du Pi</span><span class="dot"></span>
+    <span>Panne du 31 août 2026</span>
+  </div>
+  <h1>Autopsie du Raspberry Pi</h1>
+  <p class="lede">Quoi regarder, dans quel ordre, à la seconde où la machine redémarre — pour savoir si c'est l'alimentation, le SSD ou autre chose. Certaines traces s'effacent vite : mieux vaut savoir quoi chercher avant d'ouvrir les journaux.</p>
+
+  <dl class="specs">
+    <div class="spec"><dt>Fenêtre</dt><dd>31/08 · 04h49 → 10h37</dd></div>
+    <div class="spec"><dt>Dernier signe de vie</dt><dd>04h48 · sauvegarde OK</dd></div>
+    <div class="spec"><dt>Symptôme</dt><dd>Plus de réponse ARP</dd></div>
+    <div class="spec"><dt>Durée du contrôle</dt><dd>10 min</dd></div>
+  </dl>
+</header>
+
+<div class="now">
+  <h2>⚠ Avant de rebrancher le Pi</h2>
+  <p><b>Arrête le conteneur du NAS.</b> Container Manager → Projet → <code>homeassistant</code> → Arrêter.</p>
+  <p>Deux instances de Home Assistant pilotant le même bus KNX, la même chaudière et la même alarme, c'est le seul vrai piège qui reste. Fais-le d'abord, pas après.</p>
+</div>
+
+<section class="block">
+  <div class="sechead"><h2>Procédure</h2><span class="count">4 étapes</span></div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Le capteur d'alimentation, en premier</h3><span class="dur">1 min</span></div>
+    <p>C'est le contrôle que j'aurais dû faire avant d'installer quoi que ce soit. Dans Outils de développement → États, cherche :</p>
+    <pre><code>binary_sensor.rpi_power_status</code></pre>
+    <p>Il vient de l'intégration <i>Raspberry Pi Power Supply Checker</i>, déjà installée chez toi.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>État</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><code>off</code> · aucun problème</td><td>L'alimentation tient. Cherche du côté du SSD.</td></tr>
+        <tr><td><code>on</code> · problème détecté</td><td><b>Sous-tension confirmée.</b> Remplace le bloc d'alimentation par un modèle 5,1 V / 3 A officiel. Vingt euros, sujet clos.</td></tr>
+      </tbody>
+    </table></div>
+    <p>Regarde aussi son <b>historique</b> : clique sur l'entité, onglet Historique. S'il a basculé plusieurs fois ces dernières semaines, tu as ta réponse sans rien lire d'autre.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 2</span><h3>Les réparations en attente</h3><span class="dur">1 min</span></div>
+    <p><b>Paramètres → Appareils et services → onglet Réparations.</b> Home Assistant y remonte de lui-même les problèmes de stockage, de sauvegarde et de matériel. C'est plus lisible que n'importe quel journal, et c'est gratuit à consulter.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 3</span><h3>Le journal de l'hôte</h3><span class="dur">5 min</span></div>
+    <p><b>Paramètres → Système → Journaux.</b> En haut à droite, un menu déroulant permet de choisir la source. Sélectionne <b>« Hôte »</b> — c'est le journal du système d'exploitation, celui où apparaissent les erreurs de disque, d'USB et d'alimentation. Le journal « Core » ne les verra jamais.</p>
+    <p>Puis <b>« Charger le journal complet »</b>, et cherche ces motifs :</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>À chercher</th><th>Ce que ça signifie</th></tr></thead>
+      <tbody>
+        <tr><td><code>Under-voltage detected</code><br><code>hwmon</code></td><td><b>Alimentation insuffisante.</b> La cause la plus fréquente sur Pi 4 avec un SSD USB, et la plus facile à corriger.</td></tr>
+        <tr><td><code>USB disconnect</code><br><code>reset SuperSpeed</code></td><td>Le SSD s'est détaché du bus USB. Câble fatigué, ou alimentation qui a fléchi sous la charge.</td></tr>
+        <tr><td><code>EXT4-fs error</code><br><code>remounting filesystem read-only</code></td><td>Le système de fichiers s'est protégé après une erreur. Explique parfaitement le « <code>configuration.yaml</code> manquant » alors que HA tournait encore.</td></tr>
+        <tr><td><code>I/O error, dev sda</code></td><td>Erreur disque franche. Si c'est récurrent, le SSD est à remplacer.</td></tr>
+        <tr><td><code>oom-killer</code></td><td>Manque de mémoire. Peu probable, mais à écarter.</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Remonter avant le crash</h3><span class="dur">15 min</span></div>
+    <p>L'interface n'affiche que le démarrage courant. Pour lire ce qui s'est passé <b>avant</b> la panne — la fenêtre du 31 août entre 04 h 49 et 10 h 37 — il faut un accès shell.</p>
+    <p>Installe l'app <b>Terminal & SSH</b> (Paramètres → Modules complémentaires → Boutique). Puis :</p>
+    <pre><code>journalctl -b -1 -p warning --no-pager</code></pre>
+    <p>Le <code>-b -1</code> désigne le démarrage précédent, celui qui s'est mal terminé. Ajoute <code>-p warning</code> pour ne garder que les avertissements et au-delà.</p>
+    <p>Pour cibler la fenêtre exacte :</p>
+    <pre><code>journalctl -b -1 --since "2026-08-31 04:00" --until "2026-08-31 11:00"</code></pre>
+    <div class="check">
+      <b>À installer de toute façon</b>
+      Terminal & SSH aurait changé la donne aujourd'hui : il donne un accès distant indépendant de Home Assistant, qui survit quand l'interface tombe. C'est trois minutes d'installation pour une panne évitée la prochaine fois.
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="sechead"><h2>Selon le verdict</h2><span class="count">3 cas</span></div>
+
+  <article class="finding good">
+    <div class="rail"><span class="id">A</span><span class="chip good">Le plus probable</span></div>
+    <div class="fbody">
+      <h3>Sous-tension</h3>
+      <p>Remplace le bloc par un <b>5,1 V / 3 A officiel Raspberry Pi</b>. Si le SSD est alimenté par le port USB seul, ajoute un hub USB alimenté — un Pi 4 partage son budget électrique entre le processeur et l'USB, et une écriture soutenue fait plonger la tension.</p>
+      <p>Surveille ensuite <code>binary_sensor.rpi_power_status</code> avec une notification : tu seras prévenu avant la prochaine panne, pas après.</p>
+    </div>
+  </article>
+
+  <article class="finding warn">
+    <div class="rail"><span class="id">B</span><span class="chip warn">Possible</span></div>
+    <div class="fbody">
+      <h3>Système de fichiers corrompu, disque sain</h3>
+      <p>Une vérification <code>fsck</code> au démarrage suffit souvent. Si HAOS repart normalement et que les erreurs ne reviennent pas sous charge, tu peux reprendre — en gardant l'instance du NAS prête à l'emploi.</p>
+    </div>
+  </article>
+
+  <article class="finding crit">
+    <div class="rail"><span class="id">C</span><span class="chip crit">Le pire cas</span></div>
+    <div class="fbody">
+      <h3>SSD en fin de vie</h3>
+      <p>Erreurs d'E/S répétées, secteurs réalloués, disque qui disparaît du bus. Remplace le support, réinstalle HAOS, et restaure la sauvegarde du 31 août depuis <code>surveillance/ha_backup_domolaunaguet/</code>.</p>
+      <p>Rien n'est perdu : tu as la sauvegarde complète et la configuration versionnée sur GitHub. C'est exactement le scénario pour lequel tu voulais ce dépôt.</p>
+    </div>
+  </article>
+</section>
+
+<footer>
+  <span>Domolaunaguet · Launaguet (31)</span>
+  <span>Panne du 31 août 2026</span>
+  <span>Dernier signe de vie : 04 h 49, sauvegarde réussie</span>
+  <span>Config de référence : Mathiaspayet/Mon-ha</span>
+</footer>
+
+</div>
