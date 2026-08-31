@@ -307,6 +307,7 @@ pre code{background:none;padding:0;font-size:inherit}
     <div class="spec"><dt>Réversible</dt><dd>Oui</dd></div>
     <div class="spec"><dt>Touche au Pi</dt><dd>Non</dd></div>
     <div class="spec"><dt>Étapes</dt><dd>7 · sans SSH</dd></div>
+    <div class="spec"><dt>Validé</dt><dd>31 août · KNX OK</dd></div>
   </dl>
 </header>
 
@@ -405,6 +406,12 @@ pre code{background:none;padding:0;font-size:inherit}
     <pre><code># automation: !include automations.yaml</code></pre>
     <p>Rien n'est supprimé : on retirera le <code>#</code> à l'étape 6, une fois le KNX vérifié.</p>
 
+    <div class="warn-box">
+      <b>Le bloc http n'est plus la bonne méthode</b>
+      Depuis les versions récentes, les réglages réseau de Home Assistant vivent dans l'interface (<code>Paramètres → Système → Réseau</code>) et sont stockés dans <code>.storage</code>. <b>C'est cette configuration qui fait autorité — le YAML est ignoré.</b> Une valeur restaurée depuis la sauvegarde y persiste, invisible dans les fichiers. Cette confusion nous a coûté une heure : on retirait le bloc du YAML sans le moindre effet.
+      <br><br>
+      Le bloc ci-dessous ne sert donc que de repli ; le réglage réel se fait à l'étape 6.
+    </div>
     <p>Puis, <b>tout à la fin du même fichier</b>, ajoute ce bloc :</p>
     <pre><code>http:
   use_x_forwarded_for: true
@@ -470,25 +477,45 @@ pre code{background:none;padding:0;font-size:inherit}
 
   <!-- 7 -->
   <div class="step">
-    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Reverse proxy DSM, puis réactivation des automatisations</h3><span class="dur">15 min</span></div>
-    <p><b>Panneau de configuration → Portail de connexion → Reverse Proxy → Créer</b></p>
-    <ul>
-      <li><b>Source</b> — Protocole : HTTPS · Nom d'hôte : ton sous-domaine · Port : 443</li>
-      <li><b>Destination</b> — Protocole : HTTP · Nom d'hôte : <code>localhost</code> · Port : <code>8123</code></li>
-    </ul>
+    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Accès à distance</h3><span class="dur">30 min</span></div>
+
+    <p>Deux voies possibles. La seconde est plus simple et plus robuste — commence par elle.</p>
+
+    <h3 style="font-size:17px;margin:26px 0 10px">Voie A — Tailscale <span style="color:var(--good)">(recommandée)</span></h3>
+    <p>Tailscale est bâti sur WireGuard et se configure seul. Aucun port à ouvrir, aucun certificat, aucun proxy dans le chemin — donc aucun des pièges ci-dessous.</p>
+    <ol>
+      <li><b>Centre de paquets → Tailscale → Installer.</b> Absent du catalogue ? Télécharge le <code>.spk</code> sur <code>pkgs.tailscale.com/stable/#synology</code> (DSM 7, architecture <b>apollolake</b> pour un DS218+) et passe par <b>Installation manuelle</b>.</li>
+      <li>Ouvre Tailscale depuis le menu DSM, clique <b>Log in</b>, crée un compte (gratuit jusqu'à 100 appareils).</li>
+      <li><b>Installe aussi l'app Tailscale sur ton téléphone</b>, même compte. C'est un réseau privé : il faut y être des deux côtés. Sans ça, rien ne fonctionne.</li>
+      <li>Relève l'adresse <code>100.x.y.z</code> du NAS dans l'app, et connecte-toi sur <code>http://100.x.y.z:8123</code>.</li>
+    </ol>
+    <p>Bénéfice annexe : tu retrouves l'accès à tout ton réseau local à distance, y compris le Pi quand il reviendra.</p>
+
+    <h3 style="font-size:17px;margin:26px 0 10px">Voie B — Reverse proxy DSM</h3>
+    <p><b>Panneau de configuration → Portail de connexion → Reverse Proxy → Créer</b> : source en HTTPS sur ton sous-domaine, destination en HTTP vers <code>localhost</code> port <code>8123</code>. Onglet <b>En-tête personnalisé → Créer → WebSocket</b>, sans quoi la page reste figée sur le logo.</p>
     <div class="warn-box">
-      <b>Onglet « En-tête personnalisé »</b>
-      Clique sur <b>Créer → WebSocket</b> pour appliquer le préréglage. L'interface de Home Assistant fonctionne entièrement en WebSocket : sans ces en-têtes, la page se charge puis reste figée sur le logo. C'est le second piège classique, après <code>trusted_proxies</code>.
+      <b>Puis, dans Home Assistant : Paramètres → Système → Réseau</b>
+      Section <b>Proxy inverse</b> : active « Faire confiance à X-Forwarded-For » et ajoute <b><code>127.0.0.1/32</code></b> aux proxys de confiance. Le reverse proxy DSM se connecte en <code>localhost</code> : sans cette entrée, chaque requête est rejetée par un <b>400 Bad Request</b>, quoi que contienne le YAML.
+      <br><br>
+      L'enregistrement redémarre Home Assistant — attends deux à trois minutes avant de conclure que ça ne marche pas.
     </div>
-    <p>Teste depuis l'extérieur. Une fois que l'accès distant fonctionne <b>et</b> que le KNX répond correctement, remets tes automatisations : rouvre <code>configuration.yaml</code> dans l'éditeur de File Station et <b>retire le <code>#</code></b> devant la ligne <code>automation:</code>, puis enregistre.</p>
-    <p>Ensuite, dans Home Assistant : <b>Outils de développement → YAML → Recharger les automatisations</b>. Inutile de redémarrer le conteneur.</p>
+
+    <h3 style="font-size:17px;margin:26px 0 10px">Si l'app Compagnon refuse de se connecter</h3>
+    <p>Elle s'authentifie, demande le nom du téléphone, puis annonce « impossible de se connecter ». Regarde le journal du conteneur : si tu y vois <code>[http.ban] Login attempt or request with invalid authentication</code>, <b>ton adresse IP a été bannie</b> après plusieurs essais.</p>
+    <p>Débloque-la dans <b>Paramètres → Système → Réseau → Blocage d'adresses IP</b>, ou supprime le fichier <code>ip_bans.yaml</code> dans <code>config/</code>. Et ne retente qu'<b>une seule fois</b> ensuite : chaque échec supplémentaire rebannit et brouille le diagnostic.</p>
+    <p>Le plus simple reste de pointer l'app sur l'adresse Tailscale : ni proxy, ni certificat, ni bannissement.</p>
+
+    <p>Une fois l'accès distant établi <b>et</b> le KNX vérifié, remets tes automatisations : rouvre <code>configuration.yaml</code> dans l'éditeur de File Station et <b>retire le <code>#</code></b> devant la ligne <code>automation:</code>, puis enregistre. Ensuite, dans Home Assistant : <b>Outils de développement → YAML → Recharger les automatisations</b>.</p>
+
     <div class="check">
       <b>Vérification finale</b>
-      Paramètres → Automatisations : tu dois retrouver tes 14 automatisations. Souviens-toi que six d'entre elles contiennent le bug de notification vide identifié à l'audit — elles s'interrompront sur cette action, exactement comme sur le Pi. Rien de nouveau, mais ne t'en étonne pas.
+      Paramètres → Automatisations : tes 14 automatisations doivent réapparaître. Six d'entre elles portent le bug de notification vide identifié à l'audit — elles s'interrompront dessus, exactement comme sur le Pi.
+      <br><br>
+      Attention aussi : un téléphone réenregistré sous un nouveau nom crée un <b>nouveau service</b> <code>notify.mobile_app_…</code>. Les automatisations qui visent l'ancien nom pointeront dans le vide.
     </div>
   </div>
 
-  <!-- 8 -->
+  <!-- 7 -->
   <div class="step">
     <div class="step-head"><span class="step-num">ÉTAPE 7</span><h3>Le jour où le Pi revient</h3><span class="dur">5 min</span></div>
     <div class="warn-box">
@@ -506,7 +533,7 @@ pre code{background:none;padding:0;font-size:inherit}
 
 <footer>
   <span>Domolaunaguet · Launaguet (31)</span>
-  <span>Mode opératoire du 31 août 2026 · rév. 2</span>
+  <span>Mode opératoire du 31 août 2026 · rév. 4 · procédure éprouvée</span>
   <span>Sauvegarde source : 31 août, 04 h 48 — 170,6 Mo</span>
   <span>Config de référence : Mathiaspayet/Mon-ha</span>
 </footer>
