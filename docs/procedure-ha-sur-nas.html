@@ -300,7 +300,7 @@ pre code{background:none;padding:0;font-size:inherit}
     <span>Container Manager</span>
   </div>
   <h1>Domolaunaguet sur NAS</h1>
-  <p class="lede">Remonter Home Assistant sur le Synology pendant que le Raspberry Pi est hors service, en restaurant la sauvegarde du 30 août. Objectif : retrouver le pilotage KNX et l'alarme, accessibles à distance par le reverse proxy DSM.</p>
+  <p class="lede">Remonter Home Assistant sur le Synology pendant que le Raspberry Pi est hors service, en restaurant la sauvegarde du 31 août. Objectif : retrouver le pilotage KNX et l'alarme, accessibles à distance par le reverse proxy DSM.</p>
 
   <dl class="specs">
     <div class="spec"><dt>Durée</dt><dd>≈ 1 h</dd></div>
@@ -313,7 +313,7 @@ pre code{background:none;padding:0;font-size:inherit}
 <div class="now">
   <h2>⚠ Les deux règles à ne pas enfreindre</h2>
   <p><b>1. Jamais deux instances en même temps.</b> Le jour où le Pi redémarre, il se reconnectera au bus KNX et relancera ses automatisations. Deux Home Assistant pilotant la même chaudière, le même bouclage ECS et la même alarme, c'est la garantie de comportements erratiques. Avant de rallumer le Pi : arrêter ce conteneur. C'est l'étape 8.</p>
-  <p><b>2. Neutraliser avant le premier démarrage.</b> La sauvegarde contient l'alarme en <code>armed_vacation</code> et 14 automatisations actives. Démarrée telle quelle avec quelqu'un à la maison, la première détection en cuisine déclenche la sirène extérieure. L'étape 3 règle ça — <b>ne la saute pas</b>.</p>
+  <p><b>2. Neutraliser avant le premier démarrage.</b> La sauvegarde du 31 août contient l'alarme en <code>armed_vacation</code> et 14 automatisations actives. Démarrée telle quelle avec quelqu'un à la maison, la première détection en cuisine déclenche la sirène extérieure. L'étape 3 règle ça — <b>ne la saute pas</b>.</p>
 </div>
 
 <section class="block">
@@ -349,10 +349,18 @@ pre code{background:none;padding:0;font-size:inherit}
     <p>Connecte-toi en SSH sur le NAS (<code>ssh ton_compte@192.168.0.100</code>), puis passe root avec <code>sudo -i</code>.</p>
     <pre><code>mkdir -p /volume1/docker/homeassistant/config
 cd /volume1/docker/homeassistant</code></pre>
-    <p>Copie ensuite le <code>.tar</code> de la sauvegarde du 30 août depuis BigNas vers ce dossier. Le plus simple est de passer par <b>File Station</b> : monte BigNas en dossier distant, ou télécharge puis re-téléverse le fichier. Renomme-le <code>backup.tar</code> pour la suite.</p>
+    <p>Les sauvegardes natives de Home Assistant sont dans le dossier partagé <code>surveillance/ha_backup_domolaunaguet/</code>, sur ce même NAS. Copie la plus récente :</p>
+    <pre><code>cp "/volume1/surveillance/ha_backup_domolaunaguet/Automatic_backup_2026.8.3_2026-08-31_04.48_39003374.tar" \
+   /volume1/docker/homeassistant/backup.tar</code></pre>
+    <div class="warn-box">
+      <b>Bien prendre celle du 31 août</b>
+      C'est la plus récente — <b>170,6 Mo</b>, écrite ce matin à 04 h 49. Le fait qu'elle existe prouve que le système était encore parfaitement sain à cette heure-là.
+      <br><br>
+      Ne pas confondre avec les archives <code>Samba_Backup_2024_*</code> trouvées ailleurs sur le NAS : celles-là datent d'août <b>2024</b> et restaureraient une installation vieille de deux ans.
+    </div>
     <div class="check">
       <b>Vérification</b>
-      <code>ls -lh /volume1/docker/homeassistant/backup.tar</code> doit afficher un fichier d'environ <b>175 Mo</b>.
+      <code>ls -lh /volume1/docker/homeassistant/backup.tar</code> doit afficher environ <b>170 Mo</b>.
     </div>
   </div>
 
@@ -489,8 +497,8 @@ mv automations.yaml.original automations.yaml</code></pre>
 
 <footer>
   <span>Domolaunaguet · Launaguet (31)</span>
-  <span>Mode opératoire du 31 août 2026</span>
-  <span>Sauvegarde source : 30 août, 03 h 07</span>
+  <span>Mode opératoire du 31 août 2026 · rév. 2</span>
+  <span>Sauvegarde source : 31 août, 04 h 48 — 170,6 Mo</span>
   <span>Config de référence : Mathiaspayet/Mon-ha</span>
 </footer>
 
