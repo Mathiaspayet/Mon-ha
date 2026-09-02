@@ -80,11 +80,24 @@ Le script choisit sa route selon les paramètres reçus :
    C'est le chemin natif et robuste ; il ne transporte que `message` et `title`,
    ce qui est précisément pourquoi le chemin 2 existe.
 
-**Qui est en critique ?** Seule `automation.declenchement_alarme` — celle qui allume
-la sirène. Les automatisations de détection (nuit, vacances) et la pré-alerte
-restent en notification normale : la centrale a un `delay_time` de 60 s, elles
-préviennent pendant le délai de grâce et donnent le capteur concerné, sans faire
-hurler le téléphone à chaque rentrée à la maison.
+**Qui est en critique ?** Les quatre automatisations d'alarme : détection nuit,
+détection vacances, pré-alerte silencieuse et déclenchement sonore. Rien d'autre —
+la sonnette et l'alerte de porte de garage restent en notification normale.
+
+Conséquence à connaître : la centrale `manual` n'entre en `pending` que sur un appel
+à `alarm_control_panel.alarm_trigger`, lequel n'est émis que par les automatisations
+nuit et vacances (l'armement, lui, passe par `arming`). Une détection réelle produit
+donc **trois notifications critiques** :
+
+| Instant | Automatisation | Message |
+|---|---|---|
+| t = 0 | détection nuit *ou* vacances | quel capteur a détecté |
+| t = 0 | pré-alerte silencieuse | décompte entamé, lumières qui clignotent |
+| t + 60 s | déclenchement sonore | sirène extérieure activée |
+
+Les deux premières partent au même instant. C'est voulu — sur une intrusion, mieux
+vaut deux alertes qu'une manquée. Pour n'en garder qu'une à t = 0, retirer
+`critique: true` de `alarme-declenchement-silencieuse.yaml`.
 
 ⚠️ **Sur iOS**, l'alerte critique exige que « Alertes critiques » soit autorisé dans
 l'app Compagnon (Réglages → Notifications). Sans cette permission, la notification

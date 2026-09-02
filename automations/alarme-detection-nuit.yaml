@@ -40,4 +40,5 @@ actions:
   data:
     title: 🚨 Alarme Nuit
     message: Détection sur {{ trigger.to_state.name }} — alarme déclenchée.
+    critique: true
 mode: single

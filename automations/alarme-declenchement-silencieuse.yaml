@@ -21,4 +21,5 @@ actions:
   data:
     title: ⚠️ Alarme en pré-alerte
     message: Décompte avant déclenchement — clignotement des lumières (hors chambres).
+    critique: true
 mode: single
