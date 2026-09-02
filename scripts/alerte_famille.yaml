@@ -2,40 +2,42 @@
 # script_id : alerte_famille  (entity_id : script.alerte_famille)
 #
 # Point d'entrée UNIQUE de toutes les notifications vers les téléphones.
-# Découvre automatiquement les appareils de l'app Compagnon (entités notify.*)
-# et n'envoie qu'à ceux qui sont activés dans la vue « Réglages » du tableau
-# de bord, via les helpers input_boolean.notif_<appareil>.
 #
-# Règle : un appareil SANS helper est notifié par défaut (fail-safe :
-#         mieux vaut trop notifier que rater une alarme).
-#         Pour l'exclure, créer input_boolean.notif_<slug> et le mettre à off.
+# DESTINATAIRES — découverts automatiquement via integration_entities('mobile_app').
+#   Tout appareil de l'app Compagnon est notifié, sans aucune configuration.
+#   Pour en exclure un : l'ajouter à la liste `exclus` ci-dessous.
+#   ⚠️ Cette liste est dupliquée dans la carte « Appareils » de la vue
+#      « Réglages » (dashboards/lovelace.yaml) — garder les deux synchronisées.
+#
+# CRITICITÉ — chaque appelant passe un id de type d'alerte via le champ `alerte`.
+#   Le script lit alors input_boolean.critique_<alerte>, réglable depuis la vue
+#   « Réglages ». Le champ `critique` reste disponible pour forcer la valeur
+#   (boutons de test), et l'emporte sur l'interrupteur.
 #
 # TROIS CHEMINS (choose) :
-#   1. Aucun appareil actif      -> persistent_notification, rien n'est perdu.
-#   2. critique OU donnees       -> services hérités notify.mobile_app_<slug>,
-#                                   un appel par appareil, avec bloc data adapté
-#                                   à la plateforme (device_attr manufacturer).
-#   3. Défaut                    -> notify.send_message sur la liste d'entités,
-#                                   un seul appel, natif et robuste.
+#   1. Aucun appareil ciblé  -> persistent_notification, rien n'est perdu.
+#   2. crit OU donnees       -> services hérités notify.mobile_app_<slug>, un
+#                               appel par appareil, bloc data adapté à la
+#                               plateforme (device_attr manufacturer).
+#   3. Défaut                -> notify.send_message sur la liste d'entités,
+#                               un seul appel, natif et robuste.
 #
 # Le chemin 2 déduit le nom du service hérité du slug de l'entité notify
-# (notify.pixel_9a -> notify.mobile_app_pixel_9a). Renommer une entité notify
-# casserait cette correspondance : ne pas les renommer.
+# (notify.pixel_9a -> notify.mobile_app_pixel_9a). Ne pas renommer ces entités.
 #
 # iOS : l'alerte critique exige que « Alertes critiques » soit autorisé dans
-#       l'app Compagnon (Réglages > Notifications). Sinon elle arrive en normal.
-# Android : channel alarm_stream = passe par le flux alarme, ignore silencieux
-#       et Ne pas déranger.
+#       l'app Compagnon. Sinon elle arrive en notification normale.
+# Android : channel alarm_stream = flux alarme, ignore silencieux et NPD.
 #
 # Export Home Assistant du 2026-09-02.
 ---
 alias: Alerte famille
 description: >-
   Point d'entree unique des notifications vers les telephones. Decouvre
-  automatiquement les appareils de l'app Compagnon et n'envoie qu'a ceux actives
-  dans Reglages > Notifications (input_boolean.notif_<appareil>). Un appareil
-  sans interrupteur est notifie par defaut. Le mode critique perce le silencieux
-  et Ne pas deranger (alarm_stream sur Android, critical alert sur iOS).
+  automatiquement les appareils de l'app Compagnon ; les appareils exclus sont
+  listes en dur dans la variable 'exclus'. Le caractere critique de chaque type
+  d'alerte se regle dans Reglages > Notifications
+  (input_boolean.critique_<alerte>).
 icon: mdi:cellphone-message
 mode: parallel
 max: 10
@@ -54,29 +56,39 @@ fields:
     example: Sonnette maison
     selector:
       text: null
-  critique:
-    name: Alerte critique
-    description: Perce le mode silencieux et Ne pas deranger. Reserve aux alarmes.
+  alerte:
+    name: Type d'alerte
+    description: >-
+      Identifiant du type d'alerte. Determine si elle est critique en lisant
+      input_boolean.critique_<alerte>.
     required: false
-    default: false
+    example: alarme_nuit
+    selector:
+      text: null
+  critique:
+    name: Forcer le mode critique
+    description: Outrepasse le reglage du type d'alerte. Laisser vide en usage normal.
+    required: false
     selector:
       boolean: null
   donnees:
     name: Donnees avancees
     description: >-
-      Bloc data supplementaire fusionne au payload (image, actions, TTS...).
+      Bloc data supplementaire fusionne au payload (image, url, actions...).
       Ecrase les cles du mode critique en cas de conflit.
     required: false
-    example: '{"image": "/api/camera_proxy/camera.sonnette"}'
+    example: '{"url": "/config/helpers"}'
     selector:
       object: null
 sequence:
-- alias: Liste des telephones actives
+- alias: Cibles et niveau de criticite
   variables:
     cibles: >-
-      {% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app') if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~ e.split('.')[1]) != 'off' %}{% set ns.l = ns.l + [e] %}{% endif %}{% endfor %}{{ ns.l }}
+      {% set exclus = ['notify.i10_pro'] %}{% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app') if e.startswith('notify.') and e not in exclus %}{% set ns.l = ns.l + [e] %}{% endfor %}{{ ns.l }}
+    crit: >-
+      {% set c = critique | default(none) %}{% set a = alerte | default('') %}{% if c is not none %}{{ c | bool(false) }}{% elif a %}{{ is_state('input_boolean.critique_' ~ a, 'on') }}{% else %}{{ false }}{% endif %}
 - choose:
-  - alias: 'Aucun telephone actif : filet de securite'
+  - alias: 'Aucun appareil cible : filet de securite'
     conditions:
     - condition: template
       value_template: '{{ cibles | count == 0 }}'
@@ -84,12 +96,11 @@ sequence:
     - action: persistent_notification.create
       data:
         title: Alerte non distribuee
-        message: '{{ message }} — aucun telephone active dans Reglages > Notifications.'
+        message: '{{ message }} — aucun appareil cible par script.alerte_famille.'
   - alias: 'Payload avance : services herites, un appel par appareil'
     conditions:
     - condition: template
-      value_template: >-
-        {{ (critique | default(false) | bool(false)) or (donnees | default({}, true) | count > 0) }}
+      value_template: '{{ crit or (donnees | default({}, true) | count > 0) }}'
     sequence:
     - repeat:
         for_each: '{{ cibles }}'
@@ -97,7 +108,7 @@ sequence:
         - alias: Payload adapte a la plateforme de l'appareil
           variables:
             payload: >-
-              {% set crit = critique | default(false) | bool(false) %}{% set extra = donnees | default({}, true) %}{% if crit and device_attr(repeat.item, 'manufacturer') == 'Apple' %}{% set base = {'push': {'sound': {'name': 'default', 'critical': 1, 'volume': 1.0}}} %}{% elif crit %}{% set base = {'channel': 'alarm_stream', 'ttl': 0, 'priority': 'high', 'importance': 'high', 'color': 'red', 'sticky': 'true'} %}{% else %}{% set base = {} %}{% endif %}{{ base | combine(extra) }}
+              {% set extra = donnees | default({}, true) %}{% if crit and device_attr(repeat.item, 'manufacturer') == 'Apple' %}{% set base = {'push': {'sound': {'name': 'default', 'critical': 1, 'volume': 1.0}}} %}{% elif crit %}{% set base = {'channel': 'alarm_stream', 'ttl': 0, 'priority': 'high', 'importance': 'high', 'color': 'red', 'sticky': 'true'} %}{% else %}{% set base = {} %}{% endif %}{{ base | combine(extra) }}
         - action: notify.mobile_app_{{ repeat.item.split('.')[1] }}
           continue_on_error: true
           data:
@@ -105,7 +116,7 @@ sequence:
             title: '{{ title | default(''Domolaunaguet'', true) }}'
             data: '{{ payload }}'
   default:
-  - alias: Envoi standard a tous les appareils actifs
+  - alias: Envoi standard a tous les appareils cibles
     action: notify.send_message
     continue_on_error: true
     target:

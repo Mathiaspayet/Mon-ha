@@ -812,37 +812,70 @@ views:
   badges: []
   cards:
   - type: custom:mushroom-title-card
-    title: Notifications
-    subtitle: Téléphones prévenus en cas d'alerte
+    title: Appareils
+    subtitle: Découverts automatiquement dans l'app Compagnon
+    alignment: start
+  # NOTE : la liste `exclus` ci-dessous doit rester synchronisée avec celle
+  #        de scripts/alerte_famille.yaml (variable `exclus`).
+  - type: markdown
+    content: "{% set exclus = ['notify.i10_pro'] %}{% set ns = namespace(oui=[], non=[])\
+      \ %}{% for e in integration_entities('mobile_app') if e.startswith('notify.')\
+      \ %}{% set n = state_attr(e, 'friendly_name') or e %}{% if e in exclus %}{% set\
+      \ ns.non = ns.non + [n] %}{% else %}{% set ns.oui = ns.oui + [n] %}{% endif\
+      \ %}{% endfor %}**Notifiés ({{ ns.oui | count }})**\n{% for n in ns.oui %}- ✅\
+      \ {{ n }}\n{% endfor %}{% if ns.non %}\n**Non notifiés ({{ ns.non | count }})**\n\
+      {% for n in ns.non %}- ⬜ {{ n }}\n{% endfor %}{% endif %}"
+  - type: custom:mushroom-title-card
+    title: Alertes critiques
+    subtitle: Percent le mode silencieux et Ne pas déranger
     alignment: start
   - type: entities
-    title: Téléphones à prévenir
     state_color: true
     entities:
-    - entity: input_boolean.notif_pixel_9a
-      name: Pixel 9a (Mathias)
-    - entity: input_boolean.notif_iphone_marine
-      name: iPhone Marine
-    - entity: input_boolean.notif_i10_pro
-      name: Tablette I10 Pro
+    - entity: input_boolean.critique_alarme_declenchee
+      name: Alarme déclenchée (sirène)
+    - entity: input_boolean.critique_alarme_nuit
+      name: Détection nuit
+    - entity: input_boolean.critique_alarme_vacances
+      name: Détection vacances
+    - entity: input_boolean.critique_alarme_prealerte
+      name: Pré-alerte (décompte)
+    - entity: input_boolean.critique_sonnette
+      name: Sonnette
+    - entity: input_boolean.critique_garage
+      name: Porte de garage restée ouverte
   - type: markdown
-    content: "{% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app')\
-      \ if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~ e.split('.')[1])\
-      \ != 'off' %}{% set ns.l = ns.l + [state_attr(e, 'friendly_name') or e] %}{%\
-      \ endif %}{% endfor %}**Destinataires actuels :** {% if ns.l %}{{ ns.l | join(',\
-      \ ') }}{% else %}⚠️ aucun téléphone activé{% endif %}\n\n*Tout appareil ajouté\
-      \ à l'app Compagnon est prévenu automatiquement. Pour lui donner un interrupteur\
-      \ ici, créer un helper nommé `Notif <nom de l'appareil>`.*"
-  - type: button
-    name: Envoyer une notification de test
-    icon: mdi:bell-ring
-    icon_height: 40px
-    show_name: true
-    show_icon: true
-    tap_action:
-      action: perform-action
-      perform_action: script.alerte_famille
-      data:
-        title: Test Domolaunaguet
-        message: Notification de test envoyée depuis le tableau de bord.
-      target: {}
+    content: "*Une alerte critique passe par le flux alarme sur Android et l'alerte\
+      \ critique sur iOS : elle sonne même en silencieux ou Ne pas déranger. Sur iPhone,\
+      \ il faut avoir autorisé « Alertes critiques » dans l'app Compagnon.*\n\n*Les\
+      \ appareils exclus sont définis en dur dans `script.alerte_famille`, variable\
+      \ `exclus`.*"
+  - type: horizontal-stack
+    cards:
+    - type: button
+      name: Test normal
+      icon: mdi:bell-ring
+      icon_height: 40px
+      show_name: true
+      show_icon: true
+      tap_action:
+        action: perform-action
+        perform_action: script.alerte_famille
+        data:
+          title: Test normal
+          message: Notification standard envoyée depuis le tableau de bord.
+        target: {}
+    - type: button
+      name: Test critique
+      icon: mdi:bell-alert
+      icon_height: 40px
+      show_name: true
+      show_icon: true
+      tap_action:
+        action: perform-action
+        perform_action: script.alerte_famille
+        data:
+          title: Test critique
+          message: Ceci doit percer le mode silencieux.
+          critique: true
+        target: {}

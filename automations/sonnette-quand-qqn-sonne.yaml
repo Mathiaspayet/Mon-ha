@@ -18,6 +18,7 @@ actions:
   data:
     title: Sonnette maison
     message: Quelqu'un sonne !
+    alerte: sonnette
 - data:
     with_group: true
     entity_id: media_player.salle_a_manger

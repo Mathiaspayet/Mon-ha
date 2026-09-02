@@ -52,9 +52,20 @@ tableau de bord, visible du seul compte admin.
 
 | Élément | Rôle |
 |---|---|
-| `script.alerte_famille` | Point d'entrée unique, diffuse aux appareils actifs |
-| `input_boolean.notif_<appareil>` | Un interrupteur par appareil, dans la vue « Réglages » |
-| Vue « Réglages » | Cases à cocher + bouton de test + liste des destinataires en direct |
+| `script.alerte_famille` | Point d'entrée unique, diffuse à tous les appareils ciblés |
+| `input_boolean.critique_<alerte>` | Un interrupteur par **type d'alerte** : critique ou non |
+| Vue « Réglages » | Liste des appareils (lecture seule) + interrupteurs de criticité + tests |
+
+### Destinataires
+
+Aucune configuration. Tout appareil de l'app Compagnon est notifié dès qu'il
+apparaît — le script les découvre via `integration_entities('mobile_app')`.
+
+Pour en **exclure** un, l'ajouter à la liste `exclus` en tête de la séquence de
+`scripts/alerte_famille.yaml`. Aujourd'hui : `['notify.i10_pro']` (tablette murale).
+
+⚠️ Cette liste est **dupliquée** dans la carte « Appareils » de la vue « Réglages »
+(`dashboards/lovelace.yaml`), qui s'en sert pour l'affichage. Modifier les deux.
 
 ### Paramètres du script
 
@@ -62,7 +73,8 @@ tableau de bord, visible du seul compte admin.
 |---|---|---|
 | `message` | oui | Le texte de la notification |
 | `title` | non | Titre affiché au-dessus (défaut : `Domolaunaguet`) |
-| `critique` | non | Perce le mode silencieux et Ne pas déranger |
+| `alerte` | non | Id du type d'alerte — le script lit `input_boolean.critique_<id>` |
+| `critique` | non | Force la criticité, l'emporte sur l'interrupteur (boutons de test) |
 | `donnees` | non | Bloc `data` supplémentaire fusionné au payload |
 
 ### Les trois chemins
@@ -80,24 +92,25 @@ Le script choisit sa route selon les paramètres reçus :
    C'est le chemin natif et robuste ; il ne transporte que `message` et `title`,
    ce qui est précisément pourquoi le chemin 2 existe.
 
-**Qui est en critique ?** Les quatre automatisations d'alarme : détection nuit,
-détection vacances, pré-alerte silencieuse et déclenchement sonore. Rien d'autre —
-la sonnette et l'alerte de porte de garage restent en notification normale.
+**Qui est en critique ?** Ça ne se décide plus dans le YAML : chaque automatisation
+déclare son type d'alerte, et l'interrupteur correspondant se règle depuis la vue
+« Réglages ».
+
+| Id d'alerte | Automatisation | Réglage initial |
+|---|---|---|
+| `alarme_declenchee` | Déclenchement sonore et visuel | 🔴 critique |
+| `alarme_nuit` | Détection nuit | 🔴 critique |
+| `alarme_vacances` | Détection vacances | 🔴 critique |
+| `alarme_prealerte` | Pré-alerte silencieuse | 🔴 critique |
+| `sonnette` | Sonnette | normal |
+| `garage` | Porte de garage restée ouverte | normal |
 
 Conséquence à connaître : la centrale `manual` n'entre en `pending` que sur un appel
 à `alarm_control_panel.alarm_trigger`, lequel n'est émis que par les automatisations
-nuit et vacances (l'armement, lui, passe par `arming`). Une détection réelle produit
-donc **trois notifications critiques** :
-
-| Instant | Automatisation | Message |
-|---|---|---|
-| t = 0 | détection nuit *ou* vacances | quel capteur a détecté |
-| t = 0 | pré-alerte silencieuse | décompte entamé, lumières qui clignotent |
-| t + 60 s | déclenchement sonore | sirène extérieure activée |
-
-Les deux premières partent au même instant. C'est voulu — sur une intrusion, mieux
-vaut deux alertes qu'une manquée. Pour n'en garder qu'une à t = 0, retirer
-`critique: true` de `alarme-declenchement-silencieuse.yaml`.
+nuit et vacances (l'armement, lui, passe par `arming`). Avec les quatre alarmes en
+critique, une détection réelle produit **trois notifications critiques** — la détection
+et la pré-alerte au même instant, le déclenchement sonore 60 s plus tard. Pour n'en
+garder qu'une à t = 0, décocher « Pré-alerte » dans la vue « Réglages ».
 
 ⚠️ **Sur iOS**, l'alerte critique exige que « Alertes critiques » soit autorisé dans
 l'app Compagnon (Réglages → Notifications). Sans cette permission, la notification

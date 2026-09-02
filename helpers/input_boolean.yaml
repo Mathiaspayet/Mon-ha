@@ -12,17 +12,30 @@ lumieres_automatiques:
 etat_depart_maison:
   name: État depart maison
 
-# --- Destinataires des notifications ---------------------------------------
-# Lus par script.alerte_famille. Convention de nommage OBLIGATOIRE :
-#   input_boolean.notif_<slug de l'entité notify.*>
-# Un appareil sans helper est notifié par défaut ; ce helper sert à l'exclure.
+# --- Criticité des notifications -------------------------------------------
+# Lus par script.alerte_famille via son champ `alerte`. Convention :
+#   input_boolean.critique_<id d'alerte>
+# Activé = la notification perce le silencieux et Ne pas déranger.
 # Pilotés depuis la vue « Réglages » du tableau de bord (compte admin).
-notif_pixel_9a:
-  name: Notif Pixel 9a
-  icon: mdi:cellphone-message
-notif_iphone_marine:
-  name: Notif iPhone Marine
-  icon: mdi:cellphone-message
-notif_i10_pro:
-  name: Notif I10 Pro
-  icon: mdi:tablet
+#
+# Le choix des DESTINATAIRES ne passe plus par des helpers : tout appareil de
+# l'app Compagnon est notifié, sauf ceux listés en dur dans la variable
+# `exclus` de scripts/alerte_famille.yaml.
+critique_alarme_declenchee:
+  name: Critique alarme declenchee
+  icon: mdi:alarm-light
+critique_alarme_nuit:
+  name: Critique alarme nuit
+  icon: mdi:weather-night
+critique_alarme_vacances:
+  name: Critique alarme vacances
+  icon: mdi:bag-suitcase
+critique_alarme_prealerte:
+  name: Critique alarme prealerte
+  icon: mdi:timer-alert
+critique_sonnette:
+  name: Critique sonnette
+  icon: mdi:bell-ring
+critique_garage:
+  name: Critique garage
+  icon: mdi:garage-alert

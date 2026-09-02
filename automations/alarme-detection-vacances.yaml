@@ -42,4 +42,4 @@ actions:
   data:
     title: 🚨 Alarme Vacances
     message: Détection sur {{ trigger.to_state.name }} — alarme déclenchée.
-    critique: true
+    alerte: alarme_vacances
