@@ -38,6 +38,7 @@ registry/         zones, personnes
 integrations/     dépôts HACS (avec versions), Apps, entrées de configuration
 blueprints/       métadonnées du blueprint utilisé
 docs/             rapport d'audit du 29 août 2026
+nas/              script de surveillance du Pi depuis le NAS Synology
 ```
 
 ## Notifications
