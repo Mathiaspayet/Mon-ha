@@ -21,6 +21,12 @@
 # regroupe déjà lumières, volet, chauffage et capteurs, et qui reste à jour toute
 # seule quand on ajoute une entité. Une sous-vue dessinée à la main ne se mettrait
 # pas à jour et devrait être maintenue pièce par pièce.
+#
+# Les cartes de zone n'ont volontairement AUCUNE commande. La fonction
+# area-controls avait été essayée : elle ajoute une à trois grosses touches par
+# carte, de nombre variable selon la pièce, ce qui triple la hauteur, rend la
+# grille irrégulière et noie le nom de la pièce. Les commandes sont sur la page
+# de zone, à un appui.
 ---
 views:
 - title: Maison
@@ -409,14 +415,6 @@ views:
   badges: []
   sections:
   - type: grid
-    column_span: 3
-    cards:
-    - type: markdown
-      grid_options:
-        columns: full
-      content: 'Appuyez sur une pièce pour ouvrir son détail : lumières, volet, chauffage
-        et capteurs, tenus à jour automatiquement par Home Assistant.'
-  - type: grid
     cards:
     - type: heading
       heading: Rez-de-chaussée
@@ -427,91 +425,68 @@ views:
       alert_classes: &id001 []
       sensor_classes: &id002
       - temperature
-      features: &id003
-      - type: area-controls
-      features_position: bottom
-      grid_options: &id004
+      grid_options: &id003
         columns: 6
       area: entree
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: cuisine
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salle_a_manger
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salon
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salon_piano
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salon_tele
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: bureau
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: buanderie
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: cellier
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: wc_rdc
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: garage
   - type: grid
     cards:
@@ -523,73 +498,55 @@ views:
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: couloir_etage
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: chambre_parentale
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: chambre_auguste
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: chambre_margaux
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: chambre
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salle_de_bain
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: salle_d_eau
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: wc_etage
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: patio
   - type: grid
     cards:
@@ -601,7 +558,5 @@ views:
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
-      features: *id003
-      features_position: bottom
-      grid_options: *id004
+      grid_options: *id003
       area: exterieur

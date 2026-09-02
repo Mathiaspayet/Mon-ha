@@ -42,7 +42,7 @@ areas:
 - area_id: cellier
   name: Cellier
   floor_id: rez_de_chaussee
-  icon: mdi:cupboard-outline
+  icon: mdi:fridge-outline
 - area_id: cuisine
   name: Cuisine
   floor_id: rez_de_chaussee
@@ -54,7 +54,7 @@ areas:
 - area_id: salle_a_manger
   name: Salle à manger
   floor_id: rez_de_chaussee
-  icon: mdi:table-chair
+  icon: mdi:glass-wine
 - area_id: salon
   name: Salon
   floor_id: rez_de_chaussee
