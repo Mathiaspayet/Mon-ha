@@ -288,17 +288,17 @@ Deux zones créées, une supprimée :
   « Etage » — ce qui avait été pris pour une commodité d'affichage était juste.
 - **Cabanon** supprimé : il n'existe pas.
 
-### L'extérieur ne compte que deux éclairages
+### L'éclairage du jardin et le projet ETS
 
-Quatre lumières y étaient rattachées. Après le déplacement du patio il en reste trois, et
-la troisième est morte : `light.eclairage_jardin` (adresse `18/0/0`) **n'a jamais été
-allumée** sur dix jours d'historique — elle ne change d'état qu'aux redémarrages de Home
-Assistant. Le groupe principal 18 n'existe pas non plus dans le projet ETS, dont les
-groupes s'arrêtent à 17.
+Trois lumières restent à l'extérieur après le déplacement du patio : la **terrasse**,
+**Porsche et travées**, et l'**éclairage du jardin**. Ce dernier sert peu — il n'a pas
+été allumé une seule fois sur dix jours d'historique — ce qui ne l'empêche pas d'exister
+et d'être bien dehors.
 
-Les deux éclairages extérieurs réels sont la **terrasse** et **Porsche et travées**,
-tous deux avec un historique d'allumages. `light.eclairage_jardin` est à retirer de
-`knx.yaml`.
+À noter pour plus tard : son adresse `18/0/0` n'est pas dans le projet ETS, dont les
+groupes principaux s'arrêtent à 17. L'export `.knxproj` datant du 18/08/2024, cet
+éclairage lui est vraisemblablement postérieur. Un rappel de plus que ce fichier sert à
+dire « cette adresse existe », jamais « cette adresse est morte ».
 
 ### Douze entités rattachées
 
@@ -306,11 +306,11 @@ tous deux avec un historique d'allumages. `light.eclairage_jardin` est à retire
   `ruban_led_salon` → Salon, `ruban_led_salon_piano` → Salon Piano.
 - **6 thermostats KNX** : Chambre parentale, Chambre Auguste, Chambre Margaux,
   Chambre d'amis, Salle de bain (Salle d'eau était déjà rattachée).
-- **1 clim Daikin** : Couloir Étage.
+- **2 clim Daikin** : « clim chambre » dans la Chambre parentale, où elle complète le
+  thermostat KNX, et « Clim couloir étage » dans le Couloir Étage.
 - **1 lumière déplacée** : `patio_exterieur` de Extérieur vers Patio.
 
-Reste `climate.clim_chambre_room_temperature` — la clim Daikin nommée « clim chambre ».
-Elle n'est pas dans la Chambre parentale ; laquelle reste à confirmer.
+Les 8 thermostats sont désormais rattachés, contre 1 au départ.
 
 ### ⚠️ Ce qui n'a pas pu être fait par l'API
 

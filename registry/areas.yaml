@@ -6,8 +6,8 @@
 #     capteur d'alarme n'avaient aucune zone.
 #   - « Patio » rattaché à l'ÉTAGE, pas à l'extérieur : le patio est à ce niveau.
 #   - « Cabanon » supprimé, il n'existe pas.
-#   - L'extérieur ne compte que deux éclairages réels : la terrasse et
-#     Porsche/travées.
+#   - L'extérieur garde ses trois éclairages : terrasse, Porsche/travées et
+#     jardin. Ce dernier sert peu mais existe bien.
 #
 # temperature_entity_id_souhaite : ce champ n'est PAS écrit ici. Le serveur MCP
 # refuse la commande config/area_registry/update et l'outil dédié ne l'expose
