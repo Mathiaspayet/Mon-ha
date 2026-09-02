@@ -46,6 +46,17 @@
 # Une entité KNX sans device_class hérite d'une icône par défaut qui ne veut rien
 # dire — la sirène et la simulation de présence rendaient un contour de téléphone.
 # Toute entité KNX exposée doit porter une icône explicite.
+#
+# ATTENTION : switch.blocage_porte_de_garage est une adresse KNX 16/0/8 SANS
+# state_address. Home Assistant n'a donc aucun retour : l'état affiché est
+# seulement ce qu'il a écrit en dernier. Un blocage qui n'a pas pris s'affiche
+# quand même « activé ». La tuile qui l'accompagne, conditionnée sur cet état,
+# reste le meilleur indice disponible, pas une certitude.
+#
+# La barre de pluie du bloc Dehors est en émojis (⬜ / 🟦) et non en caractères
+# semi-graphiques : les blocs ░▒▓█ n'existent pas dans toutes les polices et
+# leurs largeurs divergent à la première substitution, ce qui casse l'alignement.
+# Les émojis carrés sont tous rendus par la même police, à largeur constante.
 ---
 views:
 - title: Maison
@@ -299,6 +310,88 @@ views:
       grid_options:
         columns: 6
         rows: 2
+    - type: tile
+      entity: cover.porte_de_garage
+      name: Porte de garage
+      icon: mdi:garage-variant
+      features:
+      - type: cover-open-close
+      grid_options:
+        columns: full
+        rows: 2
+    - type: tile
+      entity: switch.blocage_porte_de_garage
+      name: Blocage du garage
+      icon: mdi:lock-alert-outline
+      color: orange
+      visibility:
+      - condition: state
+        entity: switch.blocage_porte_de_garage
+        state: 'on'
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Dehors
+      heading_style: title
+      icon: mdi:weather-partly-cloudy
+    - type: tile
+      entity: sensor.31_weather_alert
+      name: Vigilance Haute-Garonne
+      icon: mdi:alert-decagram-outline
+      color: red
+      visibility:
+      - condition: state
+        entity: sensor.31_weather_alert
+        state_not: Vert
+      grid_options:
+        columns: full
+    - type: weather-forecast
+      entity: weather.launaguet
+      name: Launaguet
+      forecast_type: daily
+      show_current: true
+      show_forecast: true
+      grid_options:
+        columns: full
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
+        {%- if f is not mapping or f | count == 0 %}
+        ### 🌧️ Pluie dans l'heure
+        Météo-France ne donne pas la prévision minute pour Launaguet en ce moment.
+        {%- else %}
+        {%- set ns = namespace(rows=[]) %}
+        {%- for k, v in f.items() %}
+        {%- set ns.rows = ns.rows + [[k.split(' ')[0] | int, v]] %}
+        {%- endfor %}
+        {%- set rows = ns.rows | sort(attribute='0') %}
+        {%- set n = rows | count %}
+        {%- set b = namespace(bar='', debut=none, detail=[]) %}
+        {%- for i in range(n) %}
+        {%- set m = rows[i][0] %}
+        {%- set lab = rows[i][1] %}
+        {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
+        {%- set mouille = 'pluie' in (lab | lower) %}
+        {%- if mouille and b.debut is none %}{% set b.debut = [m, lab] %}{% endif %}
+        {%- if mouille %}{% set b.detail = b.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
+        {%- set b.bar = b.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
+        {%- endfor %}
+        {%- if b.debut is none %}
+        ### ☀️ Pas de pluie dans l'heure
+        {%- else %}
+        ### 🌧️ {{ b.debut[1] }} {{ 'maintenant' if b.debut[0] == 0 else 'dans %d min' | format(b.debut[0]) }}
+        {%- endif %}
+
+        maintenant {{ b.bar }} +1 h
+        {%- if b.detail %}
+
+        {{ b.detail | join(' · ') }}
+        {%- endif %}
+        {%- endif %}
   - type: grid
     visibility:
     - condition: state

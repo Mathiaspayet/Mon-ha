@@ -576,6 +576,75 @@ Deux boutons complètent la section : **Test normal** et **Test critique**, qui 
 `script.alerte_famille` avec et sans `critique: true`. De quoi vérifier d'un appui que la
 chaîne fonctionne, et que le mode silencieux est bien percé.
 
+## Refonte — le garage et la météo sur l'accueil
+
+### La porte de garage, avec son piège
+
+Une tuile pleine largeur en bas des Raccourcis, avec la fonction `cover-open-close` :
+trois touches ▲ ■ ▼. Un appui sur le corps de la tuile ouvre la fiche détaillée, il
+n'ouvre pas la porte — impossible de la déclencher par mégarde en faisant défiler.
+
+⚠️ **`switch.blocage_porte_de_garage` n'a aucun retour d'état.** C'est l'adresse KNX
+`16/0/8` déclarée sans `state_address` : Home Assistant écrit dessus et affiche ce
+qu'il a écrit, sans jamais savoir si l'ordre est passé. Un blocage qui n'a pas pris
+s'affiche quand même « activé ».
+
+Ça compte ici, parce que le blocage est piloté automatiquement — `script.depart_maison`
+l'active, `script.retour_maison` le désactive — et qu'une porte bloquée refuse de
+s'ouvrir sans rien dire. Une seconde tuile, orange, apparaît donc sous la première
+**uniquement quand le blocage est marqué actif**, et un appui le relâche. C'est le
+meilleur indice dont on dispose, pas une certitude : si un jour la porte refuse de
+bouger alors que la tuile orange est absente, c'est le retour d'état qui manque, pas
+la commande.
+
+### Le bloc « Dehors »
+
+Trois cartes, toutes natives, entre les Raccourcis et « Allumé en ce moment ».
+
+| Carte | Rôle |
+|---|---|
+| Vigilance Haute-Garonne | `sensor.31_weather_alert`, masquée tant que l'état vaut `Vert` |
+| Prévision | Carte `weather-forecast` native sur `weather.launaguet`, `forecast_type: daily`, conditions du moment plus les jours suivants |
+| Pluie dans l'heure | Carte `markdown` sur l'attribut `1_hour_forecast` de `sensor.launaguet_next_rain` |
+
+L'ancien tableau de bord affichait tout ça avec `custom:meteo-france-weather-card`,
+une carte HACS. Le nouveau tableau n'utilise aucune ressource HACS, donc la prévision
+minute est reconstruite en Jinja.
+
+### Comment se lit la barre de pluie
+
+`sensor.launaguet_next_rain` porte un attribut `1_hour_forecast` : neuf créneaux
+étiquetés `0 min` … `55 min`, chacun valant « Temps sec », « Pluie faible »,
+« Pluie modérée » ou « Pluie forte ». Les créneaux **ne sont pas réguliers** : cinq
+minutes jusqu'à `25 min`, puis dix minutes pour `35`, `45` et `55`. La carte rend donc
+un carré par tranche de cinq minutes — un carré pour les six premiers créneaux, deux
+pour les trois derniers — soit douze carrés pour une heure pleine :
+
+```
+### ☀️ Pas de pluie dans l'heure
+
+maintenant ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ +1 h
+```
+
+```
+### 🌧️ Pluie faible dans 25 min
+
+maintenant ⬜⬜⬜⬜⬜🟦🟦🟦🟦🟦🟦⬜ +1 h
+
+25 min : faible · 35 min : modérée · 45 min : faible
+```
+
+L'intensité est dans la ligne de détail, pas dans la couleur : la barre ne dit que
+« sec » ou « pluie ». Trois nuances de bleu n'existent pas en émojis, et les blocs
+semi-graphiques `░▒▓█` n'ont pas la même largeur d'une police à l'autre — l'alignement
+serait cassé dès la première substitution de police. Les carrés émojis, eux, sont tous
+rendus par la même police.
+
+Le titre lit le premier créneau mouillé et le libellé de Météo-France tel quel, donc
+« Pluie modérée dans 35 min » sort directement de la source. Quand l'attribut est
+absent — la prévision minute n'est pas disponible partout en France — la carte le dit
+au lieu d'afficher une barre vide.
+
 ## Où en est la refonte
 
 | Étape | État |
