@@ -523,13 +523,58 @@ Réservée au compte admin, comme décidé. Six sections.
 | Rubans LED | Le diagnostic de la phase 2, par ruban, plus les commandes HCL |
 | À observer | Les cinq objets KNX dont l'usage reste à confirmer — `0/0/3` et `12/6/0` en écoute seule |
 | Système | Température du Pi et du NAS, état des volumes, VMC, sauvegardes et mises à jour |
-| Alertes critiques | Les six interrupteurs de criticité, repris de l'ancienne vue Réglages |
+| Alertes critiques | La liste des appareils notifiés, les deux boutons de test, et les six interrupteurs de criticité repris de l'ancienne vue Réglages |
 
 ### ⚠️ Le volume du NAS est à 99 %
 
 Relevé en construisant la section Système : `sensor.stockagereseau_volume_2_volume_utilise`
 affiche **99 %** et l'état du volume est passé à « attention ». C'est là que vont les
 sauvegardes Home Assistant. La tuile est en rouge dans la vue Technique.
+
+## Refonte — trois retouches après relecture
+
+### Les badges de personne sont partis
+
+`person.marine` et `person.domolaunaguet` affichaient « Maison » ou « Absent » et rien
+d'autre — une information que l'on a déjà en entrant dans la maison. Ils occupaient les
+deux premières places de la barre de badges de Maison et de Sécurité, devant l'alarme et
+les températures. Retirés des deux vues. Sur Sécurité, `cover.porte_de_garage` prend la
+place laissée libre : un badge qui, lui, dit quelque chose qu'on ne voit pas depuis le
+salon.
+
+### La température extérieure était celle de Météo France, pas la nôtre
+
+Les badges « Dehors » et la courbe hebdomadaire pointaient
+`sensor.temperature_exterieure_meteo_france` — la prévision de la station la plus proche.
+Or il existe déjà `sensor.moyenne_temperature_exterieure`, qui moyenne trois sources :
+
+| Source | Entité | Relevé au moment du contrôle |
+|---|---|---|
+| Sonde de la chaudière (KNX 1.1.35) | `sensor.temperature_exterieure_chaudiere` | 26,1 °C |
+| Sonde extérieure de la clim | `sensor.clim_chambre_climatecontrol_outdoor_temperature` | 23,5 °C |
+| Météo France | `sensor.temperature_exterieure_meteo_france` | 24,7 °C |
+| **Moyenne** | `sensor.moyenne_temperature_exterieure` | **24,8 °C** |
+
+Les deux badges et la courbe pointent maintenant la moyenne. Sur la courbe, la légende
+devient « Dehors (moyenne) » pour que la différence avec l'ancienne série soit lisible
+dans l'historique.
+
+### Les appareils qui reçoivent les notifications sont maintenant visibles
+
+`script.alerte_famille` découvre seul les appareils de l'app Compagnon, ce qui est
+pratique mais opaque : rien n'affichait la liste effective. La section « Alertes
+critiques » de Technique porte désormais une sous-section **Appareils** qui rejoue la même
+découverte que le script — `integration_entities('mobile_app')` filtré sur `notify.` — et
+sépare les appareils notifiés (✅) de ceux exclus (⬜, aujourd'hui la tablette murale
+`notify.i10_pro`).
+
+⚠️ La liste des exclusions est écrite deux fois : dans `scripts/alerte_famille.yaml` et
+dans le template de cette carte. Elles ne se synchronisent pas toutes seules. En exclure
+un nouvel appareil demande de modifier les deux — c'est rappelé sous la carte.
+
+Deux boutons complètent la section : **Test normal** et **Test critique**, qui appellent
+`script.alerte_famille` avec et sans `critique: true`. De quoi vérifier d'un appui que la
+chaîne fonctionne, et que le mode silencieux est bien percé.
 
 ## Où en est la refonte
 

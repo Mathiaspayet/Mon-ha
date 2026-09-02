@@ -14,8 +14,17 @@
 # Les conditions filtrent sur UNLOCKED et OPENED — une correspondance positive,
 # pour qu'un « unknown » transitoire ne déclenche pas de fausse alerte.
 #
-# Les badges portent show_name ET show_state : sans show_name, une puce de
-# personne n'affiche que « Maison » ou « Absent », sans dire de qui il s'agit.
+# Les badges portent show_name ET show_state : sans show_name, une puce n'affiche
+# que sa valeur, sans dire de quoi elle parle.
+#
+# Aucun badge de personne : person.marine et person.domolaunaguet ne disaient rien
+# d'utile (« Maison » / « Absent » toute la journée) et prenaient la place des
+# mesures. Sur Sécurité, c'est la porte de garage qui les remplace.
+#
+# La température extérieure affichée est sensor.moyenne_temperature_exterieure,
+# pas Météo France seul : la moyenne combine la sonde de la chaudière (1.1.35),
+# la sonde extérieure de la clim et la prévision Météo France. C'est la valeur
+# mesurée chez nous, pas celle de la station la plus proche.
 #
 # Vue Pièces : les 21 zones rangées par étage, chaque carte ouvrant la sous-vue de
 # sa pièce via un tap_action explicite.
@@ -47,16 +56,6 @@ views:
   theme: Backend-selected
   badges:
   - type: entity
-    entity: person.marine
-    name: Marine
-    show_name: true
-    show_state: true
-  - type: entity
-    entity: person.domolaunaguet
-    name: Mathias
-    show_name: true
-    show_state: true
-  - type: entity
     entity: alarm_control_panel.alarme_maison
     name: Alarme
     show_name: true
@@ -68,7 +67,7 @@ views:
     show_name: true
     show_state: true
   - type: entity
-    entity: sensor.temperature_exterieure_meteo_france
+    entity: sensor.moyenne_temperature_exterieure
     name: Dehors
     icon: mdi:sun-thermometer-outline
     show_name: true
@@ -647,7 +646,7 @@ views:
     show_state: true
     icon: mdi:home-thermometer-outline
   - type: entity
-    entity: sensor.temperature_exterieure_meteo_france
+    entity: sensor.moyenne_temperature_exterieure
     name: Dehors
     show_name: true
     show_state: true
@@ -809,8 +808,8 @@ views:
       entities:
       - entity: sensor.moyenne_temperature_interieure
         name: Intérieur
-      - entity: sensor.temperature_exterieure_meteo_france
-        name: Dehors
+      - entity: sensor.moyenne_temperature_exterieure
+        name: Dehors (moyenne)
 - title: Sécurité
   path: securite
   icon: mdi:shield-home-outline
@@ -824,13 +823,8 @@ views:
     show_name: true
     show_state: true
   - type: entity
-    entity: person.marine
-    name: Marine
-    show_name: true
-    show_state: true
-  - type: entity
-    entity: person.domolaunaguet
-    name: Mathias
+    entity: cover.porte_de_garage
+    name: Garage
     show_name: true
     show_state: true
   sections:
@@ -1282,6 +1276,22 @@ views:
       heading: Alertes critiques
       heading_style: title
       icon: mdi:bell-alert
+    - type: heading
+      heading: Appareils
+      heading_style: subtitle
+      icon: mdi:cellphone-check
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        {% set exclus = ['notify.i10_pro'] %}{% set ns = namespace(oui=[], non=[]) %}{% for e in integration_entities('mobile_app') if e.startswith('notify.') %}{% set n = state_attr(e, 'friendly_name') or e %}{% if e in exclus %}{% set ns.non = ns.non + [n] %}{% else %}{% set ns.oui = ns.oui + [n] %}{% endif %}{% endfor %}**Appareils notifiés ({{ ns.oui | count }})**
+        {% for n in ns.oui %}- ✅ {{ n }}
+        {% endfor %}{% if ns.non %}
+        **Non notifiés ({{ ns.non | count }})**
+        {% for n in ns.non %}- ⬜ {{ n }}
+        {% endfor %}{% endif %}
+
+        *Découverts seuls dans l'app Compagnon. Pour en exclure un, l'ajouter à la liste `exclus` de `script.alerte_famille` — et ici même.*
     - type: markdown
       grid_options:
         columns: full
@@ -1306,6 +1316,37 @@ views:
         name: Sonnette
       - entity: input_boolean.critique_garage
         name: Garage resté ouvert
+    - type: horizontal-stack
+      grid_options:
+        columns: full
+      cards:
+      - type: button
+        name: Test normal
+        icon: mdi:bell-ring
+        icon_height: 40px
+        show_name: true
+        show_icon: true
+        tap_action:
+          action: perform-action
+          perform_action: script.alerte_famille
+          data:
+            title: Test normal
+            message: Notification standard envoyée depuis le tableau de bord.
+          target: {}
+      - type: button
+        name: Test critique
+        icon: mdi:bell-alert
+        icon_height: 40px
+        show_name: true
+        show_icon: true
+        tap_action:
+          action: perform-action
+          perform_action: script.alerte_famille
+          data:
+            title: Test critique
+            message: Ceci doit percer le mode silencieux.
+            critique: true
+          target: {}
 - title: Entrée
   path: entree
   icon: mdi:door-open
