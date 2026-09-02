@@ -26,4 +26,5 @@ actions:
   data:
     title: 🚨 ALARME DÉCLENCHÉE
     message: Intrusion détectée — sirène extérieure et clignotement activés.
+    critique: true
 mode: single

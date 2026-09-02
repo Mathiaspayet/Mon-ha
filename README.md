@@ -52,9 +52,46 @@ tableau de bord, visible du seul compte admin.
 
 | Élément | Rôle |
 |---|---|
-| `script.alerte_famille` | Reçoit `message` (obligatoire) et `title`, diffuse aux appareils actifs |
+| `script.alerte_famille` | Point d'entrée unique, diffuse aux appareils actifs |
 | `input_boolean.notif_<appareil>` | Un interrupteur par appareil, dans la vue « Réglages » |
 | Vue « Réglages » | Cases à cocher + bouton de test + liste des destinataires en direct |
+
+### Paramètres du script
+
+| Champ | Obligatoire | Rôle |
+|---|---|---|
+| `message` | oui | Le texte de la notification |
+| `title` | non | Titre affiché au-dessus (défaut : `Domolaunaguet`) |
+| `critique` | non | Perce le mode silencieux et Ne pas déranger |
+| `donnees` | non | Bloc `data` supplémentaire fusionné au payload |
+
+### Les trois chemins
+
+Le script choisit sa route selon les paramètres reçus :
+
+1. **Aucun appareil actif** → `persistent_notification`, l'alerte n'est jamais perdue.
+2. **`critique` ou `donnees` fourni** → services hérités `notify.mobile_app_<appareil>`,
+   un appel par appareil, avec un bloc `data` adapté à la plateforme :
+   - **iOS** : `push.sound.critical = 1`, volume 1.0 — alerte critique.
+   - **Android** : `channel: alarm_stream`, `ttl: 0`, `priority: high`, `sticky` —
+     passe par le flux alarme, ignore le silencieux et Ne pas déranger.
+   La plateforme est déduite de `device_attr(entité, 'manufacturer')`.
+3. **Par défaut** → `notify.send_message` sur la liste d'entités, un seul appel.
+   C'est le chemin natif et robuste ; il ne transporte que `message` et `title`,
+   ce qui est précisément pourquoi le chemin 2 existe.
+
+**Qui est en critique ?** Seule `automation.declenchement_alarme` — celle qui allume
+la sirène. Les automatisations de détection (nuit, vacances) et la pré-alerte
+restent en notification normale : la centrale a un `delay_time` de 60 s, elles
+préviennent pendant le délai de grâce et donnent le capteur concerné, sans faire
+hurler le téléphone à chaque rentrée à la maison.
+
+⚠️ **Sur iOS**, l'alerte critique exige que « Alertes critiques » soit autorisé dans
+l'app Compagnon (Réglages → Notifications). Sans cette permission, la notification
+arrive quand même, mais en mode normal.
+
+⚠️ **Ne pas renommer les entités `notify.*`** : le chemin 2 déduit le nom du service
+hérité du slug de l'entité (`notify.pixel_9a` → `notify.mobile_app_pixel_9a`).
 
 **Ajouter un téléphone** : rien à faire, il est notifié dès qu'il apparaît dans l'app
 Compagnon. Pour lui donner un interrupteur, créer le helper `Notif <nom de l'appareil>`

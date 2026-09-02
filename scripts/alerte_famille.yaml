@@ -10,14 +10,32 @@
 #         mieux vaut trop notifier que rater une alarme).
 #         Pour l'exclure, créer input_boolean.notif_<slug> et le mettre à off.
 #
+# TROIS CHEMINS (choose) :
+#   1. Aucun appareil actif      -> persistent_notification, rien n'est perdu.
+#   2. critique OU donnees       -> services hérités notify.mobile_app_<slug>,
+#                                   un appel par appareil, avec bloc data adapté
+#                                   à la plateforme (device_attr manufacturer).
+#   3. Défaut                    -> notify.send_message sur la liste d'entités,
+#                                   un seul appel, natif et robuste.
+#
+# Le chemin 2 déduit le nom du service hérité du slug de l'entité notify
+# (notify.pixel_9a -> notify.mobile_app_pixel_9a). Renommer une entité notify
+# casserait cette correspondance : ne pas les renommer.
+#
+# iOS : l'alerte critique exige que « Alertes critiques » soit autorisé dans
+#       l'app Compagnon (Réglages > Notifications). Sinon elle arrive en normal.
+# Android : channel alarm_stream = passe par le flux alarme, ignore silencieux
+#       et Ne pas déranger.
+#
 # Export Home Assistant du 2026-09-02.
 ---
 alias: Alerte famille
 description: >-
   Point d'entree unique des notifications vers les telephones. Decouvre
-  automatiquement les appareils de l'app Compagnon et n'envoie qu'a ceux
-  actives dans Reglages > Notifications (input_boolean.notif_<appareil>).
-  Un appareil sans interrupteur est notifie par defaut.
+  automatiquement les appareils de l'app Compagnon et n'envoie qu'a ceux actives
+  dans Reglages > Notifications (input_boolean.notif_<appareil>). Un appareil
+  sans interrupteur est notifie par defaut. Le mode critique perce le silencieux
+  et Ne pas deranger (alarm_stream sur Android, critical alert sur iOS).
 icon: mdi:cellphone-message
 mode: parallel
 max: 10
@@ -36,19 +54,58 @@ fields:
     example: Sonnette maison
     selector:
       text: null
+  critique:
+    name: Alerte critique
+    description: Perce le mode silencieux et Ne pas deranger. Reserve aux alarmes.
+    required: false
+    default: false
+    selector:
+      boolean: null
+  donnees:
+    name: Donnees avancees
+    description: >-
+      Bloc data supplementaire fusionne au payload (image, actions, TTS...).
+      Ecrase les cles du mode critique en cas de conflit.
+    required: false
+    example: '{"image": "/api/camera_proxy/camera.sonnette"}'
+    selector:
+      object: null
 sequence:
 - alias: Liste des telephones actives
   variables:
     cibles: >-
-      {% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app')
-      if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~
-      e.split('.')[1]) != 'off' %}{% set ns.l = ns.l + [e] %}{% endif %}{% endfor
-      %}{{ ns.l }}
-- if:
-  - condition: template
-    value_template: '{{ cibles | count > 0 }}'
-  then:
-  - alias: Envoi aux telephones actives
+      {% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app') if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~ e.split('.')[1]) != 'off' %}{% set ns.l = ns.l + [e] %}{% endif %}{% endfor %}{{ ns.l }}
+- choose:
+  - alias: 'Aucun telephone actif : filet de securite'
+    conditions:
+    - condition: template
+      value_template: '{{ cibles | count == 0 }}'
+    sequence:
+    - action: persistent_notification.create
+      data:
+        title: Alerte non distribuee
+        message: '{{ message }} — aucun telephone active dans Reglages > Notifications.'
+  - alias: 'Payload avance : services herites, un appel par appareil'
+    conditions:
+    - condition: template
+      value_template: >-
+        {{ (critique | default(false) | bool(false)) or (donnees | default({}, true) | count > 0) }}
+    sequence:
+    - repeat:
+        for_each: '{{ cibles }}'
+        sequence:
+        - alias: Payload adapte a la plateforme de l'appareil
+          variables:
+            payload: >-
+              {% set crit = critique | default(false) | bool(false) %}{% set extra = donnees | default({}, true) %}{% if crit and device_attr(repeat.item, 'manufacturer') == 'Apple' %}{% set base = {'push': {'sound': {'name': 'default', 'critical': 1, 'volume': 1.0}}} %}{% elif crit %}{% set base = {'channel': 'alarm_stream', 'ttl': 0, 'priority': 'high', 'importance': 'high', 'color': 'red', 'sticky': 'true'} %}{% else %}{% set base = {} %}{% endif %}{{ base | combine(extra) }}
+        - action: notify.mobile_app_{{ repeat.item.split('.')[1] }}
+          continue_on_error: true
+          data:
+            message: '{{ message }}'
+            title: '{{ title | default(''Domolaunaguet'', true) }}'
+            data: '{{ payload }}'
+  default:
+  - alias: Envoi standard a tous les appareils actifs
     action: notify.send_message
     continue_on_error: true
     target:
@@ -56,9 +113,3 @@ sequence:
     data:
       message: '{{ message }}'
       title: '{{ title | default(''Domolaunaguet'', true) }}'
-  else:
-  - alias: 'Filet de securite : aucun telephone active'
-    action: persistent_notification.create
-    data:
-      title: Alerte non distribuee
-      message: '{{ message }} — aucun telephone active dans Reglages > Notifications.'
