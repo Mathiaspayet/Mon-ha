@@ -259,6 +259,74 @@ Le `.knxproj` date du 18/08/2024. Sur des thermostats qui *fonctionnent* aujourd
 certains objets d'état y apparaissent comme non raccordés : le fichier sous-déclare. Il
 sert à dire « cette adresse existe », jamais « cette adresse est morte ».
 
+## Refonte de l'interface — étape 1 : le registre
+
+Le cahier des charges de la refonte a établi que les fonctions modernes de Home Assistant
+— page d'accueil mobile, cartes de zone, navigation par pièce — reposent toutes sur le
+registre des zones et des étages, et que ce registre était incomplet. Cette étape le
+remet d'aplomb. **Aucun effet visible**, mais rien du reste n'est possible sans.
+
+### Trois étages, vingt-et-une zones
+
+| Étage | Niveau | Zones |
+|---|---:|---|
+| Rez-de-chaussée | 0 | Buanderie, Bureau, Cellier, Cuisine, Entrée, Salle à manger, Salon, Salon Piano, Salon Télé, WC RDC, **Garage** |
+| Étage | 1 | Chambre Auguste, Chambre d'amis, Chambre Margaux, Chambre parentale, Couloir Étage, Salle d'eau, Salle de bain, WC étage |
+| Extérieur | 2 | Cabanon, Extérieur |
+
+La répartition n'a pas été devinée : elle vient des sections « Rez de Chaussée » et
+« Etage » de la vue Éclairage existante, et des groupes `Volets étage` /
+`Volets Rez de Chaussée`. La salle d'eau et la salle de bain sont donc bien à l'étage.
+
+La zone **Garage** a été créée. L'éclairage du garage, la porte, son blocage et le
+capteur d'alarme n'avaient aucune zone alors que la vue Éclairage les range au
+rez-de-chaussée.
+
+### Douze entités rattachées
+
+- **4 lumières** : `eclairage_garage` → Garage, `eclairage_jardin` → Extérieur,
+  `ruban_led_salon` → Salon, `ruban_led_salon_piano` → Salon Piano.
+- **6 thermostats KNX** : chambre Parents, Auguste, Margaux, amis, Salle de bain
+  (Salle d'eau était déjà rattachée).
+- **1 clim Daikin** : couloir étage.
+
+Reste `climate.clim_chambre_room_temperature` — le nom « clim chambre » ne dit pas
+laquelle. À trancher.
+
+### ⚠️ Ce qui n'a pas pu être fait par l'API
+
+Le champ `temperature_entity_id` de chaque zone reste vide. Le serveur MCP refuse
+`config/area_registry/update` (« mutates persistent state that a dedicated tool guards »)
+et l'outil dédié `ha_set_area_or_floor` n'expose pas ce champ.
+
+**À faire à la main** dans Paramètres → Zones et étiquettes → la zone → *Capteur de
+température*. Neuf zones sont concernées, la correspondance est dans
+`registry/areas.yaml` sous la clé `temperature_entity_id_souhaite` :
+
+| Zone | Capteur |
+|---|---|
+| Chambre Auguste | `sensor.temperature_chambre_auguste` |
+| Chambre d'amis | `sensor.temperature_chambre_amis` |
+| Chambre Margaux | `sensor.temperature_chambre_margaux` |
+| Chambre parentale | `sensor.temperature_chambre_parents` |
+| Salle d'eau | `sensor.temperature_salle_d_eau` |
+| Salle de bain | `sensor.temperature_salle_de_bain` |
+| Salon Télé | `sensor.temperature_salon_tele` |
+| Couloir Étage | `sensor.clim_couloir_etage_climatecontrol_room_temperature` |
+| Extérieur | `sensor.temperature_exterieure_meteo_france` |
+
+Sans ce champ, la carte de zone n'affiche pas la température toute seule et il faut la
+nommer explicitement dans chaque carte. Ça marche, c'est juste moins propre à maintenir.
+
+### Décisions arrêtées pour la suite
+
+| Sujet | Décision |
+|---|---|
+| Thème | Sombre sur la tablette murale, thème du système sur les téléphones |
+| Accès | Maison, Pièces, Confort, Sécurité pour tous ; Technique réservée au compte admin |
+| Bloc « attention » | Sécurité, oublis du quotidien, pannes techniques. **Pas** les alertes système, qui vont dans Technique |
+| Vue Diag | Reste dans l'ancien tableau de bord jusqu'au tri des objets KNX, puis ce qui survit rejoint Technique |
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

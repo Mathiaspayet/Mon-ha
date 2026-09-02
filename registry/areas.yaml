@@ -1,65 +1,99 @@
-# 20 zones, AUCUN étage défini (constat H5 de l'audit).
-# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+# Registre des zones et des étages — refonte de l'interface, étape 1 (2026-09-02).
+# 3 étages, 21 zones, aucune zone non rattachée.
+#
+# La zone « Garage » a été créée : l'éclairage du garage, la porte, son blocage
+# et le capteur d'alarme n'avaient aucune zone, et la vue Éclairage les range au
+# rez-de-chaussée.
+#
+# temperature_entity_id_souhaite : ce champ n'est PAS écrit ici. Le serveur MCP
+# refuse la commande config/area_registry/update et l'outil dédié ne l'expose
+# pas. À renseigner à la main dans Paramètres > Zones et étiquettes > la zone >
+# « Capteur de température ». Sans lui, la carte de zone n'affiche pas la
+# température toute seule et il faut la nommer dans chaque carte.
 ---
-floors: []
+floors:
+- floor_id: rez_de_chaussee
+  name: Rez-de-chaussée
+  level: 0
+  icon: mdi:home-floor-g
+- floor_id: etage
+  name: Étage
+  level: 1
+  icon: mdi:home-floor-1
+- floor_id: exterieur
+  name: Extérieur
+  level: 2
+  icon: mdi:tree-outline
 areas:
 - area_id: buanderie
   name: Buanderie
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: bureau
   name: Bureau
-  floor_id: null
-- area_id: cabanon
-  name: Cabanon
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: cellier
   name: Cellier
-  floor_id: null
-- area_id: chambre_auguste
-  name: Chambre Auguste
-  floor_id: null
-- area_id: chambre
-  name: Chambre d'amis
-  floor_id: null
-- area_id: chambre_margaux
-  name: Chambre Margaux
-  floor_id: null
-- area_id: chambre_parentale
-  name: Chambre parentale
-  floor_id: null
-- area_id: couloir_etage
-  name: Couloir Etage
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: cuisine
   name: Cuisine
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: entree
   name: Entrée
-  floor_id: null
-- area_id: exterieur
-  name: Extérieur
-  floor_id: null
-- area_id: salle_d_eau
-  name: Salle d'eau
-  floor_id: null
-- area_id: salle_de_bain
-  name: Salle de bain
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: salle_a_manger
   name: Salle à manger
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: salon
   name: Salon
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: salon_piano
   name: Salon Piano
-  floor_id: null
+  floor_id: rez_de_chaussee
 - area_id: salon_tele
-  name: Salon Télé
-  floor_id: null
+  name: 'Salon Télé '
+  floor_id: rez_de_chaussee
+  temperature_entity_id_souhaite: sensor.temperature_salon_tele
 - area_id: wc_rdc
   name: WC RDC
-  floor_id: null
+  floor_id: rez_de_chaussee
+- area_id: garage
+  name: Garage
+  floor_id: rez_de_chaussee
+- area_id: chambre_auguste
+  name: Chambre Auguste
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_chambre_auguste
+- area_id: chambre
+  name: Chambre d'amis
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_chambre_amis
+- area_id: chambre_margaux
+  name: Chambre Margaux
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_chambre_margaux
+- area_id: chambre_parentale
+  name: Chambre parentale
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_chambre_parents
+- area_id: couloir_etage
+  name: Couloir Etage
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.clim_couloir_etage_climatecontrol_room_temperature
+- area_id: salle_d_eau
+  name: Salle d'eau
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_salle_d_eau
+- area_id: salle_de_bain
+  name: Salle de bain
+  floor_id: etage
+  temperature_entity_id_souhaite: sensor.temperature_salle_de_bain
 - area_id: wc_etage
   name: WC étage
-  floor_id: null
+  floor_id: etage
+- area_id: cabanon
+  name: Cabanon
+  floor_id: exterieur
+- area_id: exterieur
+  name: Extérieur
+  floor_id: exterieur
+  temperature_entity_id_souhaite: sensor.temperature_exterieure_meteo_france
