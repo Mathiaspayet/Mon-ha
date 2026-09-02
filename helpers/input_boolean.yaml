@@ -1,6 +1,7 @@
 # Helpers input_boolean (mode storage).
-# NOTE : input_boolean.sirene est référencé par l'automatisation
-#        photo-mouvement-ou-sonnette mais N'EXISTE PLUS ici (entité orpheline).
+# L'entité orpheline input_boolean.sirene a été supprimée du registre le
+# 2026-09-02, en même temps que le déclencheur mort qui la référençait dans
+# photo-mouvement-ou-sonnette.
 # Export Home Assistant du 2026-09-02.
 ---
 volets_automatiques:
