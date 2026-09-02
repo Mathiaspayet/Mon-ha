@@ -173,6 +173,92 @@ Les entités indisponibles passent de **38 à 10**.
 | `sensor.samba_share_cpu_percent`, `…_memory_percent` | L'add-on **Samba share est installé mais arrêté**. Reviennent à son démarrage |
 | `sensor.iphone_marine_{camera_stream,kiosk_brightness,kiosk_volume}` | Capteurs de l'app Compagnon non activés sur le téléphone |
 
+## Phase 2 KNX — ce qui est dans ETS et pas dans Home Assistant
+
+Le recoupement du projet ETS avec `knx.yaml` donne **468 adresses de groupe** : 232 déjà
+exploitées, 153 sans le moindre objet de communication raccordé, et **83 qui ont un objet
+réel sur un appareil programmé** sans exister dans Home Assistant. Ces 83 se rangent en
+neuf familles.
+
+Deux constats préalables : le groupe 17 « Chaudiere » est **déjà mappé à 100 %** (17
+adresses sur 17), et les prises commandées n'ont plus rien à donner (`Defaut charge` et
+`fonction long` n'ont aucun objet derrière).
+
+| # | Famille | Adresses | Décision |
+|---|---|---:|---|
+| 1 | Éclairages groupés (groupe 15) | 19 | **Laissé.** Stratégie KNX pour commander plusieurs actionneurs d'un seul télégramme, pas une remontée d'information |
+| 2 | Thermostat salon télé (groupe 14) | 9 | **Laissé.** Ce thermostat ne pilote aucun radiateur |
+| 3 | Diagnostic rubans LED | 17 | **Fait** |
+| 4 | Consigne absolue et modes 1 bit des thermostats | 8 | **Laissé.** Le `setpoint_shift` et le `mode selection` en place suffisent |
+| 5 | Horloge du bus | 3 | **Fait**, en lecture |
+| 6 | HCL des rubans | — | **Fait** |
+| 7 | Diagnostic volets (`sens`, `Diagnostique`) | 16 | **Laissé** |
+| 8 | Variation relative (DPT 3.007) | 4 | **Laissé.** Télégramme d'appui long ; HA envoie des valeurs absolues |
+| 9 | Écran et objets système du bus | 7 | **Fait**, en écoute seule, dans la vue « Diag » |
+
+### Quatre capteurs qui écoutaient une plage morte
+
+`Valeur Cuorant dépassée`, `Température élevée`, `Etat alimentation 24V` et
+`Etat Jour=1/nuit=0` pointaient sur `1/2/9` à `1/2/12`. Ce sous-groupe n'a **aucun objet
+de communication raccordé** côté ETS. Confirmé par l'historique : sur dix jours, ces
+quatre entités n'ont changé d'état qu'aux redémarrages de Home Assistant. Zéro télégramme.
+
+Les vraies adresses, par ruban :
+
+| | Salon piano (1.1.15) | Double hauteur (1.1.37) |
+|---|---|---|
+| Erreur courant | `6/3/9` | `6/4/9` |
+| Surchauffe | `6/3/11` | `6/4/11` |
+| Alimentation 24 V | `6/3/12` | `6/4/12` |
+| Couleur en Kelvin | `6/3/8` | `6/4/8` |
+
+Le canal « salon » (`6/2`) n'expose pas ce diagnostic : sur cet actionneur il est porté
+par le canal double hauteur. L'objet `Day/Night` réel est en `12/3/0`, raccordé aux six
+thermostats et au variateur.
+
+Après rechargement, les six capteurs portent tous l'attribut `source: 1.1.15` ou
+`1.1.37` — preuve qu'ils reçoivent réellement du bus. Les deux capteurs Kelvin donnent
+2700 K et 3191 K.
+
+### ⚠️ L'identifiant d'une entité KNX dérive de son adresse, pas de son nom
+
+Changer `state_address` en gardant le même `name` ne déplace pas l'entité : Home Assistant
+en crée une nouvelle (suffixée `_2`) et laisse l'ancienne orpheline dans le registre. Les
+quatre orphelines ont été retirées à la main et `binary_sensor.etat_jour_1_nuit_0` a
+récupéré son identifiant.
+
+### L'horloge du bus fonctionne
+
+Question ouverte avant de la remonter : qui émet l'heure ? Réponse immédiate —
+`datetime.bus_horodatage` affiche l'heure exacte à la seconde. Le serveur de temps
+configuré dans l'alimentation KNX publie bien sur `0/0/4`, `0/0/5` et `0/0/6`.
+
+Les trois entités sont en lecture. Elles ont techniquement une adresse d'écriture — la
+plateforme KNX l'exige — donc **ne pas les modifier à la main** : Home Assistant écrirait
+l'heure sur le bus en concurrence avec l'alimentation.
+
+### Vue « Diag »
+
+Tout ce qui vient d'être ajouté est regroupé dans une vue `diag` du tableau de bord,
+visible du seul compte admin, à trier plus tard. Les deux commandes à risque — `0/0/3`
+(ordre de reset du bus) et `12/6/0` (étalonnage du temps de déplacement des volets) — y
+sont en **écoute seule** : aucun bouton ne peut les déclencher.
+
+Restent à confirmer sur le terrain :
+
+- Le sens de `binary_sensor.etat_jour_1_nuit_0` — `off` en pleine journée, à vérifier à la
+  tombée de la nuit.
+- Le sens des capteurs `Alimentation 24 V`, à `off` alors que les trois rubans sont
+  éteints. Allumer un ruban tranchera ; si le sens est inversé, ajouter `invert: true`.
+- Les deux `switch` HCL : la commande DPT 1.010 n'a jamais été essayée depuis Home
+  Assistant.
+
+### Réserve sur le fichier ETS
+
+Le `.knxproj` date du 18/08/2024. Sur des thermostats qui *fonctionnent* aujourd'hui,
+certains objets d'état y apparaissent comme non raccordés : le fichier sous-déclare. Il
+sert à dire « cette adresse existe », jamais « cette adresse est morte ».
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

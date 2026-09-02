@@ -80,15 +80,54 @@ binary_sensor:
   - name: "Volet Chambre Parental position haute"
     state_address: "2/7/5"
 
-    # diag actionneur Ruban LED
-  - name: "Valeur Cuorant dépassée"
-    state_address: "1/2/9"
-  - name: "Température élevée"
-    state_address: "1/2/11"
-  - name: "Etat alimentation 24V"
-    state_address: "1/2/12"
+    # Diagnostic des actionneurs de ruban LED — phase 2 KNX du 2026-09-02.
+    # Les quatre capteurs précédents écoutaient 1/2/9 à 1/2/12, un sous-groupe
+    # sans aucun objet de communication raccordé côté ETS : zéro télégramme reçu
+    # en dix jours d'historique. Adresses réelles relevées dans le projet, ruban
+    # par ruban. Le canal « salon » (6/2) n'expose pas ce diagnostic : sur cet
+    # actionneur il est porté par le canal double hauteur (6/4).
+  - name: "Ruban LED salon piano erreur courant"
+    state_address: "6/3/9"
+    device_class: problem
+  - name: "Ruban LED salon piano surchauffe"
+    state_address: "6/3/11"
+    device_class: problem
+  - name: "Ruban LED salon piano alimentation 24V"
+    state_address: "6/3/12"
+    device_class: power
+  - name: "Ruban LED double hauteur erreur courant"
+    state_address: "6/4/9"
+    device_class: problem
+  - name: "Ruban LED double hauteur surchauffe"
+    state_address: "6/4/11"
+    device_class: problem
+  - name: "Ruban LED double hauteur alimentation 24V"
+    state_address: "6/4/12"
+    device_class: power
+    # Même défaut : l'objet Day/Night réellement raccordé aux six thermostats et
+    # au variateur est en 12/3/0, pas en 1/2/10. Attention, l'identifiant unique
+    # d'une entité KNX dérive de son adresse de groupe et non de son nom :
+    # changer state_address crée une nouvelle entité et laisse l'ancienne
+    # orpheline. Les quatre orphelines ont été retirées du registre à la main.
   - name: "Etat Jour=1/nuit=0 "
-    state_address: "1/2/10"
+    state_address: "12/3/0"
+    # HCL — Human Centric Lighting, dérive automatique de la température de
+    # couleur sur la journée. Le ruban salon piano n'a pas d'objet de commande
+    # raccordé : lecture seule ici, les deux autres sont des switch plus bas.
+  - name: "HCL en cours ruban LED salon piano"
+    state_address: "6/3/7"
+    # Bus KNX — écran et menu de l'alimentation. Écoute seule et volontairement :
+    # 0/0/3 est un ordre de reset et 12/6/0 lance l'étalonnage du temps de
+    # déplacement des volets. Aucune commande n'est exposée tant qu'on n'a pas
+    # observé ce que ces objets font réellement.
+  - name: "Bus défilement du message"
+    state_address: "0/4/3"
+  - name: "Bus confirmation menu"
+    state_address: "0/4/4"
+  - name: "Bus ordre de reset"
+    state_address: "0/0/3"
+  - name: "Volets mesure du temps de déplacement"
+    state_address: "12/6/0"
   - name: "dépassement température mur chauffant"
     state_address: "11/1/8"
   - name: "detection chan 1"
@@ -265,6 +304,16 @@ sensor:
   - name: "Dernier évennement"
     state_address: "0/4/1"
     type: string
+  - name: "Bus statut de la visualisation"
+    state_address: "0/4/0"
+    type: string
+  #ruban LED
+  - name: "Température de couleur ruban LED salon piano"
+    state_address: "6/3/8"
+    type: color_temperature
+  - name: "Température de couleur ruban LED double hauteur"
+    state_address: "6/4/8"
+    type: color_temperature
   #thermostat
   - name: "Température chambre Auguste"
     state_address: "9/1/0"
@@ -435,6 +484,16 @@ switch:
     address: "17/2/0"
     state_address: "17/2/1"
 
+    # HCL des rubans LED. La commande (DPT 1.010) n'a jamais été essayée depuis
+    # Home Assistant : à valider avant de s'en servir. L'état vient de l'objet
+    # « HCL en cours » du même canal.
+  - name: "HCL ruban LED salon"
+    address: "6/2/13"
+    state_address: "6/2/7"
+  - name: "HCL ruban LED double hauteur"
+    address: "6/4/13"
+    state_address: "6/4/7"
+
 climate:
   - name: "thermostat Salle d'eau"
     temperature_address: "7/1/0"
@@ -478,3 +537,21 @@ climate:
     target_temperature_state_address: "10/1/1"
     operation_mode_address: "10/0/5"
     operation_mode_state_address: "10/1/4"
+
+# Horloge du bus. L'heure est censée venir d'un serveur de temps configuré dans
+# l'alimentation KNX ; ces trois entités servent à le vérifier. Home Assistant
+# n'émet rien de lui-même — il n'écrirait que si on modifiait l'entité à la main.
+datetime:
+  - name: "Bus horodatage"
+    address: "0/0/4"
+    state_address: "0/0/4"
+
+date:
+  - name: "Bus date"
+    address: "0/0/5"
+    state_address: "0/0/5"
+
+time:
+  - name: "Bus heure"
+    address: "0/0/6"
+    state_address: "0/0/6"
