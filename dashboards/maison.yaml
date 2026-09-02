@@ -33,6 +33,10 @@
 # carte, de nombre variable selon la pièce, ce qui triple la hauteur, rend la
 # grille irrégulière et noie le nom de la pièce. Les commandes sont sur la page
 # de zone, à un appui.
+#
+# Une entité KNX sans device_class hérite d'une icône par défaut qui ne veut rien
+# dire — la sirène et la simulation de présence rendaient un contour de téléphone.
+# Toute entité KNX exposée doit porter une icône explicite.
 ---
 views:
 - title: Maison
@@ -641,16 +645,19 @@ views:
     name: Intérieur
     show_name: true
     show_state: true
+    icon: mdi:home-thermometer-outline
   - type: entity
     entity: sensor.temperature_exterieure_meteo_france
     name: Dehors
     show_name: true
     show_state: true
+    icon: mdi:sun-thermometer-outline
   - type: entity
     entity: sensor.temperature_ecs_actuelle
     name: Eau chaude
     show_name: true
     show_state: true
+    icon: mdi:water-boiler
   sections:
   - type: grid
     cards:
@@ -849,11 +856,13 @@ views:
       color: red
       grid_options:
         columns: 6
+      icon: mdi:bullhorn
     - type: tile
       entity: switch.presence_simulation
-      name: Simulation de présence
+      name: Simulation
       grid_options:
         columns: 6
+      icon: mdi:home-account
   - type: grid
     cards:
     - type: heading
@@ -866,18 +875,24 @@ views:
       camera_view: auto
       grid_options:
         columns: full
+      show_state: false
+      show_name: true
     - type: picture-entity
       entity: camera.entree_garage_fluide
       name: Entrée garage
       camera_view: auto
       grid_options:
         columns: full
+      show_state: false
+      show_name: true
     - type: picture-entity
       entity: camera.127_0_0_1
       name: Dernière capture
       camera_view: auto
       grid_options:
         columns: full
+      show_state: false
+      show_name: true
   - type: grid
     cards:
     - type: heading
