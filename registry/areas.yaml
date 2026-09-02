@@ -1,9 +1,13 @@
 # Registre des zones et des étages — refonte de l'interface, étape 1 (2026-09-02).
 # 3 étages, 21 zones, aucune zone non rattachée.
 #
-# La zone « Garage » a été créée : l'éclairage du garage, la porte, son blocage
-# et le capteur d'alarme n'avaient aucune zone, et la vue Éclairage les range au
-# rez-de-chaussée.
+# Deux zones créées, deux corrections apportées par Mathias :
+#   - « Garage » (RDC) : l'éclairage du garage, la porte, son blocage et le
+#     capteur d'alarme n'avaient aucune zone.
+#   - « Patio » rattaché à l'ÉTAGE, pas à l'extérieur : le patio est à ce niveau.
+#   - « Cabanon » supprimé, il n'existe pas.
+#   - L'extérieur ne compte que deux éclairages réels : la terrasse et
+#     Porsche/travées.
 #
 # temperature_entity_id_souhaite : ce champ n'est PAS écrit ici. Le serveur MCP
 # refuse la commande config/area_registry/update et l'outil dédié ne l'expose
@@ -90,9 +94,9 @@ areas:
 - area_id: wc_etage
   name: WC étage
   floor_id: etage
-- area_id: cabanon
-  name: Cabanon
-  floor_id: exterieur
+- area_id: patio
+  name: Patio
+  floor_id: etage
 - area_id: exterieur
   name: Extérieur
   floor_id: exterieur

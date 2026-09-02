@@ -271,27 +271,46 @@ remet d'aplomb. **Aucun effet visible**, mais rien du reste n'est possible sans.
 | Étage | Niveau | Zones |
 |---|---:|---|
 | Rez-de-chaussée | 0 | Buanderie, Bureau, Cellier, Cuisine, Entrée, Salle à manger, Salon, Salon Piano, Salon Télé, WC RDC, **Garage** |
-| Étage | 1 | Chambre Auguste, Chambre d'amis, Chambre Margaux, Chambre parentale, Couloir Étage, Salle d'eau, Salle de bain, WC étage |
-| Extérieur | 2 | Cabanon, Extérieur |
+| Étage | 1 | Chambre Auguste, Chambre d'amis, Chambre Margaux, Chambre parentale, Couloir Étage, Salle d'eau, Salle de bain, WC étage, **Patio** |
+| Extérieur | 2 | Extérieur |
 
-La répartition n'a pas été devinée : elle vient des sections « Rez de Chaussée » et
-« Etage » de la vue Éclairage existante, et des groupes `Volets étage` /
-`Volets Rez de Chaussée`. La salle d'eau et la salle de bain sont donc bien à l'étage.
+La répartition vient des sections « Rez de Chaussée » et « Etage » de la vue Éclairage
+existante, et des groupes `Volets étage` / `Volets Rez de Chaussée`. La salle d'eau et la
+salle de bain sont donc bien à l'étage.
 
-La zone **Garage** a été créée. L'éclairage du garage, la porte, son blocage et le
-capteur d'alarme n'avaient aucune zone alors que la vue Éclairage les range au
-rez-de-chaussée.
+Deux zones créées, une supprimée :
+
+- **Garage** (rez-de-chaussée). L'éclairage du garage, la porte, son blocage et le
+  capteur d'alarme n'avaient aucune zone alors que la vue Éclairage les range au
+  rez-de-chaussée.
+- **Patio**, rattaché à l'**étage** et non à l'extérieur : le patio est à ce niveau.
+  C'est aussi ce que faisait la vue Éclairage, qui listait `light.patio_exterieur` sous
+  « Etage » — ce qui avait été pris pour une commodité d'affichage était juste.
+- **Cabanon** supprimé : il n'existe pas.
+
+### L'extérieur ne compte que deux éclairages
+
+Quatre lumières y étaient rattachées. Après le déplacement du patio il en reste trois, et
+la troisième est morte : `light.eclairage_jardin` (adresse `18/0/0`) **n'a jamais été
+allumée** sur dix jours d'historique — elle ne change d'état qu'aux redémarrages de Home
+Assistant. Le groupe principal 18 n'existe pas non plus dans le projet ETS, dont les
+groupes s'arrêtent à 17.
+
+Les deux éclairages extérieurs réels sont la **terrasse** et **Porsche et travées**,
+tous deux avec un historique d'allumages. `light.eclairage_jardin` est à retirer de
+`knx.yaml`.
 
 ### Douze entités rattachées
 
 - **4 lumières** : `eclairage_garage` → Garage, `eclairage_jardin` → Extérieur,
   `ruban_led_salon` → Salon, `ruban_led_salon_piano` → Salon Piano.
-- **6 thermostats KNX** : chambre Parents, Auguste, Margaux, amis, Salle de bain
-  (Salle d'eau était déjà rattachée).
-- **1 clim Daikin** : couloir étage.
+- **6 thermostats KNX** : Chambre parentale, Chambre Auguste, Chambre Margaux,
+  Chambre d'amis, Salle de bain (Salle d'eau était déjà rattachée).
+- **1 clim Daikin** : Couloir Étage.
+- **1 lumière déplacée** : `patio_exterieur` de Extérieur vers Patio.
 
-Reste `climate.clim_chambre_room_temperature` — le nom « clim chambre » ne dit pas
-laquelle. À trancher.
+Reste `climate.clim_chambre_room_temperature` — la clim Daikin nommée « clim chambre ».
+Elle n'est pas dans la Chambre parentale ; laquelle reste à confirmer.
 
 ### ⚠️ Ce qui n'a pas pu être fait par l'API
 
