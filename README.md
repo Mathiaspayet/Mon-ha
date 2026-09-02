@@ -129,6 +129,35 @@ Le script porte `continue_on_error` sur l'envoi : un appareil injoignable n'inte
 plus la suite de l'automatisation appelante — c'était la cause du silence complet des
 alertes avant le 2 septembre 2026.
 
+## Stockage et écritures disque
+
+Le Pi démarre sur un SSD USB via un pont Realtek RTL9210, dont le pilote UAS
+déclenche des resets sous charge d'écriture soutenue. Correctif définitif :
+`usb-storage.quirks=0bda:9210:u` en tête de `cmdline.txt` sur la partition de
+démarrage — **nécessite un accès physique au support**, non appliqué à ce jour.
+
+En attendant, les écritures sont réduites. Réglages appliqués le 2026-09-02
+(ils vivent dans `.storage`, pas dans ce dépôt) :
+
+| Réglage | Avant | Après | Pourquoi |
+|---|---|---|---|
+| `automation.reboot_ha_host` | actif (mercredi 03h00) | **désactivé** | Le reset UAS du 2026-09-02 03h08 est survenu 8 min après ce redémarrage |
+| Sauvegarde auto, base incluse | oui | **non** | ~175 Mo → ~20 Mo par jour |
+
+Le reste de la configuration de sauvegarde est inchangé : quotidienne vers le
+NAS Synology, 20 copies, dossier `share` inclus.
+
+⚠️ La configuration de sauvegarde contient une clé de chiffrement. Elle ne doit
+**jamais** figurer dans ce dépôt public. À noter : `protected: false` sur l'agent,
+donc les sauvegardes ne sont en réalité **pas chiffrées** (point C5 de l'audit).
+
+### Reste à appliquer (nécessite un redémarrage de Home Assistant)
+
+- Bloc `recorder:` — absent aujourd'hui, donc Home Assistant enregistre tout avec
+  la rétention par défaut de 10 jours et un `commit_interval` de 1 seconde.
+- Nettoyage des `sync_state` KNX sur les adresses de groupe qui ne répondent pas
+  (991 avertissements `xknx` en 21 h).
+
 ## Couverture
 
 L'export est complet pour tout ce que Home Assistant expose. Les fichiers YAML bruts
