@@ -142,21 +142,40 @@ En attendant, les écritures sont réduites. Réglages appliqués le 2026-09-02
 | Réglage | Avant | Après | Pourquoi |
 |---|---|---|---|
 | `automation.reboot_ha_host` | actif (mercredi 03h00) | **désactivé** | Le reset UAS du 2026-09-02 03h08 est survenu 8 min après ce redémarrage |
-| Sauvegarde auto, base incluse | oui | **non** | ~175 Mo → ~20 Mo par jour |
 
-Le reste de la configuration de sauvegarde est inchangé : quotidienne vers le
+Sauvegarde inchangée sur décision explicite : quotidienne **avec la base**, vers le
 NAS Synology, 20 copies, dossier `share` inclus.
 
 ⚠️ La configuration de sauvegarde contient une clé de chiffrement. Elle ne doit
 **jamais** figurer dans ce dépôt public. À noter : `protected: false` sur l'agent,
 donc les sauvegardes ne sont en réalité **pas chiffrées** (point C5 de l'audit).
 
-### Reste à appliquer (nécessite un redémarrage de Home Assistant)
+### Bloc `recorder:` — écrit, en attente de redémarrage
 
-- Bloc `recorder:` — absent aujourd'hui, donc Home Assistant enregistre tout avec
-  la rétention par défaut de 10 jours et un `commit_interval` de 1 seconde.
+Il n'existait aucun bloc `recorder:` : Home Assistant tournait donc sur les valeurs
+par défaut. Ajouté à `config/configuration.yaml` le 2026-09-02, validé par
+`check_config`, **effectif au prochain redémarrage** :
+
+| Réglage | Défaut | Retenu | Effet |
+|---|---|---|---|
+| `commit_interval` | 1 s | **30 s** | ~30× moins d'opérations d'écriture |
+| `auto_repack` | `true` | **`false`** | Supprime la réécriture complète de la base, mensuelle |
+| `purge_keep_days` | 10 | **30** | Historique détaillé triplé |
+| `exclude.domains` | — | `update` | Bruit sans valeur historique |
+
+⚠️ `purge_keep_days: 30` triple la taille de la base, et la base est incluse dans la
+sauvegarde quotidienne : celle-ci va grossir en proportion (~175 Mo aujourd'hui).
+Si l'écriture quotidienne redevient un problème, c'est le premier réglage à revoir.
+
+Note : les capteurs numériques portant un `state_class` (températures, énergie)
+alimentent les **statistiques long terme**, qui ne sont jamais purgées.
+`purge_keep_days` ne joue que sur l'historique détaillé — les courbes de température
+horaires sont déjà conservées indéfiniment.
+
+### Reste à appliquer
+
 - Nettoyage des `sync_state` KNX sur les adresses de groupe qui ne répondent pas
-  (991 avertissements `xknx` en 21 h).
+  (991 avertissements `xknx` en 21 h). Nécessite aussi un redémarrage.
 
 ## Couverture
 

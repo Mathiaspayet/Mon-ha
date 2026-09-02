@@ -82,3 +82,12 @@ alarm_control_panel:
     trigger_time: 600 #Le temps en secondes de l'état «déclenché» pendant lequel l'alarme se déclenche.
     disarmed:
       trigger_time: 0
+recorder:
+# Ajouté le 2026-09-02 pour réduire la charge d'écriture sur le SSD USB
+# (pont Realtek RTL9210 + pilote UAS : resets sous écriture soutenue).
+  purge_keep_days: 30    # 10 par défaut — historique détaillé plus long
+  commit_interval: 30    # 1 s par défaut — ~30x moins d'opérations d'écriture
+  auto_repack: false     # évite la réécriture complète de la base chaque mois
+  exclude:
+    domains:
+      - update
