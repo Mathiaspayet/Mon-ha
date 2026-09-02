@@ -59,10 +59,10 @@ sous d'autres identifiants. Un fantôme avait **un** enregistrement en 72 h
 
 ### 8 entités mortes hors KNX
 
-Distinction importante, faite avec `dead_entities` : **`config_entry_orphans` = 0**.
-Aucune entité de Daikin, Reolink, Cast, app mobile ou Samba n'est réellement orpheline
-— leurs intégrations tournent, ces entités sont seulement non renseignées ou hors
-ligne. Les supprimer serait sans effet : Home Assistant les recrée au rechargement.
+Premier tri avec `dead_entities` : **`config_entry_orphans` = 0**. Ce compteur ne dit
+qu'une seule chose — aucune intégration n'a disparu en laissant ses entités derrière
+elle. Il ne dit **rien** des entités qu'une intégration toujours chargée a cessé de
+fournir : c'est le second panier, `stale_restored`, dépouillé plus bas.
 
 Seules 8 n'avaient plus aucune intégration derrière (`config_entry_id: null`) :
 
@@ -105,6 +105,73 @@ Un consommateur avait été oublié au premier passage : le capteur template
 `Pression Chaudiere en Bar`, dans `configuration.yaml`, qui lisait
 `sensor.pression_eau_chaudiere_2`. Il est resté `unavailable` quelques minutes avant
 d'être corrigé et rechargé.
+
+## Résidus d'anciennes versions — Reolink et Daikin
+
+Question posée après le nettoyage KNX : reste-t-il des entités qui servaient à une
+installation ou à une **version antérieure** ? `config_entry_orphans` ne répond pas à
+ça. Le bon panier est `stale_restored` : l'entité est restaurée depuis le registre au
+démarrage, mais l'intégration chargée ne la fournit plus. 33 entités s'y trouvaient.
+
+### Reolink — rien à supprimer
+
+Deux appareils, deux entrées de configuration, et c'est tout :
+
+| Entrée | MAC | Matériel | Entités |
+|---|---|---|---|
+| Interphone | `ec:71:db:87:b3:e1` | Reolink Video Doorbell PoE | 50 |
+| Entree garage | `ec:71:db:3c:58:d3` | RLC-810A | 44 |
+
+Aucun appareil orphelin, aucune entité d'une caméra disparue. Les deux entrées
+`reolink` supplémentaires — « entree (192.168.0.31) » et « camera1 (192.168.0.30) » —
+sont en `source: ignore` / `not_loaded` : des **découvertes réseau écartées**, sans
+appareil ni entité derrière. Leurs adresses MAC diffèrent des deux caméras en service,
+donc elles désignent bien d'autres matériels vus sur le réseau. Elles ne coûtent rien.
+
+Quatre entités Reolink sont `stale_restored` mais **conservées volontairement** : ce
+sont des capacités que le matériel n'expose pas *aujourd'hui*, et elles reviendraient
+si la configuration de la caméra changeait.
+
+- `binary_sensor.entree_garage_intrusion_area_1_vehicle` et `…_animal` — la zone
+  d'intrusion 1 du RLC-810A n'est armée que sur la détection de personne.
+- `number.interphone_speak_volume` et `number.interphone_volume_de_la_sonnette` — non
+  exposées par le micrologiciel `v3.0.0.6460` de l'interphone.
+
+### Daikin — 28 entités supprimées
+
+Là, oui. L'intégration HACS `daikin_onecta` a renommé et retiré des entités au fil de
+ses versions ; les anciennes sont restées dans le registre, `unavailable` en
+permanence, sur les deux unités (clim chambre, clim couloir étage) :
+
+| Famille | Par unité | Ce qui les remplace |
+|---|---|---|
+| `ratelimit_{minute,day,remaining_minutes,retry_after,ratelimit_reset}` | 5 | `sensor.…_ratelimit_remaining_day` sur le sous-appareil Gateway |
+| `gateway_{firmware_version,model_info,serial_number}`, `indoorunit_software_version` | 4 | Attributs du registre d'appareils (`sw_version`, modèle) |
+| `climatecontrol_{name,on_off_mode,powerful_mode}` | 3 | L'entité `climate` et `binary_sensor.…_is_powerful_mode_active` |
+| `gateway_mac_address` | 1 | Plus renvoyé par l'API Onecta |
+| `update.…_gateway_firmware_update` | 1 | Son jumeau vivant, jusqu'ici suffixé `_2` |
+
+**La preuve est nette sur la dernière ligne** : le même appareil portait deux entrées
+de registre, `…_firmware_update` (ancien `unique_id`, `unavailable`) et
+`…_gateway_firmware_update` (nouveau, `off`). La seconde avait dû prendre un suffixe
+`_2` parce que l'identifiant était occupé par le fantôme. Les deux fantômes supprimés,
+les suffixes `_2` ont été récupérés.
+
+Aucune des 28 n'était référencée : ni dans les automatisations, scripts, scènes et
+helpers, ni dans le tableau de bord, ni dans les YAML du dépôt. Seule
+`sensor.clim_chambre_climatecontrol_outdoor_temperature` est consommée (moyenne de
+température extérieure) — elle est vivante et n'a pas bougé.
+
+Les entités indisponibles passent de **38 à 10**.
+
+### Les 10 restantes ne sont pas des résidus
+
+| Entité(s) | Pourquoi |
+|---|---|
+| 4 entités Reolink | Capacités matérielles non exposées (voir ci-dessus) |
+| `media_player.shield` | Cast joignable jusqu'au 25/08 à 23 h 04, hors ligne depuis. Appareil éteint, pas un fantôme |
+| `sensor.samba_share_cpu_percent`, `…_memory_percent` | L'add-on **Samba share est installé mais arrêté**. Reviennent à son démarrage |
+| `sensor.iphone_marine_{camera_stream,kiosk_brightness,kiosk_volume}` | Capteurs de l'app Compagnon non activés sur le téléphone |
 
 ## Notifications
 
