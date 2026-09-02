@@ -147,9 +147,21 @@ En attendant, les écritures sont réduites. Réglages appliqués le 2026-09-02
 Sauvegarde inchangée sur décision explicite : quotidienne **avec la base**, vers le
 NAS Synology, 20 copies, dossier `share` inclus.
 
-⚠️ La configuration de sauvegarde contient une clé de chiffrement. Elle ne doit
-**jamais** figurer dans ce dépôt public. À noter : `protected: false` sur l'agent,
-donc les sauvegardes ne sont en réalité **pas chiffrées** (point C5 de l'audit).
+### Chiffrement des sauvegardes — décision : non (C5, clos)
+
+Les sauvegardes ne sont **pas chiffrées** (`protected: false` sur l'agent), et
+c'est délibéré. Une clé figure bien dans la configuration mais reste inactive ;
+elle ne doit **jamais** être copiée dans ce dépôt public.
+
+Raison : le 1ᵉʳ septembre 2026, la récupération après la panne du Pi s'est faite
+en décompressant l'archive **à la main dans File Station**. Une archive chiffrée
+aurait rendu ce chemin impossible — il aurait fallu la clé au moment précis où
+Home Assistant était injoignable. Le chiffrement aurait bloqué la seule
+récupération qui a effectivement fonctionné.
+
+Contrepartie assumée : l'archive contient `secrets.yaml`, les jetons d'API, les
+identifiants des caméras et le code d'alarme. **Leur confidentialité vaut donc
+celle du NAS** — un partage ouvert trop largement les exposerait en clair.
 
 ### Bloc `recorder:` — écrit, en attente de redémarrage
 
