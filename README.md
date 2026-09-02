@@ -400,6 +400,31 @@ Les capteurs `alimentation 24V` des rubans LED sont **volontairement exclus** du
 Attention : leur polarité n'est pas confirmée (voir phase 2 KNX), les intégrer
 maintenant risquerait une alerte permanente à tort.
 
+### Corrections après la première capture d'écran
+
+Trois défauts relevés sur le rendu réel, tous corrigés.
+
+**Les badges n'affichaient pas les noms.** `show_state: true` sans `show_name: true` ne
+montre que l'état : les puces de personne affichaient « Maison » et « Absent » sans dire
+de qui il s'agissait, et la première ressemblait au titre de la page. Les cinq badges
+portent désormais les deux options, plus une icône explicite pour les températures.
+
+**Les cartes de zone affichaient un carré hachuré.** Une zone sans `icon` fait afficher à
+la carte `area` un cadre « image manquante ». Les **21 zones** ont maintenant leur icône —
+un investissement qui resservira pour la vue Pièces.
+
+**La tuile Lumières portait un interrupteur pleine largeur** que le `feature: toggle`
+ajoute sur un groupe. Retiré : la tuile bascule déjà au toucher, et l'écart de traitement
+avec les flèches des Volets était injustifié.
+
+### Une bonne surprise
+
+La carte `area` **trouve seule la température de la pièce** en agrégeant les entités de
+la zone : Salon Télé affiche 27,3 °C et Chambre parentale 26 °C alors que le champ
+`temperature_entity_id` n'a pas pu être écrit. Le renseigner à la main reste utile pour
+choisir explicitement quel capteur fait foi quand une pièce en compte plusieurs, mais ce
+n'est plus bloquant.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

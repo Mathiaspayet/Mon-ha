@@ -12,6 +12,9 @@
 # Les ouvrants Tydom parlent en LOCKED / UNLOCKED, plus « unknown » au démarrage.
 # Les conditions filtrent sur UNLOCKED et OPENED — une correspondance positive,
 # pour qu'un « unknown » transitoire ne déclenche pas de fausse alerte.
+#
+# Les badges portent show_name ET show_state : sans show_name, une puce de
+# personne n'affiche que « Maison » ou « Absent », sans dire de qui il s'agit.
 ---
 views:
 - title: Maison
@@ -23,22 +26,31 @@ views:
   badges:
   - type: entity
     entity: person.marine
+    name: Marine
+    show_name: true
     show_state: true
   - type: entity
     entity: person.domolaunaguet
+    name: Mathias
+    show_name: true
     show_state: true
   - type: entity
     entity: alarm_control_panel.alarme_maison
-    show_state: true
     name: Alarme
+    show_name: true
+    show_state: true
   - type: entity
     entity: sensor.moyenne_temperature_interieure
-    show_state: true
     name: Intérieur
+    icon: mdi:home-thermometer-outline
+    show_name: true
+    show_state: true
   - type: entity
     entity: sensor.temperature_exterieure_meteo_france
-    show_state: true
     name: Dehors
+    icon: mdi:sun-thermometer-outline
+    show_name: true
+    show_state: true
   sections:
   - type: grid
     column_span: 3
@@ -253,10 +265,10 @@ views:
       entity: light.toutes_les_lumieres
       name: Lumières
       icon: mdi:lightbulb-group-outline
-      features:
-      - type: toggle
       grid_options:
         columns: 6
+      state_content:
+      - state
     - type: tile
       entity: cover.tous_les_volets
       name: Volets
