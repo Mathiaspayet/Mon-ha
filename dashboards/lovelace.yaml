@@ -803,3 +803,46 @@ views:
     - entity: binary_sensor.etat_chaffage_h1
     - entity: binary_sensor.etat_vannne_chambre_parents
     - entity: binary_sensor.etat_chauffage_h2
+- theme: Backend-selected
+  title: Réglages
+  path: reglages
+  icon: mdi:cog
+  visible:
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  badges: []
+  cards:
+  - type: custom:mushroom-title-card
+    title: Notifications
+    subtitle: Téléphones prévenus en cas d'alerte
+    alignment: start
+  - type: entities
+    title: Téléphones à prévenir
+    state_color: true
+    entities:
+    - entity: input_boolean.notif_pixel_9a
+      name: Pixel 9a (Mathias)
+    - entity: input_boolean.notif_iphone_marine
+      name: iPhone Marine
+    - entity: input_boolean.notif_i10_pro
+      name: Tablette I10 Pro
+  - type: markdown
+    content: "{% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app')\
+      \ if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~ e.split('.')[1])\
+      \ != 'off' %}{% set ns.l = ns.l + [state_attr(e, 'friendly_name') or e] %}{%\
+      \ endif %}{% endfor %}**Destinataires actuels :** {% if ns.l %}{{ ns.l | join(',\
+      \ ') }}{% else %}⚠️ aucun téléphone activé{% endif %}\n\n*Tout appareil ajouté\
+      \ à l'app Compagnon est prévenu automatiquement. Pour lui donner un interrupteur\
+      \ ici, créer un helper nommé `Notif <nom de l'appareil>`.*"
+  - type: button
+    name: Envoyer une notification de test
+    icon: mdi:bell-ring
+    icon_height: 40px
+    show_name: true
+    show_icon: true
+    tap_action:
+      action: perform-action
+      perform_action: script.alerte_famille
+      data:
+        title: Test Domolaunaguet
+        message: Notification de test envoyée depuis le tableau de bord.
+      target: {}

@@ -1,0 +1,64 @@
+# Alerte famille
+# script_id : alerte_famille  (entity_id : script.alerte_famille)
+#
+# Point d'entrée UNIQUE de toutes les notifications vers les téléphones.
+# Découvre automatiquement les appareils de l'app Compagnon (entités notify.*)
+# et n'envoie qu'à ceux qui sont activés dans la vue « Réglages » du tableau
+# de bord, via les helpers input_boolean.notif_<appareil>.
+#
+# Règle : un appareil SANS helper est notifié par défaut (fail-safe :
+#         mieux vaut trop notifier que rater une alarme).
+#         Pour l'exclure, créer input_boolean.notif_<slug> et le mettre à off.
+#
+# Export Home Assistant du 2026-09-02.
+---
+alias: Alerte famille
+description: >-
+  Point d'entree unique des notifications vers les telephones. Decouvre
+  automatiquement les appareils de l'app Compagnon et n'envoie qu'a ceux
+  actives dans Reglages > Notifications (input_boolean.notif_<appareil>).
+  Un appareil sans interrupteur est notifie par defaut.
+icon: mdi:cellphone-message
+mode: parallel
+max: 10
+fields:
+  message:
+    name: Message
+    description: Texte de la notification.
+    required: true
+    example: Quelqu'un sonne !
+    selector:
+      text: null
+  title:
+    name: Titre
+    description: Titre affiche au-dessus du message.
+    required: false
+    example: Sonnette maison
+    selector:
+      text: null
+sequence:
+- alias: Liste des telephones actives
+  variables:
+    cibles: >-
+      {% set ns = namespace(l=[]) %}{% for e in integration_entities('mobile_app')
+      if e.startswith('notify.') %}{% if states('input_boolean.notif_' ~
+      e.split('.')[1]) != 'off' %}{% set ns.l = ns.l + [e] %}{% endif %}{% endfor
+      %}{{ ns.l }}
+- if:
+  - condition: template
+    value_template: '{{ cibles | count > 0 }}'
+  then:
+  - alias: Envoi aux telephones actives
+    action: notify.send_message
+    continue_on_error: true
+    target:
+      entity_id: '{{ cibles }}'
+    data:
+      message: '{{ message }}'
+      title: '{{ title | default(''Domolaunaguet'', true) }}'
+  else:
+  - alias: 'Filet de securite : aucun telephone active'
+    action: persistent_notification.create
+    data:
+      title: Alerte non distribuee
+      message: '{{ message }} — aucun telephone active dans Reglages > Notifications.'

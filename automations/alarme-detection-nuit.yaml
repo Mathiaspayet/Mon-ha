@@ -1,6 +1,6 @@
 # Alarme / détection alarme Nuit
 # entity_id : automation.declenchement_alarme_nuit
-# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+# Export Home Assistant du 2026-09-02 — ne pas éditer à la main sans réimport.
 ---
 id: '1686494168795'
 alias: Alarme / détection alarme Nuit
@@ -35,6 +35,9 @@ actions:
     entity_id: alarm_control_panel.alarme_maison
   data: {}
   action: alarm_control_panel.alarm_trigger
-- action: notify.mobile_app_pixel_9a
-  data: {}
+- alias: Notification aux telephones actives
+  action: script.alerte_famille
+  data:
+    title: 🚨 Alarme Nuit
+    message: Détection sur {{ trigger.to_state.name }} — alarme déclenchée.
 mode: single

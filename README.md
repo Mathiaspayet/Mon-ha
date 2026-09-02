@@ -9,7 +9,7 @@ avant toute modification issue de l'audit.
 | Système | Home Assistant OS 18.2 · Supervisor 2026.08.0 |
 | Matériel | Raspberry Pi 4 (aarch64) |
 | Entités | 509 (dont 83 indisponibles) |
-| Automatisations | 14 · Scripts : 4 · Zones : 20 |
+| Automatisations | 14 · Scripts : 5 · Zones : 20 |
 
 ## ⚠️ Dépôt public — à savoir
 
@@ -20,6 +20,8 @@ Ce dépôt est **public**. Deux éléments sensibles y figurent en clair, en con
   `scripts/depart_maison.yaml` et `scripts/retour_maison.yaml`.
   **À changer dans Home Assistant, puis ici.**
 - Le plan de la maison, les prénoms, et la liste des capteurs qui gardent chaque accès.
+- L'identifiant interne du compte admin (`visible:` de la vue « Réglages », dans
+  `dashboards/lovelace.yaml`). C'est un UUID opaque, il ne permet aucune connexion.
 
 Les coordonnées GPS de la zone « domicile » n'ont volontairement pas été exportées.
 Aucun mot de passe de caméra, jeton d'API ou contenu de `secrets.yaml` ne figure dans ce dépôt.
@@ -29,14 +31,40 @@ Aucun mot de passe de caméra, jeton d'API ou contenu de `secrets.yaml` ne figur
 ```
 config/          fichiers YAML bruts : configuration.yaml, knx.yaml, commandline.yaml
 automations/     14 automatisations, une par fichier
-scripts/          4 scripts
-dashboards/       tableau de bord « Domolaunaguet » (9 vues) + ressources Lovelace
+scripts/          5 scripts (dont alerte_famille, point d'entrée des notifications)
+dashboards/       tableau de bord « Domolaunaguet » (10 vues) + ressources Lovelace
 helpers/          input_boolean, input_number, groupes et moyennes
 registry/         zones, personnes
 integrations/     dépôts HACS (avec versions), Apps, entrées de configuration
 blueprints/       métadonnées du blueprint utilisé
 docs/             rapport d'audit du 29 août 2026
 ```
+
+## Notifications
+
+Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :
+`script.alerte_famille` (`scripts/alerte_famille.yaml`). Aucune automatisation n'appelle
+plus `notify.mobile_app_*` directement.
+
+Le script découvre seul les appareils de l'app Compagnon (entités `notify.*`) et n'envoie
+qu'à ceux qui sont activés. L'activation se pilote depuis la vue **« Réglages »** du
+tableau de bord, visible du seul compte admin.
+
+| Élément | Rôle |
+|---|---|
+| `script.alerte_famille` | Reçoit `message` (obligatoire) et `title`, diffuse aux appareils actifs |
+| `input_boolean.notif_<appareil>` | Un interrupteur par appareil, dans la vue « Réglages » |
+| Vue « Réglages » | Cases à cocher + bouton de test + liste des destinataires en direct |
+
+**Ajouter un téléphone** : rien à faire, il est notifié dès qu'il apparaît dans l'app
+Compagnon. Pour lui donner un interrupteur, créer le helper `Notif <nom de l'appareil>`
+— le nom doit produire `input_boolean.notif_<slug de l'entité notify>`.
+
+**Retirer un téléphone** : décocher sa case dans « Réglages ».
+
+Le script porte `continue_on_error` sur l'envoi : un appareil injoignable n'interrompt
+plus la suite de l'automatisation appelante — c'était la cause du silence complet des
+alertes avant le 2 septembre 2026.
 
 ## Couverture
 

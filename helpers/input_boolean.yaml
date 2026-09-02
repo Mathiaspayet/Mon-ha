@@ -1,7 +1,7 @@
 # Helpers input_boolean (mode storage).
 # NOTE : input_boolean.sirene est référencé par l'automatisation
 #        photo-mouvement-ou-sonnette mais N'EXISTE PLUS ici (entité orpheline).
-# Export Home Assistant du 2026-08-30 — instantané avant modifications.
+# Export Home Assistant du 2026-09-02.
 ---
 volets_automatiques:
   name: 'Volets automatiques '
@@ -11,3 +11,18 @@ lumieres_automatiques:
   icon: mdi:lightbulb-auto
 etat_depart_maison:
   name: État depart maison
+
+# --- Destinataires des notifications ---------------------------------------
+# Lus par script.alerte_famille. Convention de nommage OBLIGATOIRE :
+#   input_boolean.notif_<slug de l'entité notify.*>
+# Un appareil sans helper est notifié par défaut ; ce helper sert à l'exclure.
+# Pilotés depuis la vue « Réglages » du tableau de bord (compte admin).
+notif_pixel_9a:
+  name: Notif Pixel 9a
+  icon: mdi:cellphone-message
+notif_iphone_marine:
+  name: Notif iPhone Marine
+  icon: mdi:cellphone-message
+notif_i10_pro:
+  name: Notif I10 Pro
+  icon: mdi:tablet
