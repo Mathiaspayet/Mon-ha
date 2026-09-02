@@ -504,6 +504,46 @@ chaudière ».
 Différence de traitement assumée avec la vue Maison : là-bas les ouvrants n'apparaissent
 que s'ils sont ouverts, ici ils sont **tous** visibles. Maison signale, Sécurité inventorie.
 
+### Le panneau d'alarme remplacé par une tuile
+
+La carte `alarm-panel` occupait un écran entier de pavé numérique en permanence, alors
+que le clavier ne sert qu'au moment d'armer ou de désarmer. Remplacée par une tuile avec
+la fonction `alarm-modes` : l'état et les cinq modes tiennent sur une ligne, et le clavier
+s'ouvre au besoin. Rien n'est perdu — un appui sur l'icône ouvre la fiche détaillée avec
+le panneau complet.
+
+## Refonte — étape 5 : la vue Technique
+
+Réservée au compte admin, comme décidé. Six sections.
+
+| Section | Contenu |
+|---|---|
+| Chaudière | Flamme, modulation, pression, température extérieure ; circuits H1/H2 avec départ et consigne ; marche/arrêt ; les six vannes |
+| Bus KNX | Courant, tension, charge, temps de fonctionnement ; les quatre alarmes du bus ; horloge et dernier événement |
+| Rubans LED | Le diagnostic de la phase 2, par ruban, plus les commandes HCL |
+| À observer | Les cinq objets KNX dont l'usage reste à confirmer — `0/0/3` et `12/6/0` en écoute seule |
+| Système | Température du Pi et du NAS, état des volumes, VMC, sauvegardes et mises à jour |
+| Alertes critiques | Les six interrupteurs de criticité, repris de l'ancienne vue Réglages |
+
+### ⚠️ Le volume du NAS est à 99 %
+
+Relevé en construisant la section Système : `sensor.stockagereseau_volume_2_volume_utilise`
+affiche **99 %** et l'état du volume est passé à « attention ». C'est là que vont les
+sauvegardes Home Assistant. La tuile est en rouge dans la vue Technique.
+
+## Où en est la refonte
+
+| Étape | État |
+|---|---|
+| 1. Registre des zones | ✅ 3 étages, 21 zones, tout rattaché |
+| 2. Vue Maison | ✅ |
+| 3. Vue Pièces + 21 sous-vues | ✅ |
+| 4. Confort et Sécurité | ✅ |
+| 5. Technique | ✅ |
+| 6. Bascule | à faire — `maison-v2` n'est pas encore le tableau par défaut |
+
+L'ancien tableau `lovelace` et ses onze vues restent intacts et par défaut.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

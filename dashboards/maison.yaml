@@ -1,6 +1,6 @@
 # Tableau de bord « Maison » (url_path: maison-v2, mode storage) — refonte, étape 2.
-# Quatre vues principales — Maison, Pièces, Confort, Sécurité — plus 21 sous-vues,
-# une par pièce. Reste la vue Technique, réservée au compte admin.
+# Cinq vues : Maison, Pièces, Confort, Sécurité, et Technique réservée au compte
+# admin. Plus 21 sous-vues, une par pièce.
 # Visible de tous. Aucune ressource HACS : natif Home Assistant uniquement.
 #
 # Le tableau de bord historique « Domolaunaguet » (url_path: lovelace) n'est pas
@@ -840,14 +840,17 @@ views:
       heading: Alarme
       heading_style: title
       icon: mdi:shield-home
-    - type: alarm-panel
+    - type: tile
       entity: alarm_control_panel.alarme_maison
       name: Alarme maison
-      states:
-      - arm_home
-      - arm_away
-      - arm_night
-      - arm_vacation
+      features:
+      - type: alarm-modes
+        modes:
+        - disarmed
+        - armed_home
+        - armed_away
+        - armed_night
+        - armed_vacation
       grid_options:
         columns: full
     - type: tile
@@ -980,6 +983,329 @@ views:
       name: Blocage
       grid_options:
         columns: full
+- title: Technique
+  path: technique
+  icon: mdi:tools
+  type: sections
+  max_columns: 3
+  theme: Backend-selected
+  visible:
+  - user: abc71c5f987448a297a5fb6c0108a2e3
+  badges:
+  - type: entity
+    entity: sensor.pression_chaudiere_en_bar
+    name: Pression
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: sensor.cpu_temperature
+    name: Pi
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: sensor.utilisation_du_bus
+    name: Bus
+    show_name: true
+    show_state: true
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chaudière
+      heading_style: title
+      icon: mdi:water-boiler
+    - type: tile
+      entity: binary_sensor.etat_flamme_chaudiere
+      name: Flamme
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.pourcentage_de_modulation_chauffage
+      name: Modulation
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.pression_chaudiere_en_bar
+      name: Pression
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.temperature_exterieure_chaudiere
+      name: Ext. chaudière
+      grid_options:
+        columns: 6
+    - type: entities
+      title: Circuits
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.etat_h1
+        name: H1 en chauffe
+      - entity: binary_sensor.etat_h2
+        name: H2 en chauffe
+      - entity: sensor.temperature_h1_actuelle
+        name: H1 départ
+      - entity: sensor.temperature_h1_consigne
+        name: H1 consigne
+      - entity: sensor.temperature_h2_actuelle
+        name: H2 départ
+      - entity: sensor.temperature_h2_consigne
+        name: H2 consigne
+      - entity: binary_sensor.blocage_circulateur_radiateur_etage
+        name: Blocage circulateur étage
+    - type: entities
+      title: Marche / arrêt
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: switch.switch_h1
+        name: H1
+      - entity: switch.switch_h2
+        name: H2
+      - entity: switch.switch_ecs
+        name: ECS
+      - entity: switch.switch_mode_ete
+        name: Mode été
+      - entity: switch.switch_pompe_bouclage_ecs
+        name: Bouclage ECS
+    - type: entities
+      title: Vannes
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.etat_vannne_chambre_parents
+        name: Chambre parentale
+      - entity: binary_sensor.etat_vannne_chambre_auguste
+        name: Chambre Auguste
+      - entity: binary_sensor.etat_vannne_chambre_margaux
+        name: Chambre Margaux
+      - entity: binary_sensor.etat_vannne_chambre_ami
+        name: Chambre d'amis
+      - entity: binary_sensor.etat_chauffage_salle_d_eau
+        name: Salle d'eau
+      - entity: binary_sensor.etat_chauffage_mur_chauffant
+        name: Mur chauffant
+  - type: grid
+    cards:
+    - type: heading
+      heading: Bus KNX
+      heading_style: title
+      icon: mdi:lan
+    - type: tile
+      entity: sensor.courant_du_bus
+      name: Courant
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.tension_du_bus
+      name: Tension
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.utilisation_du_bus
+      name: Charge
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.temps_de_fonctionnement
+      name: Fonctionnement
+      grid_options:
+        columns: 6
+    - type: entities
+      title: Alarmes du bus
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.alarme_depasement_temperature
+        name: Température
+      - entity: binary_sensor.alarme_depasement_courant
+        name: Courant
+      - entity: binary_sensor.alarme_tension_trop_basse
+        name: Tension basse
+      - entity: binary_sensor.alarme_trafic_bus
+        name: Trafic
+    - type: entities
+      title: Horloge et journal
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: datetime.bus_horodatage
+        name: Horodatage
+      - entity: sensor.dernier_evennement
+        name: Dernier événement
+      - entity: sensor.bus_statut_de_la_visualisation
+        name: Statut visualisation
+  - type: grid
+    cards:
+    - type: heading
+      heading: Rubans LED
+      heading_style: title
+      icon: mdi:led-strip-variant
+    - type: entities
+      title: Salon piano
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.ruban_led_salon_piano_erreur_courant
+        name: Erreur courant
+      - entity: binary_sensor.ruban_led_salon_piano_surchauffe
+        name: Surchauffe
+      - entity: binary_sensor.ruban_led_salon_piano_alimentation_24v
+        name: Alimentation 24 V
+      - entity: sensor.temperature_de_couleur_ruban_led_salon_piano
+        name: Couleur
+      - entity: binary_sensor.hcl_en_cours_ruban_led_salon_piano
+        name: HCL en cours
+    - type: entities
+      title: Double hauteur
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.ruban_led_double_hauteur_erreur_courant
+        name: Erreur courant
+      - entity: binary_sensor.ruban_led_double_hauteur_surchauffe
+        name: Surchauffe
+      - entity: binary_sensor.ruban_led_double_hauteur_alimentation_24v
+        name: Alimentation 24 V
+      - entity: sensor.temperature_de_couleur_ruban_led_double_hauteur
+        name: Couleur
+    - type: entities
+      title: Commande HCL
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: switch.hcl_ruban_led_salon
+        name: Ruban salon
+      - entity: switch.hcl_ruban_led_double_hauteur
+        name: Double hauteur
+  - type: grid
+    cards:
+    - type: heading
+      heading: À observer
+      heading_style: title
+      icon: mdi:magnify-scan
+    - type: markdown
+      grid_options:
+        columns: full
+      content: 'Objets KNX remontés en phase 2 dont l''usage réel reste à confirmer.
+        Ce qui ne bouge jamais sera supprimé. `0/0/3` et `12/6/0` sont en **écoute
+        seule** : ce sont un ordre de reset du bus et un étalonnage de volets.'
+    - type: entities
+      title: Objets en attente
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.etat_jour_1_nuit_0
+        name: Jour / nuit
+      - entity: binary_sensor.bus_defilement_du_message
+        name: Défilement message
+      - entity: binary_sensor.bus_confirmation_menu
+        name: Confirmation menu
+      - entity: binary_sensor.bus_ordre_de_reset
+        name: Ordre de reset
+      - entity: binary_sensor.volets_mesure_du_temps_de_deplacement
+        name: Étalonnage volets
+  - type: grid
+    cards:
+    - type: heading
+      heading: Système
+      heading_style: title
+      icon: mdi:server
+    - type: tile
+      entity: sensor.cpu_temperature
+      name: Temp. du Pi
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.stockagereseau_temperature
+      name: Temp. du NAS
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.stockagereseau_volume_2_volume_utilise
+      name: Volume NAS utilisé
+      grid_options:
+        columns: full
+      color: red
+    - type: entities
+      title: NAS
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.stockagereseau_etat_de_securite
+        name: Sécurité
+      - entity: sensor.stockagereseau_volume_2_etat
+        name: Volume 2
+      - entity: sensor.stockagereseau_drive_2_etat
+        name: Disque 2
+      - entity: sensor.stockagereseau_utilisation_du_processeur_totale
+        name: Processeur
+      - entity: sensor.stockagereseau_utilisation_de_la_memoire_reelle
+        name: Mémoire
+    - type: entities
+      title: Ventilation
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: switch.vmc_cote_rue
+        name: VMC côté rue
+      - entity: switch.vmc_cote_jardi
+        name: VMC côté jardin
+    - type: entities
+      title: Sauvegardes et mises à jour
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: event.backup_sauvegarde_automatique
+        name: Dernière sauvegarde
+      - entity: update.home_assistant_core_update
+        name: Core
+      - entity: update.home_assistant_operating_system_update
+        name: OS
+      - entity: update.stockagereseau_mise_a_jour_dsm
+        name: DSM
+  - type: grid
+    cards:
+    - type: heading
+      heading: Alertes critiques
+      heading_style: title
+      icon: mdi:bell-alert
+    - type: markdown
+      grid_options:
+        columns: full
+      content: Une alerte critique perce le mode silencieux et Ne pas déranger. Les
+        appareils notifiés sont découverts seuls ; les exclusions se posent en dur
+        dans `script.alerte_famille`.
+    - type: entities
+      title: Par type d'alerte
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: input_boolean.critique_alarme_declenchee
+        name: Alarme déclenchée
+      - entity: input_boolean.critique_alarme_nuit
+        name: Détection nuit
+      - entity: input_boolean.critique_alarme_vacances
+        name: Détection vacances
+      - entity: input_boolean.critique_alarme_prealerte
+        name: Pré-alerte
+      - entity: input_boolean.critique_sonnette
+        name: Sonnette
+      - entity: input_boolean.critique_garage
+        name: Garage resté ouvert
 - title: Entrée
   path: entree
   icon: mdi:door-open
