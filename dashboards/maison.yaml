@@ -1,6 +1,6 @@
 # Tableau de bord « Maison » (url_path: maison-v2, mode storage) — refonte, étape 2.
-# Deux vues principales — Maison et Pièces — plus 21 sous-vues, une par pièce.
-# Confort et Sécurité viendront ensuite.
+# Quatre vues principales — Maison, Pièces, Confort, Sécurité — plus 21 sous-vues,
+# une par pièce. Reste la vue Technique, réservée au compte admin.
 # Visible de tous. Aucune ressource HACS : natif Home Assistant uniquement.
 #
 # Le tableau de bord historique « Domolaunaguet » (url_path: lovelace) n'est pas
@@ -629,6 +629,342 @@ views:
       tap_action:
         action: navigate
         navigation_path: /maison-v2/exterieur
+- title: Confort
+  path: confort
+  icon: mdi:thermometer
+  type: sections
+  max_columns: 3
+  theme: Backend-selected
+  badges:
+  - type: entity
+    entity: sensor.moyenne_temperature_interieure
+    name: Intérieur
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: sensor.temperature_exterieure_meteo_france
+    name: Dehors
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: sensor.temperature_ecs_actuelle
+    name: Eau chaude
+    show_name: true
+    show_state: true
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chauffage
+      heading_style: title
+      icon: mdi:radiator
+    - type: tile
+      entity: climate.thermostat
+      name: Chambre parentale
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_chambre_auguste
+      name: Chambre Auguste
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_chambre_margaux
+      name: Chambre Margaux
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_chambre_amis
+      name: Chambre d'amis
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_salle_de_bain
+      name: Salle de bain
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_salle_d_eau
+      name: Salle d'eau
+      features:
+      - type: target-temperature
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.forcage_chauffage_salle_d_eau
+      name: Forçage salle d'eau
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Climatisation
+      heading_style: title
+      icon: mdi:air-conditioner
+    - type: tile
+      entity: climate.clim_chambre_room_temperature
+      name: Chambre parentale
+      features:
+      - type: target-temperature
+      - type: climate-hvac-modes
+        style: dropdown
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.clim_couloir_etage_room_temperature
+      name: Couloir Étage
+      features:
+      - type: target-temperature
+      - type: climate-hvac-modes
+        style: dropdown
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Eau chaude
+      heading_style: title
+      icon: mdi:water-boiler
+    - type: tile
+      entity: sensor.temperature_ecs_actuelle
+      name: Température
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.temperature_ecs_consigne
+      name: Consigne
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: binary_sensor.etat_ecs
+      name: En chauffe
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.switch_ecs
+      name: Eau chaude
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.switch_pompe_bouclage_ecs
+      name: Bouclage
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.switch_mode_ete
+      name: Mode été
+      grid_options:
+        columns: full
+  - type: grid
+    column_span: 2
+    cards:
+    - type: heading
+      heading: Températures
+      heading_style: title
+      icon: mdi:chart-line
+    - type: history-graph
+      hours_to_show: 48
+      title: Par pièce
+      grid_options:
+        columns: full
+        rows: 6
+      entities:
+      - entity: sensor.temperature_chambre_parents
+        name: Chambre parentale
+      - entity: sensor.temperature_chambre_auguste
+        name: Chambre Auguste
+      - entity: sensor.temperature_chambre_margaux
+        name: Chambre Margaux
+      - entity: sensor.temperature_chambre_amis
+        name: Chambre d'amis
+      - entity: sensor.temperature_salle_de_bain
+        name: Salle de bain
+      - entity: sensor.temperature_salle_d_eau
+        name: Salle d'eau
+      - entity: sensor.temperature_salon_tele
+        name: Salon Télé
+    - type: history-graph
+      hours_to_show: 168
+      title: Moyennes sur la semaine
+      grid_options:
+        columns: full
+        rows: 5
+      entities:
+      - entity: sensor.moyenne_temperature_interieure
+        name: Intérieur
+      - entity: sensor.temperature_exterieure_meteo_france
+        name: Dehors
+- title: Sécurité
+  path: securite
+  icon: mdi:shield-home-outline
+  type: sections
+  max_columns: 3
+  theme: Backend-selected
+  badges:
+  - type: entity
+    entity: alarm_control_panel.alarme_maison
+    name: Alarme
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: person.marine
+    name: Marine
+    show_name: true
+    show_state: true
+  - type: entity
+    entity: person.domolaunaguet
+    name: Mathias
+    show_name: true
+    show_state: true
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Alarme
+      heading_style: title
+      icon: mdi:shield-home
+    - type: alarm-panel
+      entity: alarm_control_panel.alarme_maison
+      name: Alarme maison
+      states:
+      - arm_home
+      - arm_away
+      - arm_night
+      - arm_vacation
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.sirene_exterieure
+      name: Sirène extérieure
+      color: red
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.presence_simulation
+      name: Simulation de présence
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Caméras
+      heading_style: title
+      icon: mdi:cctv
+    - type: picture-entity
+      entity: camera.interphone_main
+      name: Interphone
+      camera_view: auto
+      grid_options:
+        columns: full
+    - type: picture-entity
+      entity: camera.entree_garage_fluide
+      name: Entrée garage
+      camera_view: auto
+      grid_options:
+        columns: full
+    - type: picture-entity
+      entity: camera.127_0_0_1
+      name: Dernière capture
+      camera_view: auto
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Ouvrants
+      heading_style: title
+      icon: mdi:window-closed-variant
+    - type: entities
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: sensor.openstate_tydom_baie_vitree_gauche
+        name: Baie vitrée gauche
+      - entity: sensor.openstate_tydom_baie_vitree_droit
+        name: Baie vitrée droite
+      - entity: sensor.openstate_tydom_fenetre_buanderie
+        name: Fenêtre buanderie
+      - entity: sensor.openstate_tydom_fenetre_bureau
+        name: Fenêtre bureau
+      - entity: sensor.openstate_tydom_ouvrant_droit
+        name: Fenêtre salon télé
+      - entity: sensor.openstate_tydom_ouvrant_droit_2
+        name: Fenêtre chambre d'amis
+      - entity: sensor.openstate_tydom_ouvrant_droit_3
+        name: Fenêtre salle de bain
+      - entity: sensor.openstate_tydom_ouvrant_droit_4
+        name: Fenêtre chambre Auguste
+      - entity: sensor.openstate_tydom_ouvrant_droit_5
+        name: Fenêtre chambre Margaux
+      - entity: sensor.openstate_tydom_ouvrant_droit_6
+        name: Fenêtre chambre parentale
+      - entity: sensor.openstate_tydom_ouvrant_droit_7
+        name: Fenêtre salle d'eau
+  - type: grid
+    cards:
+    - type: heading
+      heading: Détecteurs
+      heading_style: title
+      icon: mdi:motion-sensor
+    - type: entities
+      state_color: true
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.capteur_cuisine
+        name: Cuisine
+      - entity: binary_sensor.capteur_salon_piano
+        name: Salon Piano
+      - entity: binary_sensor.capteur_porche
+        name: Porche
+      - entity: binary_sensor.capteur_patio
+        name: Patio
+      - entity: binary_sensor.capteur_garage
+        name: Garage
+      - entity: binary_sensor.capteur_couloir_etage
+        name: Couloir Étage
+    - type: entities
+      state_color: true
+      title: Interphone
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.interphone_visitor
+        name: Visiteur
+      - entity: binary_sensor.interphone_person
+        name: Personne
+      - entity: binary_sensor.interphone_motion
+        name: Mouvement
+  - type: grid
+    cards:
+    - type: heading
+      heading: Garage
+      heading_style: title
+      icon: mdi:garage-variant
+    - type: tile
+      entity: cover.porte_de_garage
+      name: Porte
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.blocage_porte_de_garage
+      name: Blocage
+      grid_options:
+        columns: full
 - title: Entrée
   path: entree
   icon: mdi:door-open

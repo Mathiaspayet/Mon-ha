@@ -472,6 +472,38 @@ des badges sans nom, des cartes de zone noyées sous `area-controls`, et un `tap
 que j'avais supposé au lieu de le vérifier. **Rien ne remplace une capture d'écran** —
 le moteur Puppet, non installé ici, rendrait ces allers-retours inutiles.
 
+## Refonte — étape 4 : Confort et Sécurité
+
+Les deux dernières vues destinées à tout le monde. La barre d'onglets compte désormais
+**quatre entrées** — Maison, Pièces, Confort, Sécurité — contre onze sur l'ancien
+tableau de bord.
+
+### Confort
+
+| Section | Contenu |
+|---|---|
+| Chauffage | Les 6 thermostats KNX, consigne réglable dans la tuile, plus le forçage de la salle d'eau |
+| Climatisation | Les 2 Daikin, consigne et mode (chaud / froid / auto) en liste déroulante |
+| Eau chaude | Température et consigne ECS, état de chauffe, marche/arrêt, bouclage, mode été |
+| Températures | Les 7 pièces sur 48 h, et les moyennes intérieur / dehors sur la semaine |
+
+La chaudière elle-même — H1, H2, flamme, modulation, pression — n'est **pas** ici : elle
+ira dans Technique. Confort répond à « ai-je chaud », pas à « comment marche la
+chaudière ».
+
+### Sécurité
+
+| Section | Contenu |
+|---|---|
+| Alarme | Panneau avec les quatre modes d'armement, sirène extérieure, simulation de présence |
+| Caméras | Interphone, Entrée garage, et la dernière capture du déclenchement |
+| Ouvrants | Les 11 capteurs Tydom, tous listés — c'est la vue dédiée, on ne filtre pas |
+| Détecteurs | Les 6 capteurs d'alarme, plus visiteur / personne / mouvement de l'interphone |
+| Garage | Porte avec position, et son blocage |
+
+Différence de traitement assumée avec la vue Maison : là-bas les ouvrants n'apparaissent
+que s'ils sont ouverts, ici ils sont **tous** visibles. Maison signale, Sécurité inventorie.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :
