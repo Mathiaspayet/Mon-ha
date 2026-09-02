@@ -46,7 +46,7 @@ areas:
 - area_id: cuisine
   name: Cuisine
   floor_id: rez_de_chaussee
-  icon: mdi:countertop
+  icon: mdi:silverware-fork-knife
 - area_id: entree
   name: Entrée
   floor_id: rez_de_chaussee

@@ -425,6 +425,37 @@ la zone : Salon Télé affiche 27,3 °C et Chambre parentale 26 °C alors que le
 choisir explicitement quel capteur fait foi quand une pièce en compte plusieurs, mais ce
 n'est plus bloquant.
 
+## Refonte — étape 3 : la vue Pièces
+
+Les **21 zones rangées par étage** : Rez-de-chaussée (11), Étage (9), Extérieur (1).
+Chaque carte affiche la température de la pièce et porte une commande `area-controls`
+pour allumer ou éteindre ses lumières sans quitter la vue.
+
+### Pourquoi aucune sous-vue n'est construite à la main
+
+Le cahier des charges prévoyait une sous-vue par pièce. En construisant, un meilleur
+choix s'est imposé : **la carte de zone ouvre la page de zone native de Home Assistant**,
+qui regroupe déjà lumières, volet, chauffage et capteurs de la pièce.
+
+| | Sous-vue dessinée à la main | Page de zone native |
+|---|---|---|
+| Config | 21 vues à écrire | zéro |
+| Nouvelle entité dans une pièce | à ajouter à la main | apparaît toute seule |
+| Renommage, déplacement | à répercuter | suit le registre |
+
+C'est exactement le bénéfice du chantier de l'étape 1 : un registre propre rend le
+travail manuel inutile. Des sous-vues dessinées viendront plus tard, mais seulement pour
+les pièces qui méritent une mise en page particulière.
+
+### Correction de mise en page sur Maison
+
+La tuile Lumières faisait une ligne quand Volets en faisait deux — ses flèches
+haut/stop/bas prennent une rangée supplémentaire — ce qui laissait un trou sous
+Lumières. Les deux tuiles sont fixées à `rows: 2`.
+
+L'icône de la Cuisine passe de `mdi:countertop` à `mdi:silverware-fork-knife` : la
+première ne se lit pas à la taille d'une carte de zone.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

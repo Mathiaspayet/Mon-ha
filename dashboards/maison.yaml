@@ -1,5 +1,5 @@
 # Tableau de bord « Maison » (url_path: maison-v2, mode storage) — refonte, étape 2.
-# Vue unique pour l'instant : Maison. Pièces, Confort et Sécurité viendront ensuite.
+# Deux vues : Maison et Pièces. Confort et Sécurité viendront ensuite.
 # Visible de tous. Aucune ressource HACS : natif Home Assistant uniquement.
 #
 # Le tableau de bord historique « Domolaunaguet » (url_path: lovelace) n'est pas
@@ -15,6 +15,12 @@
 #
 # Les badges portent show_name ET show_state : sans show_name, une puce de
 # personne n'affiche que « Maison » ou « Absent », sans dire de qui il s'agit.
+#
+# Vue Pièces : les 21 zones rangées par étage. Aucune sous-vue n'est construite à
+# la main — la carte de zone ouvre la page de zone native de Home Assistant, qui
+# regroupe déjà lumières, volet, chauffage et capteurs, et qui reste à jour toute
+# seule quand on ajoute une entité. Une sous-vue dessinée à la main ne se mettrait
+# pas à jour et devrait être maintenue pièce par pièce.
 ---
 views:
 - title: Maison
@@ -267,6 +273,7 @@ views:
       icon: mdi:lightbulb-group-outline
       grid_options:
         columns: 6
+        rows: 2
       state_content:
       - state
     - type: tile
@@ -276,6 +283,7 @@ views:
       - type: cover-open-close
       grid_options:
         columns: 6
+        rows: 2
   - type: grid
     visibility:
     - condition: state
@@ -392,3 +400,208 @@ views:
       features_position: bottom
       grid_options:
         columns: 6
+- title: Pièces
+  path: pieces
+  icon: mdi:floor-plan
+  type: sections
+  max_columns: 3
+  theme: Backend-selected
+  badges: []
+  sections:
+  - type: grid
+    column_span: 3
+    cards:
+    - type: markdown
+      grid_options:
+        columns: full
+      content: 'Appuyez sur une pièce pour ouvrir son détail : lumières, volet, chauffage
+        et capteurs, tenus à jour automatiquement par Home Assistant.'
+  - type: grid
+    cards:
+    - type: heading
+      heading: Rez-de-chaussée
+      heading_style: title
+      icon: mdi:home-floor-g
+    - type: area
+      display_type: compact
+      alert_classes: &id001 []
+      sensor_classes: &id002
+      - temperature
+      features: &id003
+      - type: area-controls
+      features_position: bottom
+      grid_options: &id004
+        columns: 6
+      area: entree
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: cuisine
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salle_a_manger
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salon
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salon_piano
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salon_tele
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: bureau
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: buanderie
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: cellier
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: wc_rdc
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: garage
+  - type: grid
+    cards:
+    - type: heading
+      heading: Étage
+      heading_style: title
+      icon: mdi:home-floor-1
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: couloir_etage
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: chambre_parentale
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: chambre_auguste
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: chambre_margaux
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: chambre
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salle_de_bain
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: salle_d_eau
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: wc_etage
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: patio
+  - type: grid
+    cards:
+    - type: heading
+      heading: Extérieur
+      heading_style: title
+      icon: mdi:tree-outline
+    - type: area
+      display_type: compact
+      alert_classes: *id001
+      sensor_classes: *id002
+      features: *id003
+      features_position: bottom
+      grid_options: *id004
+      area: exterieur
