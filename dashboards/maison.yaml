@@ -1,0 +1,382 @@
+# Tableau de bord « Maison » (url_path: maison-v2, mode storage) — refonte, étape 2.
+# Vue unique pour l'instant : Maison. Pièces, Confort et Sécurité viendront ensuite.
+# Visible de tous. Aucune ressource HACS : natif Home Assistant uniquement.
+#
+# Le tableau de bord historique « Domolaunaguet » (url_path: lovelace) n'est pas
+# touché et reste le tableau par défaut tant qu'on n'a pas basculé.
+#
+# La section « Attention » est conditionnée par un OU sur 18 déclencheurs : elle
+# n'apparaît pas du tout quand tout va bien. Chaque carte à l'intérieur porte en
+# plus sa propre condition, donc seule la ligne concernée s'affiche.
+#
+# Les ouvrants Tydom parlent en LOCKED / UNLOCKED, plus « unknown » au démarrage.
+# Les conditions filtrent sur UNLOCKED et OPENED — une correspondance positive,
+# pour qu'un « unknown » transitoire ne déclenche pas de fausse alerte.
+---
+views:
+- title: Maison
+  path: maison
+  icon: mdi:home
+  type: sections
+  max_columns: 3
+  theme: Backend-selected
+  badges:
+  - type: entity
+    entity: person.marine
+    show_state: true
+  - type: entity
+    entity: person.domolaunaguet
+    show_state: true
+  - type: entity
+    entity: alarm_control_panel.alarme_maison
+    show_state: true
+    name: Alarme
+  - type: entity
+    entity: sensor.moyenne_temperature_interieure
+    show_state: true
+    name: Intérieur
+  - type: entity
+    entity: sensor.temperature_exterieure_meteo_france
+    show_state: true
+    name: Dehors
+  sections:
+  - type: grid
+    column_span: 3
+    visibility:
+    - condition: or
+      conditions:
+      - condition: state
+        entity: alarm_control_panel.alarme_maison
+        state:
+        - triggered
+        - pending
+        - arming
+      - condition: state
+        entity: cover.porte_de_garage
+        state: open
+      - condition: numeric_state
+        entity: sensor.pression_chaudiere_en_bar
+        below: 1
+      - condition: state
+        entity: sensor.openstate_tydom_baie_vitree_gauche
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_baie_vitree_droit
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_fenetre_buanderie
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_fenetre_bureau
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_2
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_3
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_4
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_5
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_6
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: sensor.openstate_tydom_ouvrant_droit_7
+        state:
+        - UNLOCKED
+        - OPENED
+      - condition: state
+        entity: binary_sensor.ruban_led_salon_piano_erreur_courant
+        state: 'on'
+      - condition: state
+        entity: binary_sensor.ruban_led_salon_piano_surchauffe
+        state: 'on'
+      - condition: state
+        entity: binary_sensor.ruban_led_double_hauteur_erreur_courant
+        state: 'on'
+      - condition: state
+        entity: binary_sensor.ruban_led_double_hauteur_surchauffe
+        state: 'on'
+    cards:
+    - type: heading
+      heading: Attention
+      heading_style: title
+      icon: mdi:alert-circle-outline
+    - type: tile
+      entity: alarm_control_panel.alarme_maison
+      name: Alarme
+      color: red
+      hide_state: false
+      visibility:
+      - condition: state
+        entity: alarm_control_panel.alarme_maison
+        state:
+        - triggered
+        - pending
+        - arming
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.porte_de_garage
+      name: Porte de garage ouverte
+      color: orange
+      features:
+      - type: cover-open-close
+      visibility:
+      - condition: state
+        entity: cover.porte_de_garage
+        state: open
+      grid_options:
+        columns: full
+    - type: tile
+      entity: sensor.pression_chaudiere_en_bar
+      name: Pression chaudière basse
+      color: red
+      visibility:
+      - condition: numeric_state
+        entity: sensor.pression_chaudiere_en_bar
+        below: 1
+      grid_options:
+        columns: full
+    - type: entity-filter
+      conditions:
+      - condition: state
+        state:
+        - UNLOCKED
+        - OPENED
+      entities:
+      - entity: sensor.openstate_tydom_baie_vitree_gauche
+        name: Baie vitrée gauche
+      - entity: sensor.openstate_tydom_baie_vitree_droit
+        name: Baie vitrée droite
+      - entity: sensor.openstate_tydom_fenetre_buanderie
+        name: Fenêtre buanderie
+      - entity: sensor.openstate_tydom_fenetre_bureau
+        name: Fenêtre bureau
+      - entity: sensor.openstate_tydom_ouvrant_droit
+        name: Fenêtre salon télé
+      - entity: sensor.openstate_tydom_ouvrant_droit_2
+        name: Fenêtre chambre d'amis
+      - entity: sensor.openstate_tydom_ouvrant_droit_3
+        name: Fenêtre salle de bain
+      - entity: sensor.openstate_tydom_ouvrant_droit_4
+        name: Fenêtre chambre Auguste
+      - entity: sensor.openstate_tydom_ouvrant_droit_5
+        name: Fenêtre chambre Margaux
+      - entity: sensor.openstate_tydom_ouvrant_droit_6
+        name: Fenêtre chambre parentale
+      - entity: sensor.openstate_tydom_ouvrant_droit_7
+        name: Fenêtre salle d'eau
+      card:
+        type: entities
+        title: Ouvrants ouverts
+        state_color: true
+        icon: mdi:window-open-variant
+      grid_options:
+        columns: full
+    - type: entity-filter
+      conditions:
+      - condition: state
+        state: 'on'
+      entities:
+      - binary_sensor.ruban_led_salon_piano_erreur_courant
+      - binary_sensor.ruban_led_salon_piano_surchauffe
+      - binary_sensor.ruban_led_double_hauteur_erreur_courant
+      - binary_sensor.ruban_led_double_hauteur_surchauffe
+      card:
+        type: entities
+        title: Défaut ruban LED
+        state_color: true
+        icon: mdi:led-strip-variant
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Raccourcis
+      heading_style: title
+      icon: mdi:gesture-tap-button
+    - type: tile
+      entity: script.depart_maison
+      name: Départ
+      icon: mdi:home-export-outline
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.depart_maison
+        confirmation:
+          text: Lancer le départ de la maison ?
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: script.retour_maison
+      name: Retour
+      icon: mdi:home-import-outline
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.retour_maison
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: light.toutes_les_lumieres
+      name: Lumières
+      icon: mdi:lightbulb-group-outline
+      features:
+      - type: toggle
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: cover.tous_les_volets
+      name: Volets
+      features:
+      - type: cover-open-close
+      grid_options:
+        columns: 6
+  - type: grid
+    visibility:
+    - condition: state
+      entity: light.toutes_les_lumieres
+      state: 'on'
+    cards:
+    - type: heading
+      heading: Allumé en ce moment
+      heading_style: title
+      icon: mdi:lightbulb-on-outline
+      badges:
+      - type: entity
+        entity: sensor.toutes
+        show_state: true
+        show_name: false
+    - type: entity-filter
+      conditions:
+      - condition: state
+        state: 'on'
+      entities:
+      - light.buanderie
+      - light.bureau
+      - light.cellier
+      - light.chambre_auguste
+      - light.chambre_d_amis
+      - light.chambre_margaux
+      - light.chambre_parents
+      - light.couloir_etage
+      - light.cuisine
+      - light.dressing
+      - light.eclairage_garage
+      - light.eclairage_jardin
+      - light.entree_couloir
+      - light.luminaire_ilot
+      - light.patio_exterieur
+      - light.porsche_et_travees
+      - light.prise_commandee_salon_baie
+      - light.prise_commandee_salon_tele
+      - light.ruban_led_double_hauteur
+      - light.ruban_led_salon
+      - light.ruban_led_salon_piano
+      - light.salle_a_manger
+      - light.salle_d_eau
+      - light.salle_de_bain
+      - light.salle_de_bain_douche_baignoire
+      - light.salon
+      - light.salon_piano
+      - light.salon_tele
+      - light.terrasse_exterieure
+      - light.wc_etage
+      - light.wc_rdc
+      card:
+        type: entities
+        state_color: true
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: La maison
+      heading_style: title
+      icon: mdi:floor-plan
+    - type: area
+      area: salon
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6
+    - type: area
+      area: salon_tele
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6
+    - type: area
+      area: cuisine
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6
+    - type: area
+      area: chambre_parentale
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6
+    - type: area
+      area: garage
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6
+    - type: area
+      area: exterieur
+      display_type: compact
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      features_position: bottom
+      grid_options:
+        columns: 6

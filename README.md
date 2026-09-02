@@ -346,6 +346,60 @@ nommer explicitement dans chaque carte. Ça marche, c'est juste moins propre à 
 | Bloc « attention » | Sécurité, oublis du quotidien, pannes techniques. **Pas** les alertes système, qui vont dans Technique |
 | Vue Diag | Reste dans l'ancien tableau de bord jusqu'au tri des objets KNX, puis ce qui survit rejoint Technique |
 
+## Refonte — étape 2 : la vue Maison
+
+Nouveau tableau de bord **`maison-v2`**, titre « Maison », visible de tous. Le tableau
+historique `lovelace` n'est pas touché et reste celui par défaut. Config versionnée dans
+`dashboards/maison.yaml`.
+
+Une seule vue pour l'instant. Vue de type `sections`, natif Home Assistant, **aucune
+ressource HACS**.
+
+### Ce qu'il y a dessus
+
+**Bandeau** (badges de vue) — Marine, Mathias, alarme, température intérieure, dehors.
+
+**Attention** — conditionnée par un OU sur **18 déclencheurs**. La section n'apparaît pas
+du tout quand tout va bien, et chaque carte porte en plus sa propre condition : seule la
+ligne concernée s'affiche.
+
+| Famille | Déclencheurs |
+|---|---|
+| Sécurité | Alarme `triggered` / `pending` / `arming` ; les 11 ouvrants Tydom |
+| Oublis | Porte de garage ouverte |
+| Panne technique | Pression chaudière sous 1 bar ; erreur courant et surchauffe des deux rubans LED |
+
+Les alertes système (sauvegarde, NAS, Pi) sont volontairement absentes — elles iront dans
+la vue Technique.
+
+**Raccourcis** — Départ (avec confirmation), Retour, Lumières, Volets.
+
+**Allumé en ce moment** — section masquée si rien n'est allumé, sinon la liste des
+lumières allumées, chacune extinguible d'un geste.
+
+**La maison** — six cartes de zone : Salon, Salon Télé, Cuisine, Chambre parentale,
+Garage, Extérieur. Le reste des pièces ira dans la vue Pièces.
+
+### Deux points de méthode
+
+**Le vocabulaire Tydom est `LOCKED` / `UNLOCKED`**, plus `unknown` à chaque redémarrage.
+Les conditions filtrent sur `UNLOCKED` et `OPENED` — une correspondance **positive** —
+pour qu'un `unknown` transitoire ne déclenche pas de fausse alerte au démarrage.
+
+**Deux cartes `entity-filter` remplacent une quarantaine de cartes conditionnelles.**
+Elles n'affichent que les entités correspondant à leur condition et se masquent
+entièrement quand aucune ne correspond. Une pour les ouvrants, une pour les lumières
+allumées.
+
+### Ce qui n'a pas pu être vérifié
+
+Le moteur de capture d'écran (app Puppet) n'est pas installé : la vue n'a pas pu être
+regardée avant livraison. Le rendu est à valider sur téléphone.
+
+Les capteurs `alimentation 24V` des rubans LED sont **volontairement exclus** du bloc
+Attention : leur polarité n'est pas confirmée (voir phase 2 KNX), les intégrer
+maintenant risquerait une alerte permanente à tort.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :
