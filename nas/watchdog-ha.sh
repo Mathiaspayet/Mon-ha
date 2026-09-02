@@ -27,9 +27,16 @@ mkdir -p "$ETAT" 2>/dev/null
 
 notifier() {
     # $1 = titre, $2 = message
-    if command -v synodsmnotify >/dev/null 2>&1; then
-        synodsmnotify @administrators "$1" "$2"
-    fi
+    #
+    # Le canal d'alerte est l'e-mail du planificateur DSM : tout ce qu'on
+    # ecrit sur la sortie standard atterrit dans le corps du message.
+    # (synodsmnotify a ete retire : DSM refuse un titre en texte libre,
+    #  « is neither mail string key nor i18n format », et l'erreur polluait
+    #  le mail. L'e-mail arrivant sur un compte releve par le telephone,
+    #  la notification push etait de toute facon redondante.)
+    #
+    # Pour ajouter un push dedie (ntfy, Pushover...), une ligne curl ici
+    # suffit — elle n'a pas besoin de Home Assistant, qui est justement mort.
     logger -t ha-watchdog "$1 - $2"
     echo "$1"
     echo "$2"

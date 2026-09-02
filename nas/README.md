@@ -58,6 +58,39 @@ L'état vit dans `/volume2/docker/ha-watchdog/` :
 
 Les exécutions sont aussi journalisées via `logger -t ha-watchdog`.
 
+## Tester le chemin d'alerte
+
+Une exécution réussie ne prouve que la branche « tout va bien ». Pour vérifier
+que l'alerte part réellement, modifier temporairement deux lignes en tête :
+
+```sh
+PORT="8121"     # port volontairement faux
+SEUIL=1         # alerte dès le premier échec
+```
+
+Exécuter la tâche à la main : elle doit se terminer en **anormal (1)** et
+l'e-mail doit arriver. Remettre ensuite `PORT="8123"` et `SEUIL=3`, puis
+**supprimer `/volume2/docker/ha-watchdog/`** — sinon le compteur et le drapeau
+d'alerte du test restent en place.
+
+Testé le 2026-09-02 : e-mail reçu, diagnostic correct (« la machine répond au
+ping mais pas Home Assistant », le Pi tournant bien à ce moment-là).
+
+## Canal de notification
+
+L'alerte passe par l'**e-mail du planificateur DSM**, déclenché par le code de
+sortie 1. Tout ce que le script écrit sur la sortie standard forme le corps du
+message.
+
+`synodsmnotify` a été retiré : DSM refuse un titre en texte libre
+(*« is neither mail string key nor i18n format »*) et l'erreur polluait le mail.
+Comme l'e-mail arrive sur un compte relevé par le téléphone, la notification
+push était redondante.
+
+Pour ajouter un push dédié (ntfy, Pushover…), une ligne `curl` dans la fonction
+`notifier` suffit. Elle ne dépendra pas de Home Assistant — qui est justement
+hors service au moment où l'alerte part.
+
 ## Réglages
 
 En tête du script : `HOTE`, `PORT`, `SEUIL` (nombre d'échecs avant alerte) et
