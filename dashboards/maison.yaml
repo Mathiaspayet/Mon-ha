@@ -1,5 +1,6 @@
 # Tableau de bord « Maison » (url_path: maison-v2, mode storage) — refonte, étape 2.
-# Deux vues : Maison et Pièces. Confort et Sécurité viendront ensuite.
+# Deux vues principales — Maison et Pièces — plus 21 sous-vues, une par pièce.
+# Confort et Sécurité viendront ensuite.
 # Visible de tous. Aucune ressource HACS : natif Home Assistant uniquement.
 #
 # Le tableau de bord historique « Domolaunaguet » (url_path: lovelace) n'est pas
@@ -16,11 +17,16 @@
 # Les badges portent show_name ET show_state : sans show_name, une puce de
 # personne n'affiche que « Maison » ou « Absent », sans dire de qui il s'agit.
 #
-# Vue Pièces : les 21 zones rangées par étage. Aucune sous-vue n'est construite à
-# la main — la carte de zone ouvre la page de zone native de Home Assistant, qui
-# regroupe déjà lumières, volet, chauffage et capteurs, et qui reste à jour toute
-# seule quand on ajoute une entité. Une sous-vue dessinée à la main ne se mettrait
-# pas à jour et devrait être maintenue pièce par pièce.
+# Vue Pièces : les 21 zones rangées par étage, chaque carte ouvrant la sous-vue de
+# sa pièce via un tap_action explicite.
+#
+# ATTENTION : le tap_action de la carte de zone vaut « none » PAR DÉFAUT, et il
+# n'existe aucune page de zone native vers laquelle naviguer. Sans tap_action
+# explicite, appuyer sur une carte ne fait rien du tout. C'est l'erreur commise à
+# l'étape 3, corrigée ici.
+#
+# Les sous-vues portent subview: true — elles n'apparaissent donc pas dans la barre
+# d'onglets — et back_path vers /maison-v2/pieces pour le bouton retour.
 #
 # Les cartes de zone n'ont volontairement AUCUNE commande. La fonction
 # area-controls avait été essayée : elle ajoute une à trois grosses touches par
@@ -428,66 +434,99 @@ views:
       grid_options: &id003
         columns: 6
       area: entree
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/entree
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: cuisine
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/cuisine
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salle_a_manger
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salle_a_manger
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salon
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salon
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salon_piano
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salon_piano
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salon_tele
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salon_tele
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: bureau
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/bureau
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: buanderie
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/buanderie
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: cellier
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/cellier
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: wc_rdc
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/wc_rdc
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: garage
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/garage
   - type: grid
     cards:
     - type: heading
@@ -500,54 +539,81 @@ views:
       sensor_classes: *id002
       grid_options: *id003
       area: couloir_etage
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/couloir_etage
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: chambre_parentale
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/chambre_parentale
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: chambre_auguste
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/chambre_auguste
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: chambre_margaux
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/chambre_margaux
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: chambre
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/chambre
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salle_de_bain
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salle_de_bain
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: salle_d_eau
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/salle_d_eau
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: wc_etage
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/wc_etage
     - type: area
       display_type: compact
       alert_classes: *id001
       sensor_classes: *id002
       grid_options: *id003
       area: patio
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/patio
   - type: grid
     cards:
     - type: heading
@@ -560,3 +626,665 @@ views:
       sensor_classes: *id002
       grid_options: *id003
       area: exterieur
+      tap_action:
+        action: navigate
+        navigation_path: /maison-v2/exterieur
+- title: Entrée
+  path: entree
+  icon: mdi:door-open
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Entrée
+      heading_style: title
+      icon: mdi:door-open
+    - type: tile
+      entity: light.entree_couloir
+      grid_options:
+        columns: full
+- title: Cuisine
+  path: cuisine
+  icon: mdi:silverware-fork-knife
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Cuisine
+      heading_style: title
+      icon: mdi:silverware-fork-knife
+    - type: tile
+      entity: light.cuisine
+      grid_options:
+        columns: full
+    - type: tile
+      entity: light.luminaire_ilot
+      grid_options:
+        columns: full
+- title: Salle à manger
+  path: salle_a_manger
+  icon: mdi:glass-wine
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salle à manger
+      heading_style: title
+      icon: mdi:glass-wine
+    - type: tile
+      entity: light.salle_a_manger
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.ruban_led_double_hauteur
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+- title: Salon
+  path: salon
+  icon: mdi:sofa
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salon
+      heading_style: title
+      icon: mdi:sofa
+    - type: tile
+      entity: light.salon
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.ruban_led_salon
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.prise_commandee_salon_baie
+      grid_options:
+        columns: full
+- title: Salon Piano
+  path: salon_piano
+  icon: mdi:piano
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salon Piano
+      heading_style: title
+      icon: mdi:piano
+    - type: tile
+      entity: light.salon_piano
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.ruban_led_salon_piano
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+- title: Salon Télé
+  path: salon_tele
+  icon: mdi:television-classic
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salon Télé
+      heading_style: title
+      icon: mdi:television-classic
+    - type: tile
+      entity: light.salon_tele
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.prise_commandee_salon_tele
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_salon_tele
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: sensor.temperature_salon_tele
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_salon_tele
+        name: Salon Télé
+- title: Bureau
+  path: bureau
+  icon: mdi:desk
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Bureau
+      heading_style: title
+      icon: mdi:desk
+    - type: tile
+      entity: light.bureau
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_bureau
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+- title: Buanderie
+  path: buanderie
+  icon: mdi:washing-machine
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Buanderie
+      heading_style: title
+      icon: mdi:washing-machine
+    - type: tile
+      entity: light.buanderie
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_buanderie
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+- title: Cellier
+  path: cellier
+  icon: mdi:fridge-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Cellier
+      heading_style: title
+      icon: mdi:fridge-outline
+    - type: tile
+      entity: light.cellier
+      grid_options:
+        columns: full
+- title: WC RDC
+  path: wc_rdc
+  icon: mdi:toilet
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: WC RDC
+      heading_style: title
+      icon: mdi:toilet
+    - type: tile
+      entity: light.wc_rdc
+      grid_options:
+        columns: full
+- title: Garage
+  path: garage
+  icon: mdi:garage-variant
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Garage
+      heading_style: title
+      icon: mdi:garage-variant
+    - type: tile
+      entity: light.eclairage_garage
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.porte_de_garage
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+- title: Couloir Étage
+  path: couloir_etage
+  icon: mdi:stairs
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Couloir Étage
+      heading_style: title
+      icon: mdi:stairs
+    - type: tile
+      entity: light.couloir_etage
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.clim_couloir_etage_room_temperature
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+- title: Chambre parentale
+  path: chambre_parentale
+  icon: mdi:bed-king-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chambre parentale
+      heading_style: title
+      icon: mdi:bed-king-outline
+    - type: tile
+      entity: light.chambre_parents
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: light.dressing
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_parentale
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: climate.thermostat
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: climate.clim_chambre_room_temperature
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_chambre_parents
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_chambre_parents
+        name: Chambre parentale
+- title: Chambre Auguste
+  path: chambre_auguste
+  icon: mdi:bed-single-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chambre Auguste
+      heading_style: title
+      icon: mdi:bed-single-outline
+    - type: tile
+      entity: light.chambre_auguste
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_auguste
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: climate.thermostat_chambre_auguste
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_chambre_auguste
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_chambre_auguste
+        name: Chambre Auguste
+- title: Chambre Margaux
+  path: chambre_margaux
+  icon: mdi:bed-single-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chambre Margaux
+      heading_style: title
+      icon: mdi:bed-single-outline
+    - type: tile
+      entity: light.chambre_margaux
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_margaux
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: climate.thermostat_chambre_margaux
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_chambre_margaux
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_chambre_margaux
+        name: Chambre Margaux
+- title: Chambre d'amis
+  path: chambre
+  icon: mdi:bed-queen-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Chambre d'amis
+      heading_style: title
+      icon: mdi:bed-queen-outline
+    - type: tile
+      entity: light.chambre_d_amis
+      grid_options:
+        columns: full
+    - type: tile
+      entity: climate.thermostat_chambre_amis
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_chambre_amis
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_chambre_amis
+        name: Chambre d'amis
+- title: Salle de bain
+  path: salle_de_bain
+  icon: mdi:bathtub-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salle de bain
+      heading_style: title
+      icon: mdi:bathtub-outline
+    - type: tile
+      entity: light.salle_de_bain
+      grid_options:
+        columns: full
+    - type: tile
+      entity: light.salle_de_bain_douche_baignoire
+      grid_options:
+        columns: full
+      features:
+      - type: light-brightness
+    - type: tile
+      entity: cover.volet_salle_de_bain
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: climate.thermostat_salle_de_bain
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_salle_de_bain
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_salle_de_bain
+        name: Salle de bain
+- title: Salle d'eau
+  path: salle_d_eau
+  icon: mdi:shower
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Salle d'eau
+      heading_style: title
+      icon: mdi:shower
+    - type: tile
+      entity: light.salle_d_eau
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_salle_d_eau
+      grid_options:
+        columns: full
+      features:
+      - type: cover-open-close
+      - type: cover-position
+    - type: tile
+      entity: climate.thermostat_salle_d_eau
+      grid_options:
+        columns: full
+      features:
+      - type: target-temperature
+    - type: tile
+      entity: sensor.temperature_salle_d_eau
+      name: Température
+      grid_options:
+        columns: full
+    - type: history-graph
+      hours_to_show: 48
+      grid_options:
+        columns: full
+        rows: 4
+      entities:
+      - entity: sensor.temperature_salle_d_eau
+        name: Salle d'eau
+- title: WC étage
+  path: wc_etage
+  icon: mdi:toilet
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: WC étage
+      heading_style: title
+      icon: mdi:toilet
+    - type: tile
+      entity: light.wc_etage
+      grid_options:
+        columns: full
+- title: Patio
+  path: patio
+  icon: mdi:flower-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Patio
+      heading_style: title
+      icon: mdi:flower-outline
+    - type: tile
+      entity: light.patio_exterieur
+      grid_options:
+        columns: full
+- title: Extérieur
+  path: exterieur
+  icon: mdi:tree-outline
+  subview: true
+  back_path: /maison-v2/pieces
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Extérieur
+      heading_style: title
+      icon: mdi:tree-outline
+    - type: tile
+      entity: light.terrasse_exterieure
+      grid_options:
+        columns: full
+    - type: tile
+      entity: light.porsche_et_travees
+      grid_options:
+        columns: full
+    - type: tile
+      entity: light.eclairage_jardin
+      grid_options:
+        columns: full

@@ -431,21 +431,17 @@ Les **21 zones rangées par étage** : Rez-de-chaussée (11), Étage (9), Extér
 Chaque carte affiche la température de la pièce et porte une commande `area-controls`
 pour allumer ou éteindre ses lumières sans quitter la vue.
 
-### Pourquoi aucune sous-vue n'est construite à la main
+### ⚠️ Le piège du `tap_action` de la carte de zone
 
-Le cahier des charges prévoyait une sous-vue par pièce. En construisant, un meilleur
-choix s'est imposé : **la carte de zone ouvre la page de zone native de Home Assistant**,
-qui regroupe déjà lumières, volet, chauffage et capteurs de la pièce.
+J'avais d'abord écarté les sous-vues en affirmant que la carte de zone ouvrait « la page
+de zone native de Home Assistant ». **C'était faux.** La documentation est formelle : le
+`tap_action` de la carte `area` vaut **`none` par défaut**, et il n'existe aucune page de
+zone native vers laquelle naviguer. Appuyer sur une carte ne faisait strictement rien.
 
-| | Sous-vue dessinée à la main | Page de zone native |
-|---|---|---|
-| Config | 21 vues à écrire | zéro |
-| Nouvelle entité dans une pièce | à ajouter à la main | apparaît toute seule |
-| Renommage, déplacement | à répercuter | suit le registre |
+Les 21 sous-vues prévues au cahier des charges sont donc bien nécessaires, et l'argument
+de maintenance avancé pour les éviter ne tenait pas.
 
-C'est exactement le bénéfice du chantier de l'étape 1 : un registre propre rend le
-travail manuel inutile. Des sous-vues dessinées viendront plus tard, mais seulement pour
-les pièces qui méritent une mise en page particulière.
+Chaque carte de zone porte maintenant un `tap_action` explicite vers sa sous-vue.
 
 ### Correction de mise en page sur Maison
 
@@ -455,6 +451,26 @@ Lumières. Les deux tuiles sont fixées à `rows: 2`.
 
 L'icône de la Cuisine passe de `mdi:countertop` à `mdi:silverware-fork-knife` : la
 première ne se lit pas à la taille d'une carte de zone.
+
+### Les 21 sous-vues
+
+Une par pièce, en `subview: true` — elles n'encombrent donc pas la barre d'onglets — avec
+un `back_path` vers Pièces. Contenu construit depuis le registre :
+
+- une tuile par lumière, avec le réglage de luminosité sur les neuf variables ;
+- le volet, avec ouverture/fermeture et position ;
+- les thermostats, avec la consigne réglable ;
+- la température et sa courbe sur 48 h.
+
+Deux rattachements manquants trouvés en construisant : `cover.porte_de_garage` n'avait
+aucune zone, et `sensor.temperature_salle_de_bain` non plus.
+
+### La leçon des trois captures
+
+Trois allers-retours, trois erreurs de ma part, toutes invisibles sans le rendu réel :
+des badges sans nom, des cartes de zone noyées sous `area-controls`, et un `tap_action`
+que j'avais supposé au lieu de le vérifier. **Rien ne remplace une capture d'écran** —
+le moteur Puppet, non installé ici, rendrait ces allers-retours inutiles.
 
 ## Notifications
 
