@@ -41,6 +41,52 @@ docs/             rapport d'audit du 29 août 2026
 nas/              script de surveillance du Pi depuis le NAS Synology
 ```
 
+## Nettoyage KNX du 2 septembre 2026
+
+Le recoupement avec le projet ETS « Hangar » a permis de faire le tri entre erreurs
+d'adressage, objets jamais raccordés et pannes réelles. Deux chantiers en ont découlé.
+
+### 34 entités fantômes supprimées
+
+Des entrées du registre héritées de configurations successives, sans aucune
+configuration derrière, `unavailable` en permanence. Aucune n'était référencée.
+Les entités indisponibles passent de **80 à 46** — et il n'en reste **plus une seule
+côté KNX**.
+
+Point vérifié avant suppression : les fonctions correspondantes tournaient toutes
+sous d'autres identifiants. Un fantôme avait **un** enregistrement en 72 h
+(`unavailable`, jamais changé) quand l'entité active en avait plus de deux cents.
+
+### 13 entités renommées
+
+Les identifiants avaient dérivé de ce que les entités mesurent réellement. Les plus
+trompeurs :
+
+| Ancien identifiant | Ce que l'entité mesure | Nouvel identifiant |
+|---|---|---|
+| `sensor.pression_eau_chaudiere` | Température extérieure | `sensor.temperature_exterieure_chaudiere` |
+| `binary_sensor.erreur_generale_chaudiere` | État H1 | `binary_sensor.etat_h1` |
+| `binary_sensor.etat_chaffage_h1` | Vanne chambre Margaux | `binary_sensor.etat_vannne_chambre_margaux` |
+| `binary_sensor.etat_chauffage_h2` | Blocage circulateur étage | `binary_sensor.blocage_circulateur_radiateur_etage` |
+| `switch.marche_arret_ecs` | Switch H1 | `switch.switch_h1` |
+| `switch.marche_arret_h1` | Pompe de bouclage ECS | `switch.switch_pompe_bouclage_ecs` |
+| `sensor.temperature_interrupteur` | Température chambre Parents | `sensor.temperature_chambre_parents` |
+| `sensor.temperature_salle_d_eau_2` | Température Salon Télé | `sensor.temperature_salon_tele` |
+
+Les suffixes `_2` que les fantômes imposaient aux entités actives ont été récupérés
+(`etat_flamme_chaudiere`, `forcage_chauffage_salle_d_eau`, `pression_eau_chaudiere`).
+
+**17 références mises à jour** : 11 cartes du tableau de bord, 4 dans deux
+automatisations, 2 dans les helpers min/max. Ces derniers sont le point aveugle
+classique — un renommage d'entité ne les met **jamais** à jour, et la moyenne
+extérieure s'est retrouvée à moyenner une pression en pascals avec des températures
+le temps de la correction.
+
+Un consommateur avait été oublié au premier passage : le capteur template
+`Pression Chaudiere en Bar`, dans `configuration.yaml`, qui lisait
+`sensor.pression_eau_chaudiere_2`. Il est resté `unavailable` quelques minutes avant
+d'être corrigé et rechargé.
+
 ## Notifications
 
 Toutes les notifications vers les téléphones passent par **un seul point d'entrée** :

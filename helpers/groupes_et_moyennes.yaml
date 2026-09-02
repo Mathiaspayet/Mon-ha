@@ -103,13 +103,13 @@ min_max_helpers:
     - sensor.temperature_chambre_amis
     - sensor.temperature_chambre_auguste
     - sensor.temperature_chambre_margaux
-    - sensor.temperature_interrupteur
-    - sensor.temperature_salle_d_eau_2
+    - sensor.temperature_chambre_parents
+    - sensor.temperature_salon_tele
     - sensor.temperature_salle_d_eau
     - sensor.temperature_salle_de_bain
   Moyenne température extérieure:
     entity_id: sensor.moyenne_temperature_exterieure
     members:
     - sensor.clim_chambre_climatecontrol_outdoor_temperature
-    - sensor.pression_eau_chaudiere
+    - sensor.temperature_exterieure_chaudiere
     - sensor.temperature_exterieure_meteo_france

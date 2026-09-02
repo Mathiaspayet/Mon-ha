@@ -545,7 +545,7 @@ views:
     entities:
     - entity: sensor.pourcentage_de_chauffe_chambre_auguste
     - entity: sensor.pourcentage_de_chauffe_chambre_margaux
-    - entity: sensor.pourcentage_de_chauffe
+    - entity: sensor.pourcentage_de_chauffe_chambre_parents
     - entity: sensor.pourcentage_de_chauffe_chambre_patio
     - entity: sensor.pourcentage_de_chauffe_salle_d_eau
     - entity: sensor.pourcentage_de_chauffe_salle_de_bain
@@ -595,7 +595,7 @@ views:
       color: '#c0392b'
   - type: custom:mini-graph-card
     entities:
-    - sensor.temperature_interrupteur
+    - sensor.temperature_chambre_parents
     hours_to_show: 24
     points_per_hour: 60
     line_width: 2
@@ -663,7 +663,7 @@ views:
       color: '#c0392b'
   - type: custom:mini-graph-card
     entities:
-    - sensor.temperature_salle_d_eau_2
+    - sensor.temperature_salon_tele
     hours_to_show: 24
     points_per_hour: 60
     line_width: 2
@@ -766,7 +766,7 @@ views:
   cards:
   - type: entities
     entities:
-    - binary_sensor.erreur_generale_chaudiere
+    - binary_sensor.etat_h1
     - binary_sensor.etat_marche_arret_h1
     - sensor.temperature_h1_actuelle
     - sensor.temperature_h1_consigne
@@ -782,27 +782,27 @@ views:
     - entity: binary_sensor.etat_marche_arret_mode_ete
   - type: entities
     entities:
-    - entity: binary_sensor.etat_flamme_chaudiere_2
+    - entity: binary_sensor.etat_flamme_chaudiere
       secondary_info: last-updated
   - type: entities
     entities:
-    - entity: sensor.pression_eau_chaudiere
+    - entity: sensor.temperature_exterieure_chaudiere
     - entity: sensor.pression_chaudiere_en_bar
   - type: entities
     entities:
     - entity: switch.switch_ecs
-    - entity: switch.marche_arret_ecs
+    - entity: switch.switch_h1
     - entity: switch.switch_mode_ete
   - type: entities
     entities:
-    - switch.marche_arret_h1
+    - switch.switch_pompe_bouclage_ecs
   - type: entities
     entities:
     - entity: binary_sensor.etat_vannne_chambre_ami
     - entity: binary_sensor.etat_vannne_chambre_auguste
-    - entity: binary_sensor.etat_chaffage_h1
+    - entity: binary_sensor.etat_vannne_chambre_margaux
     - entity: binary_sensor.etat_vannne_chambre_parents
-    - entity: binary_sensor.etat_chauffage_h2
+    - entity: binary_sensor.blocage_circulateur_radiateur_etage
 - theme: Backend-selected
   title: Réglages
   path: reglages

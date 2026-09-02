@@ -32,8 +32,8 @@ template:
   - sensor:
       - name: "Pression Chaudiere en Bar"
         unit_of_measurement: "Bar"
-        state: "{{ (states('sensor.pression_eau_chaudiere_2') | float(0) / 100000) | round(2) }}"
-        availability: "{{ states('sensor.pression_eau_chaudiere_2') not in ['unavailable', 'unknown', 'none'] }}"
+        state: "{{ (states('sensor.pression_eau_chaudiere') | float(0) / 100000) | round(2) }}"
+        availability: "{{ states('sensor.pression_eau_chaudiere') not in ['unavailable', 'unknown', 'none'] }}"
 
       - name: température extérieure Météo france
         unit_of_measurement: "°C"
@@ -72,7 +72,6 @@ template:
               {%- endif %}
             {%- endfor -%}
             {{ lights.on}}
-
 alarm_control_panel:
   - platform: manual
     name: Alarme_maison

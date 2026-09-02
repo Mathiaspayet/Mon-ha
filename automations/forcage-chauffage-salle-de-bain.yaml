@@ -42,7 +42,7 @@ actions:
     sequence:
     - action: switch.turn_on
       target:
-        entity_id: switch.forcage_chauffage_salle_d_eau_2
+        entity_id: switch.forcage_chauffage_salle_d_eau
   - alias: Lumière éteinte depuis 1 h — arrêt, y compris en rattrapage
     conditions:
     - condition: or
@@ -60,5 +60,5 @@ actions:
     sequence:
     - action: switch.turn_off
       target:
-        entity_id: switch.forcage_chauffage_salle_d_eau_2
+        entity_id: switch.forcage_chauffage_salle_d_eau
 mode: single
