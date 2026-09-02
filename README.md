@@ -57,6 +57,25 @@ Point vérifié avant suppression : les fonctions correspondantes tournaient tou
 sous d'autres identifiants. Un fantôme avait **un** enregistrement en 72 h
 (`unavailable`, jamais changé) quand l'entité active en avait plus de deux cents.
 
+### 8 entités mortes hors KNX
+
+Distinction importante, faite avec `dead_entities` : **`config_entry_orphans` = 0**.
+Aucune entité de Daikin, Reolink, Cast, app mobile ou Samba n'est réellement orpheline
+— leurs intégrations tournent, ces entités sont seulement non renseignées ou hors
+ligne. Les supprimer serait sans effet : Home Assistant les recrée au rechargement.
+
+Seules 8 n'avaient plus aucune intégration derrière (`config_entry_id: null`) :
+
+- Les 7 capteurs **System Monitor** — `processor_temperature`, `memory_use_percent`,
+  `disk_use_percent_config`, `load_1m`, `swap_use_percent`, `processor_use_percent`,
+  `last_boot`. L'intégration n'est plus configurée nulle part.
+- `media_player.deurbel` (WebRTC).
+
+⚠️ Conséquence : **il n'y a plus de supervision système de l'hôte.** Seul
+`sensor.cpu_temperature`, via `command_line`, subsiste. Vu le problème de SSD USB,
+réactiver System Monitor (désormais une intégration à ajouter depuis l'interface)
+redonnerait la surveillance de l'espace disque et de la charge.
+
 ### 13 entités renommées
 
 Les identifiants avaient dérivé de ce que les entités mesurent réellement. Les plus
