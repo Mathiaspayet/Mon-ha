@@ -1256,9 +1256,18 @@ des deux tuiles :
 | Rez-de-chaussée | Le groupe du niveau, puis Buanderie, Bureau, Salon Télé |
 | Étage | Le groupe du niveau, puis les cinq volets |
 
-Chaque tuile porte `cover-open-close` **et** `cover-position` : c'est là que se trouve
-**l'arrêt en cours de course**, que les flèches de l'accueil ne donnent pas, et le
-réglage au pourcentage.
+Chaque tuile porte `cover-open-close` : c'est là que se trouve **l'arrêt en cours de
+course**, que les flèches de l'accueil ne donnent pas.
+
+`cover-position` a été retiré au premier rendu. Le curseur triplait la hauteur de chaque
+tuile — icône et nom, puis les touches, puis la barre — pour un réglage qu'on ne fait pas
+depuis une liste de onze volets. Sans lui la tuile tient en deux rangées, et **deux
+tiennent par ligne** : la page passe d'environ 1450 px à 760.
+
+La position reste accessible dans la fiche de chaque volet, et les vingt et une
+sous-vues de pièce la gardent — c'est là qu'on règle un volet précis au pourcentage.
+Seul le groupe des huit reste pleine largeur : seul de sa section, il remplirait mal une
+demi-ligne.
 
 Son `back_path` pointe vers `/maison-v2/maison` et non vers `/pieces` comme les vingt et
 une sous-vues de pièce : on y arrive depuis l'accueil, le bouton retour doit y ramener.

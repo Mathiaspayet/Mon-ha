@@ -114,11 +114,16 @@
 # La condition négative (state_not: closed) côté descente couvre open, opening, closing
 # et unknown : la tuile ne disparaît donc jamais, y compris pendant le mouvement.
 #
-# L'appui LONG ouvre la sous-vue Volets, qui liste les huit volets un par un avec
-# position au pourcentage et bouton d'arrêt, plus les trois groupes en tête de bloc.
-# C'est là que se trouve l'arrêt en cours de course, que les flèches de l'accueil ne
-# donnent pas. icon_hold_action double hold_action pour la même raison que plus haut :
-# l'icône a ses propres gestes.
+# L'appui LONG ouvre la sous-vue Volets, qui liste les huit volets un par un plus les
+# trois groupes. C'est là que se trouve l'arrêt en cours de course, que les flèches de
+# l'accueil ne donnent pas. icon_hold_action double hold_action pour la même raison que
+# plus haut : l'icône a ses propres gestes.
+#
+# La sous-vue ne porte PAS cover-position. Le curseur triplait la hauteur de chaque
+# tuile — icône et nom, puis les touches, puis la barre — pour un réglage qu'on ne fait
+# pas depuis une liste. Sans lui la tuile tient en deux rangées, et deux tiennent par
+# ligne : la page est passée d'environ 1450 px à 760. La position reste accessible dans
+# la fiche de chaque volet, et les sous-vues de pièce la gardent.
 #
 # La sous-vue Volets porte back_path vers /maison-v2/maison et non vers /pieces comme
 # les vingt et une sous-vues de pièce : on y arrive depuis l'accueil, on doit y revenir.
@@ -2426,9 +2431,9 @@ views:
       name: Les huit ensemble
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
         columns: full
+        rows: 2
   - type: grid
     cards:
     - type: heading
@@ -2440,33 +2445,33 @@ views:
       name: Tout le rez-de-chaussée
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_buanderie
       name: Buanderie
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_bureau
       name: Bureau
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_salon_tele
       name: Salon Télé
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
   - type: grid
     cards:
     - type: heading
@@ -2478,46 +2483,46 @@ views:
       name: Tout l'étage
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_chambre_parentale
       name: Chambre parentale
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_chambre_auguste
       name: Chambre Auguste
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_chambre_margaux
       name: Chambre Margaux
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_salle_de_bain
       name: Salle de bain
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
     - type: tile
       entity: cover.volet_salle_d_eau
       name: Salle d'eau
       features:
       - type: cover-open-close
-      - type: cover-position
       grid_options:
-        columns: full
+        columns: 6
+        rows: 2
