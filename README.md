@@ -1012,7 +1012,7 @@ Trois voies, à trancher :
 | Disque | 16,0 Go utilisés sur 457,7 |
 | Supervisor | `healthy: true`, `supported: true` |
 | Horloge | `ntp_synchronized: true` |
-| Journal hôte, recherche `usb` | aucune ligne — pas de reset UAS |
+| Journal hôte, recherche `usb` | aucune ligne — pas de reset UAS à cette heure (la mise à jour de 09:53 en déclenchera douze, voir plus bas) |
 
 À noter : trois interruptions le 2 septembre — 03:00, 10:11 et 15:00. Celles de
 10:11 et 15:00 sont les rechargements de l'entrée KNX. Celle de **03:00 dure 2 min 50
@@ -1200,6 +1200,71 @@ En attendant, les écritures sont réduites. Réglages appliqués le 2026-09-02
 
 Sauvegarde inchangée sur décision explicite : quotidienne **avec la base**, vers le
 NAS Synology, 20 copies, dossier `share` inclus.
+
+### La montée en 2026.9.0 — le bug pris sur le fait
+
+Première mesure chiffrée du défaut, le 3 septembre 2026. Mathias a lancé la mise à
+jour du Core (2026.8.3 → **2026.9.0** ; l'OS reste en 18.2). Elle a réussi, mais le
+pont a lâché pendant toute la durée de l'opération.
+
+| Heure (Paris) | |
+|---|---|
+| 09:51:40 | Sauvegarde automatique avant mise à jour |
+| 09:53:18 → 10:09:10 | **12 resets UAS**, environ un par minute |
+| 09:53:18 → 10:05:54 | **14 erreurs d'E/S**, toutes en lecture |
+| 10:06:21 | Le recorder redémarre — Home Assistant est revenu |
+| 10:09:10 | Dernier reset |
+
+La séquence, identique à chaque fois :
+
+```
+sd 0:0:0:0: [sda] tag#0 uas_eh_abort_handler 0 uas-tag 6 inflight: CMD
+sd 0:0:0:0: [sda] tag#0 CDB: opcode=0x2a 2a 00 32 e7 48 a0 00 00 08 00
+scsi host0: uas_eh_device_reset_handler start
+usb 2-2: reset SuperSpeed USB device number 2 using xhci_hcd
+usb 2-2: enable of device-initiated U1 failed.
+scsi host0: uas_eh_device_reset_handler success
+```
+
+Deux détails confirment le diagnostic posé jusqu'ici sur hypothèse :
+
+- **`opcode=0x2a`** est un SCSI `WRITE(10)`. Les commandes abandonnées sont des
+  écritures — c'est bien la charge d'écriture qui déclenche, pas la lecture.
+- **`enable of device-initiated U1 failed`** est l'échec de négociation de l'état de
+  veille du lien USB 3, signature connue du pont Realtek RTL9210.
+
+Chaque reset s'est terminé en `success` : le pilote a récupéré à chaque fois. Mais
+**14 erreurs d'E/S ont tout de même remonté aux couches supérieures** — des lectures
+qui ont réellement échoué, pas des commandes rejouées en silence.
+
+#### Ce qui a tenu, vérifié 47 minutes après
+
+| | |
+|---|---|
+| Nouveaux resets depuis 10:09:10 | **0** |
+| Nouvelles erreurs d'E/S | **0** |
+| Erreurs `EXT4`, remontage en lecture seule | aucune |
+| Base recorder | intacte — plus ancien enregistrement toujours au 22 août, 202 Mio |
+| `current_recorder_run` | inchangé depuis 10:06:21 — pas de redémarrage spontané |
+| Supervisor | `healthy: true`, `supported: true` |
+| Entités | 441, dont 10 indisponibles — le lot habituel |
+| Entités KNX | 138 — la purge du matin a survécu |
+| Disque | 18,3 Go pendant la mise à jour, retombé à 15,9 Go (ancienne image nettoyée) |
+
+#### Ce que ça apprend
+
+Le défaut se déclenche sur les **rafales** d'écriture, pas en régime permanent : douze
+resets en seize minutes pendant la mise à jour, zéro dans les quarante-sept minutes
+qui ont suivi, alors que Home Assistant tournait normalement.
+
+Le réglage `commit_interval: 30` du recorder réduit l'écriture continue et reste utile,
+mais il ne peut rien contre une rafale de mise à jour. **`usb-storage.quirks` demeure le
+seul remède**, et il attend toujours un accès physique au support.
+
+En pratique : chaque mise à jour est un passage à risque. Celle-ci est passée — le
+système de fichiers et la base sont indemnes — mais quatorze erreurs de lecture, c'est
+passer près. Sauvegarde vérifiée avant, et pas de mise à jour à distance sans pouvoir
+intervenir physiquement en cas de casse.
 
 ### Chiffrement des sauvegardes — décision : non (C5, clos)
 
