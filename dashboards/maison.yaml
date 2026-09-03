@@ -94,17 +94,19 @@
 # un bandeau qui faisait la même chose d'un doigt. tap_action: more-info ouvre la
 # fiche du switch, seul endroit d'où le relâcher volontairement.
 #
-# La carte météo porte show_current: false ET grid_options.rows: 3. Le bloc
-# « conditions du moment » répétait la première colonne de la prévision (mêmes
-# mini et maxi du jour) et la température extérieure est déjà dans les badges, en
-# moyenne des trois sondes.
+# La carte météo porte forecast_type: hourly, show_current: false et
+# grid_options.rows: 2. Le bloc « conditions du moment » répétait la première
+# colonne de la prévision et la température extérieure est déjà dans les badges,
+# en moyenne des trois sondes.
 #
-# rows: 2 a été essayé et rogne les températures minimales — le contenu d'une
-# prévision quotidienne (jour, icône, maxi, mini) ne tient pas en deux rangées.
-# rows: 3 vaut la hauteur automatique : grid_options ne peut pas réduire cette
-# carte davantage. Descendre plus bas demande de changer le CONTENU, pas le
-# gabarit — soit forecast_type: hourly, qui n'a pas de ligne de mini, soit une
-# carte markdown alimentée par un capteur modèle appelant weather.get_forecasts.
+# Le passage à l'horaire n'est pas cosmétique : c'est ce qui permet les deux
+# rangées. Une prévision QUOTIDIENNE affiche jour, icône, maxi ET mini ; à rows: 2
+# la ligne des minimales était rognée, et rows: 3 vaut exactement la hauteur
+# automatique — grid_options ne pouvait donc pas réduire la version quotidienne.
+# L'horaire n'a qu'une température par créneau, donc une ligne de moins, et tient.
+#
+# weather.launaguet annonce supported_features = 3, soit quotidien + horaire. Une
+# entité météo qui ne porterait pas le bit 2 rendrait la carte vide.
 #
 # Il n'y a plus de section « La maison » avec des cartes de zone : l'onglet Pièces
 # fait la même chose en mieux, avec les 21 zones rangées par étage au lieu de 6.
@@ -611,12 +613,12 @@ views:
     - type: weather-forecast
       entity: weather.launaguet
       name: Launaguet
-      forecast_type: daily
+      forecast_type: hourly
       show_current: false
       show_forecast: true
       grid_options:
         columns: full
-        rows: 3
+        rows: 2
     - type: markdown
       grid_options:
         columns: full

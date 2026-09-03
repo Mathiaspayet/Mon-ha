@@ -751,21 +751,26 @@ le blocage est actif, la porte n'est pas manœuvrable depuis l'accueil, et c'est
 but. `tap_action: more-info` ouvre la fiche du switch, seul endroit d'où le relâcher
 volontairement.
 
-### La météo : `grid_options` ne peut pas la réduire davantage
+### La météo passe à l'horaire pour tenir en deux rangées
 
-`rows: 2` a été essayé et **rogne les températures minimales** — le contenu d'une
-prévision quotidienne (jour, icône, maxi, mini) ne tient pas en deux rangées. La
-carte est repassée à `rows: 3`, ce qui vaut exactement sa hauteur automatique.
+`grid_options` seul ne pouvait pas la réduire. `rows: 2` **rognait les températures
+minimales**, et `rows: 3` valait exactement la hauteur automatique : avec
+`show_current: false`, la carte quotidienne était déjà à son minimum, le reste étant
+sa marge interne — que seul `card-mod` (HACS, exclu) pourrait toucher.
 
-Autrement dit, avec `show_current: false` la carte native est déjà à son minimum : la
-place restante est sa marge interne, que seul `card-mod` (HACS, exclu) pourrait
-toucher. Descendre plus bas demande de changer le **contenu**, pas le gabarit :
+Le levier était donc le **contenu**. Une prévision quotidienne affiche jour, icône,
+maxi *et* mini ; l'horaire n'a qu'une température par créneau, soit une ligne de
+moins. `forecast_type: hourly` + `rows: 2` tient sans rien rogner. On échange les cinq
+jours contre les prochaines heures — ce qui, sur un écran d'accueil, répond plutôt
+mieux à « je sors, je prends quoi ».
 
-- `forecast_type: hourly` — la prévision horaire n'a pas de ligne de minimale, donc
-  une rangée de moins ; on échange les cinq jours contre les prochaines heures.
-- Une carte `markdown` alimentée par un capteur modèle déclenché appelant
-  `weather.get_forecasts` — les cinq jours en une ou deux lignes de texte, mais cela
-  ajoute un appel de service périodique à la configuration.
+`weather.launaguet` annonce `supported_features = 3`, soit quotidien + horaire : le
+bit 2 est bien là. Une entité météo qui ne le porterait pas rendrait la carte vide.
+
+L'autre voie, écartée : une carte `markdown` alimentée par un capteur modèle
+déclenché appelant `weather.get_forecasts`, qui donnerait les cinq jours en une ou
+deux lignes de texte — mais au prix d'un appel de service périodique dans la
+configuration.
 
 ## ⚠️ L'éclairage du jardin manque au groupe « Toutes les Lumières »
 
