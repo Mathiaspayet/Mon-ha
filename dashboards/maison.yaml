@@ -86,15 +86,25 @@
 # — allumé seul, il n'aurait pas déclenché la section. Le trou est dans le groupe,
 # pas ici ; ce OU est un contournement, à retirer quand le groupe sera complété.
 #
-# La tuile « garage bloqué » porte tap_action: more-info. Le défaut d'une tuile de
-# switch est « toggle » : appuyer n'importe où sur la carte relâchait le blocage
-# sans le dire. Seul l'interrupteur le fait maintenant.
+# La tuile « garage bloqué » n'a AUCUNE commande : ni feature toggle, ni tap_action
+# par défaut. C'est un panneau d'information, et c'est voulu — tant que le blocage
+# est actif, la porte ne doit pas être manœuvrable depuis l'accueil. Deux essais
+# ont précédé : le tap_action par défaut d'une tuile de switch vaut « toggle »,
+# donc appuyer n'importe où relâchait le blocage ; puis la feature toggle laissait
+# un bandeau qui faisait la même chose d'un doigt. tap_action: more-info ouvre la
+# fiche du switch, seul endroit d'où le relâcher volontairement.
 #
-# La carte météo porte show_current: false ET grid_options.rows: 2. Le bloc
+# La carte météo porte show_current: false ET grid_options.rows: 3. Le bloc
 # « conditions du moment » répétait la première colonne de la prévision (mêmes
 # mini et maxi du jour) et la température extérieure est déjà dans les badges, en
-# moyenne des trois sondes. Le gabarit à 2 rangées force ensuite la hauteur : la
-# carte s'auto-dimensionnait à 3 rangées dont une de marge vide.
+# moyenne des trois sondes.
+#
+# rows: 2 a été essayé et rogne les températures minimales — le contenu d'une
+# prévision quotidienne (jour, icône, maxi, mini) ne tient pas en deux rangées.
+# rows: 3 vaut la hauteur automatique : grid_options ne peut pas réduire cette
+# carte davantage. Descendre plus bas demande de changer le CONTENU, pas le
+# gabarit — soit forecast_type: hourly, qui n'a pas de ligne de mini, soit une
+# carte markdown alimentée par un capteur modèle appelant weather.get_forecasts.
 #
 # Il n'y a plus de section « La maison » avec des cartes de zone : l'onglet Pièces
 # fait la même chose en mieux, avec les 21 zones rangées par étage au lieu de 6.
@@ -385,15 +395,12 @@ views:
       icon: mdi:garage-lock
       color: orange
       hide_state: true
-      features:
-      - type: toggle
       visibility:
       - condition: state
         entity: switch.blocage_porte_de_garage
         state: 'on'
       grid_options:
         columns: full
-        rows: 2
       tap_action:
         action: more-info
   - type: grid
@@ -609,7 +616,7 @@ views:
       show_forecast: true
       grid_options:
         columns: full
-        rows: 2
+        rows: 3
     - type: markdown
       grid_options:
         columns: full

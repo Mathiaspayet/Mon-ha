@@ -738,15 +738,34 @@ Les 31 lampes portent maintenant chacune leur `tap_action: toggle` et leur
 
 ### Le blocage du garage se relâchait au moindre appui
 
-Le `tap_action` par défaut d'une tuile de `switch` est `toggle` : appuyer n'importe
-où sur la carte « Garage bloqué » relâchait le blocage, l'information disparaissait
-et les commandes revenaient. La tuile porte désormais `tap_action: more-info` — seul
-l'interrupteur relâche.
+Trois versions ont été nécessaires.
 
-### La météo réduite à deux rangées
+| Version | Ce qui n'allait pas |
+|---|---|
+| Tuile de switch nue | `tap_action` vaut `toggle` par défaut : appuyer n'importe où relâchait le blocage |
+| `tap_action: more-info` + feature `toggle` | Le bandeau de la feature faisait la même chose d'un seul doigt |
+| **Tuile d'information seule** | — |
 
-`grid_options.rows: 2` en plus de `show_current: false`. La carte s'auto-dimensionnait
-à trois rangées, dont une de marge vide sous les températures.
+La version retenue n'a **aucune commande** : ni feature, ni action au doigt. Tant que
+le blocage est actif, la porte n'est pas manœuvrable depuis l'accueil, et c'est le
+but. `tap_action: more-info` ouvre la fiche du switch, seul endroit d'où le relâcher
+volontairement.
+
+### La météo : `grid_options` ne peut pas la réduire davantage
+
+`rows: 2` a été essayé et **rogne les températures minimales** — le contenu d'une
+prévision quotidienne (jour, icône, maxi, mini) ne tient pas en deux rangées. La
+carte est repassée à `rows: 3`, ce qui vaut exactement sa hauteur automatique.
+
+Autrement dit, avec `show_current: false` la carte native est déjà à son minimum : la
+place restante est sa marge interne, que seul `card-mod` (HACS, exclu) pourrait
+toucher. Descendre plus bas demande de changer le **contenu**, pas le gabarit :
+
+- `forecast_type: hourly` — la prévision horaire n'a pas de ligne de minimale, donc
+  une rangée de moins ; on échange les cinq jours contre les prochaines heures.
+- Une carte `markdown` alimentée par un capteur modèle déclenché appelant
+  `weather.get_forecasts` — les cinq jours en une ou deux lignes de texte, mais cela
+  ajoute un appel de service périodique à la configuration.
 
 ## ⚠️ L'éclairage du jardin manque au groupe « Toutes les Lumières »
 
