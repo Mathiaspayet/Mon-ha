@@ -2,17 +2,38 @@
 # Adresse IP de l'interface  KNX/IP#
 ####################################
 
+# Purge du 3 septembre 2026 — 20 objets retirés, tous muets.
+#
+# Vérification à 18 h après la mise en service de la phase 2 : 32 entités KNX sur
+# 158 n'avaient rien reçu depuis le redémarrage, et xknx produisait 1 086
+# avertissements « KNX bus did not respond in time » en 20 h, à raison d'une
+# tentative de lecture par heure et par adresse. Les 20 supprimées ici n'ont jamais
+# porté de valeur, y compris sur les 7 jours d'historique conservés.
+#
+#   Alimentation KNX (jamais aucune valeur en 7 jours)
+#     0/1/0 0/1/1 0/1/2 0/1/3   les quatre alarmes du bus
+#     0/2/0 0/3/0 0/4/2         courant, tension, charge
+#     0/0/1 0/0/2               temps de fonctionnement
+#     0/4/0 0/4/1               statut de visualisation, dernier événement
+#     0/4/3 0/4/4 0/0/3         écran et menu
+#   Phase 2, jamais rien reçu en 18 h
+#     12/3/0                    jour/nuit, muet sur un cycle complet jour-nuit
+#     6/3/7                     HCL en cours ruban salon piano
+#     6/2/13 6/2/7 6/4/13 6/4/7 les deux commandes HCL
+#     12/6/0                    étalonnage du temps de déplacement des volets
+#   Chaudière
+#     17/0/3                    « Température H2 actuelle » — adresse fausse, pas
+#                               un circuit éteint : 17/0/2 (consigne) et l'état du
+#                               circuit H2 parlent toutes les dix minutes.
+#
+# Ce qui reste du bus est ce qui parle vraiment : l'horodatage 0/0/4, la date 0/0/5
+# et l'heure 0/0/6, justes à moins de 0,6 seconde.
+#
+# binary_sensor.detection_chan_1 (12/5/2) est muet lui aussi mais n'a pas été
+# retiré : son rôle n'est pas établi.
+
 # capteurs binaires#
 binary_sensor:
-  #alimentation KNX
-  - name: "Alarme dépasement Température"
-    state_address: "0/1/0"
-  - name: "Alarme dépasement Courant"
-    state_address: "0/1/1"
-  - name: "Alarme tension trop basse"
-    state_address: "0/1/2"
-  - name: "Alarme Trafic BUS"
-    state_address: "0/1/3"
   #Capteur alarme
   - name: "capteur cuisine"
     state_address: "12/7/0"
@@ -104,30 +125,6 @@ binary_sensor:
   - name: "Ruban LED double hauteur alimentation 24V"
     state_address: "6/4/12"
     device_class: power
-    # Même défaut : l'objet Day/Night réellement raccordé aux six thermostats et
-    # au variateur est en 12/3/0, pas en 1/2/10. Attention, l'identifiant unique
-    # d'une entité KNX dérive de son adresse de groupe et non de son nom :
-    # changer state_address crée une nouvelle entité et laisse l'ancienne
-    # orpheline. Les quatre orphelines ont été retirées du registre à la main.
-  - name: "Etat Jour=1/nuit=0 "
-    state_address: "12/3/0"
-    # HCL — Human Centric Lighting, dérive automatique de la température de
-    # couleur sur la journée. Le ruban salon piano n'a pas d'objet de commande
-    # raccordé : lecture seule ici, les deux autres sont des switch plus bas.
-  - name: "HCL en cours ruban LED salon piano"
-    state_address: "6/3/7"
-    # Bus KNX — écran et menu de l'alimentation. Écoute seule et volontairement :
-    # 0/0/3 est un ordre de reset et 12/6/0 lance l'étalonnage du temps de
-    # déplacement des volets. Aucune commande n'est exposée tant qu'on n'a pas
-    # observé ce que ces objets font réellement.
-  - name: "Bus défilement du message"
-    state_address: "0/4/3"
-  - name: "Bus confirmation menu"
-    state_address: "0/4/4"
-  - name: "Bus ordre de reset"
-    state_address: "0/0/3"
-  - name: "Volets mesure du temps de déplacement"
-    state_address: "12/6/0"
   - name: "dépassement température mur chauffant"
     state_address: "11/1/8"
   - name: "detection chan 1"
@@ -282,31 +279,9 @@ light:
     color_temperature_state_address: "6/3/6"
 
 sensor:
-  #alimentation KNX
-  - name: "Courant du Bus"
-    state_address: "0/2/0"
-    type: current
-  - name: "Tension du Bus"
-    state_address: "0/3/0"
-    type: voltage
-  - name: "Utilisation du Bus"
-    state_address: "0/4/2"
-    type: percent
   - name: "Position porte de garage"
     state_address: "16/0/2"
     type: percent
-  - name: "Temps de fonctionnement"
-    state_address: "0/0/1"
-    type: time_period_hrs
-  - name: "Temps de fonctionnement depuis rédémarrage"
-    state_address: "0/0/2"
-    type: time_period_hrs
-  - name: "Dernier évennement"
-    state_address: "0/4/1"
-    type: string
-  - name: "Bus statut de la visualisation"
-    state_address: "0/4/0"
-    type: string
   #ruban LED
   - name: "Température de couleur ruban LED salon piano"
     state_address: "6/3/8"
@@ -348,9 +323,6 @@ sensor:
     type: temperature
   - name: "Température H2 consigne"
     state_address: "17/0/2"
-    type: temperature
-  - name: "Température H2 actuelle"
-    state_address: "17/0/3"
     type: temperature
   - name: "Température extérieure issue chaudiere"
     state_address: "17/0/8"
@@ -483,16 +455,6 @@ switch:
   - name: "Switch Pompe bouclage ECS"
     address: "17/2/0"
     state_address: "17/2/1"
-
-    # HCL des rubans LED. La commande (DPT 1.010) n'a jamais été essayée depuis
-    # Home Assistant : à valider avant de s'en servir. L'état vient de l'objet
-    # « HCL en cours » du même canal.
-  - name: "HCL ruban LED salon"
-    address: "6/2/13"
-    state_address: "6/2/7"
-  - name: "HCL ruban LED double hauteur"
-    address: "6/4/13"
-    state_address: "6/4/7"
 
 climate:
   - name: "thermostat Salle d'eau"

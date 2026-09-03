@@ -1019,6 +1019,69 @@ Trois voies, à trancher :
 et touche aussi les entités Tydom**, donc au-delà de KNX ; sans trace au journal
 hôte, elle reste inexpliquée.
 
+## Purge KNX du 3 septembre — 20 objets retirés
+
+Suite donnée à la vérification : suppression des objets qui n'ont jamais rien envoyé,
+dans `knx.yaml`, dans le registre d'entités, et dans les deux tableaux de bord.
+
+### Ce qui a été retiré
+
+| Origine | Adresses | Objets |
+|---|---|---|
+| Alimentation KNX | `0/1/0` `0/1/1` `0/1/2` `0/1/3` | les quatre alarmes du bus |
+| | `0/2/0` `0/3/0` `0/4/2` | courant, tension, charge |
+| | `0/0/1` `0/0/2` | temps de fonctionnement |
+| | `0/4/0` `0/4/1` | statut de visualisation, dernier événement |
+| | `0/4/3` `0/4/4` `0/0/3` | écran et menu |
+| Phase 2 | `12/3/0` | jour / nuit |
+| | `6/3/7` | HCL en cours ruban salon piano |
+| | `6/2/13` `6/2/7` `6/4/13` `6/4/7` | les deux commandes HCL |
+| | `12/6/0` | étalonnage du temps de déplacement des volets |
+| Chaudière | `17/0/3` | « Température H2 actuelle » |
+
+**Le cas `17/0/3` méritait une vérification avant de couper.** Un circuit de chauffage
+muet en septembre peut simplement être à l'arrêt. Mais `17/0/2` (consigne H2) et
+`binary_sensor.etat_h2` parlent toutes les dix minutes, et `sensor.temperature_h1_actuelle`
+donne 29,8 °C : le circuit H2 est vivant, c'est l'adresse qui est fausse. Il faudra la
+retrouver dans ETS pour récupérer la température de départ H2.
+
+### Le résultat, mesuré
+
+Comptage des adresses en échec de lecture sur un cycle horaire, avant et après :
+
+| | Adresses en échec par cycle | Avertissements par jour |
+|---|---|---|
+| Cycle de 09:00 | **26** | ~1 250 |
+| Cycle de 09:15, après purge | **7** | ~340 |
+
+Entités KNX : **158 → 138**. Les vingt entrées orphelines laissées dans le registre
+après le rechargement ont été retirées dans la foulée — sans ça, elles seraient
+restées affichées en `indisponible`.
+
+⚠️ **Les sept adresses restantes ne sont pas à supprimer.** Six sont les objets de
+mode des thermostats — `3/1/4` `7/1/4` `8/1/4` `9/1/4` `10/1/4` `11/1/4` — qui
+appartiennent à des `climate` parfaitement fonctionnels : ils émettent spontanément
+mais ne répondent pas à une demande de lecture. La septième est `12/5/2`
+(`detection chan 1`), muette elle aussi mais dont le rôle n'est pas établi.
+
+Pour taire ce reste sans rien perdre : `sync_state: false` sur les six thermostats.
+Non fait — à décider.
+
+### Les cartes
+
+**Vue Technique du nouveau tableau** — la section « Bus KNX » perd ses quatre tuiles
+et sa liste d'alarmes, il ne reste que l'horodatage, avec une note expliquant
+pourquoi. La section « À observer » disparaît entièrement. « Commande HCL » et la
+ligne « HCL en cours » quittent les rubans LED, et « Température H2 actuelle » quitte
+les circuits de la chaudière. Six sections deviennent cinq, et le badge « Bus » de
+l'en-tête est retiré.
+
+**Vue Diag de l'ancien tableau** — celui encore par défaut — trois sections partent :
+« HCL », « Bus KNX — a observer » et « Jour / nuit ». Restent les diagnostics des deux
+rubans et l'horloge du bus. Une section « Sortie 24 V et rubans » est ajoutée : elle
+superpose chaque ruban et sa sortie 24 V sur 48 h, ce qui rend la corrélation
+vérifiable d'un coup d'œil plutôt que sur parole.
+
 ## Où en est la refonte
 
 | Étape | État |

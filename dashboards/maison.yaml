@@ -1253,11 +1253,6 @@ views:
     name: Pi
     show_name: true
     show_state: true
-  - type: entity
-    entity: sensor.utilisation_du_bus
-    name: Bus
-    show_name: true
-    show_state: true
   sections:
   - type: grid
     cards:
@@ -1299,8 +1294,6 @@ views:
         name: H1 départ
       - entity: sensor.temperature_h1_consigne
         name: H1 consigne
-      - entity: sensor.temperature_h2_actuelle
-        name: H2 départ
       - entity: sensor.temperature_h2_consigne
         name: H2 consigne
       - entity: binary_sensor.blocage_circulateur_radiateur_etage
@@ -1345,52 +1338,22 @@ views:
       heading: Bus KNX
       heading_style: title
       icon: mdi:lan
-    - type: tile
-      entity: sensor.courant_du_bus
-      name: Courant
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.tension_du_bus
-      name: Tension
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.utilisation_du_bus
-      name: Charge
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: sensor.temps_de_fonctionnement
-      name: Fonctionnement
-      grid_options:
-        columns: 6
-    - type: entities
-      title: Alarmes du bus
-      state_color: true
+    - type: markdown
       grid_options:
         columns: full
-      entities:
-      - entity: binary_sensor.alarme_depasement_temperature
-        name: Température
-      - entity: binary_sensor.alarme_depasement_courant
-        name: Courant
-      - entity: binary_sensor.alarme_tension_trop_basse
-        name: Tension basse
-      - entity: binary_sensor.alarme_trafic_bus
-        name: Trafic
+      content: Les diagnostics de l'alimentation KNX — courant, tension, charge, temps de
+        fonctionnement, dernier événement et les quatre alarmes du bus — ont été retirés le
+        3 septembre 2026. Ils n'avaient jamais porté de valeur sur les sept jours d'historique
+        conservés, et leurs lectures cycliques produisaient 1 086 avertissements par jour.
+        Reste l'horodatage, qui lui répond.
     - type: entities
-      title: Horloge et journal
+      title: Horloge
       state_color: true
       grid_options:
         columns: full
       entities:
       - entity: datetime.bus_horodatage
         name: Horodatage
-      - entity: sensor.dernier_evennement
-        name: Dernier événement
-      - entity: sensor.bus_statut_de_la_visualisation
-        name: Statut visualisation
   - type: grid
     cards:
     - type: heading
@@ -1411,8 +1374,6 @@ views:
         name: Alimentation 24 V
       - entity: sensor.temperature_de_couleur_ruban_led_salon_piano
         name: Couleur
-      - entity: binary_sensor.hcl_en_cours_ruban_led_salon_piano
-        name: HCL en cours
     - type: entities
       title: Double hauteur
       state_color: true
@@ -1427,44 +1388,6 @@ views:
         name: Alimentation 24 V
       - entity: sensor.temperature_de_couleur_ruban_led_double_hauteur
         name: Couleur
-    - type: entities
-      title: Commande HCL
-      state_color: true
-      grid_options:
-        columns: full
-      entities:
-      - entity: switch.hcl_ruban_led_salon
-        name: Ruban salon
-      - entity: switch.hcl_ruban_led_double_hauteur
-        name: Double hauteur
-  - type: grid
-    cards:
-    - type: heading
-      heading: À observer
-      heading_style: title
-      icon: mdi:magnify-scan
-    - type: markdown
-      grid_options:
-        columns: full
-      content: 'Objets KNX remontés en phase 2 dont l''usage réel reste à confirmer.
-        Ce qui ne bouge jamais sera supprimé. `0/0/3` et `12/6/0` sont en **écoute
-        seule** : ce sont un ordre de reset du bus et un étalonnage de volets.'
-    - type: entities
-      title: Objets en attente
-      state_color: true
-      grid_options:
-        columns: full
-      entities:
-      - entity: binary_sensor.etat_jour_1_nuit_0
-        name: Jour / nuit
-      - entity: binary_sensor.bus_defilement_du_message
-        name: Défilement message
-      - entity: binary_sensor.bus_confirmation_menu
-        name: Confirmation menu
-      - entity: binary_sensor.bus_ordre_de_reset
-        name: Ordre de reset
-      - entity: binary_sensor.volets_mesure_du_temps_de_deplacement
-        name: Étalonnage volets
   - type: grid
     cards:
     - type: heading
@@ -1552,9 +1475,8 @@ views:
     - type: markdown
       grid_options:
         columns: full
-      content: Une alerte critique perce le mode silencieux et Ne pas déranger. Les
-        appareils notifiés sont découverts seuls ; les exclusions se posent en dur
-        dans `script.alerte_famille`.
+      content: Une alerte critique perce le mode silencieux et Ne pas déranger. Les appareils
+        notifiés sont découverts seuls ; les exclusions se posent en dur dans `script.alerte_famille`.
     - type: entities
       title: Par type d'alerte
       state_color: true

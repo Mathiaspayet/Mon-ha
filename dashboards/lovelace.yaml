@@ -892,22 +892,16 @@ views:
     column_span: 3
     cards:
     - type: heading
-      heading: Tri en cours — phase 2 KNX
+      heading: Tri terminé — phase 2 KNX
       heading_style: title
       icon: mdi:stethoscope
     - type: markdown
       grid_options:
         columns: full
-      content: >-
-        Objets KNX qui existent dans le projet ETS et qu'on vient de faire
-        remonter, le 2 septembre 2026, pour voir ce qu'ils font vraiment.
-        **Rien ici n'est definitif** : on garde ce qui sert, on supprime le
-        reste.
+      content: |-
+        **Tri termine le 3 septembre 2026.** Sur les objets remontes en phase 2, seuls les diagnostics de ruban LED et l'horloge du bus parlent. Les commandes HCL, l'objet jour/nuit 12/3/0, les cinq objets d'ecran et de menu de l'alimentation, et treize diagnostics de bus anterieurs n'avaient jamais rien envoye : vingt entites ont ete retirees de `knx.yaml` et du registre.
 
-
-        Les deux commandes a risque ne sont **pas** exposees. `0/0/3` (ordre de
-        reset du bus) et `12/6/0` (etalonnage du temps de deplacement des
-        volets) sont en ecoute seule.
+        Le sens de la sortie 24 V est verifie : elle suit son ruban, +0,5 a +0,9 s a l'allumage et +12 a +24 s a l'extinction. Le graphe en bas le montre.
   - type: grid
     cards:
     - type: heading
@@ -973,35 +967,6 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: HCL
-      icon: mdi:theme-light-dark
-      heading_style: title
-    - type: markdown
-      text_only: true
-      grid_options:
-        columns: full
-      content: >-
-        Human Centric Lighting : derive automatique de la temperature de couleur
-        sur la journee. **Les deux commandes n'ont jamais ete essayees depuis
-        Home Assistant.**
-    - type: tile
-      entity: switch.hcl_ruban_led_salon
-      name: Ruban salon
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: switch.hcl_ruban_led_double_hauteur
-      name: Double hauteur
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.hcl_en_cours_ruban_led_salon_piano
-      name: Salon piano (lecture seule)
-      grid_options:
-        columns: full
-  - type: grid
-    cards:
-    - type: heading
       heading: Horloge du bus
       icon: mdi:clock-outline
       heading_style: title
@@ -1009,10 +974,9 @@ views:
       text_only: true
       grid_options:
         columns: full
-      content: >-
-        L'heure vient du serveur de temps configure dans l'alimentation KNX.
-        **Ne pas modifier ces trois entites a la main** : Home Assistant
-        ecrirait alors l'heure sur le bus, en concurrence avec lui.
+      content: 'L''heure vient du serveur de temps configure dans l''alimentation KNX. **Ne
+        pas modifier ces trois entites a la main** : Home Assistant ecrirait alors l''heure
+        sur le bus, en concurrence avec lui.'
     - type: tile
       entity: datetime.bus_horodatage
       name: Horodatage 0/0/4
@@ -1029,73 +993,30 @@ views:
       grid_options:
         columns: 6
   - type: grid
-    cards:
-    - type: heading
-      heading: Bus KNX — a observer
-      icon: mdi:monitor-small
-      heading_style: title
-    - type: markdown
-      text_only: true
-      grid_options:
-        columns: full
-      content: >-
-        Ecran et menu de l'alimentation. On ne sait pas encore quand ces objets
-        bougent — s'ils ne bougent jamais, on les supprimera.
-    - type: tile
-      entity: sensor.bus_statut_de_la_visualisation
-      name: Statut visualisation 0/4/0
-      grid_options:
-        columns: full
-    - type: tile
-      entity: binary_sensor.bus_defilement_du_message
-      name: Defilement 0/4/3
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.bus_confirmation_menu
-      name: Menu 0/4/4
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.bus_ordre_de_reset
-      name: Ordre de reset 0/0/3
-      grid_options:
-        columns: 6
-    - type: tile
-      entity: binary_sensor.volets_mesure_du_temps_de_deplacement
-      name: Etalonnage volets 12/6/0
-      grid_options:
-        columns: 6
-  - type: grid
     column_span: 2
     cards:
     - type: heading
-      heading: Jour / nuit
-      icon: mdi:sun-clock
+      heading: Sortie 24 V et rubans
+      icon: mdi:sine-wave
       heading_style: title
     - type: markdown
       text_only: true
       grid_options:
         columns: full
-      content: >-
-        Objet Day/Night en 12/3/0, raccorde aux six thermostats et au variateur.
-        L'ancien capteur ecoutait 1/2/10 et n'a jamais rien recu. **Sens a
-        confirmer** : verifier a la tombee de la nuit si off correspond bien a
-        nuit.
-    - type: tile
-      entity: binary_sensor.etat_jour_1_nuit_0
-      name: Etat jour / nuit
-      grid_options:
-        columns: full
+      content: 'Chaque paire doit se suivre. Le decalage a l''extinction est la temporisation
+        de l''alimentation, pas un defaut : une impulsion plus courte que ce delai ne fait
+        pas bouger la sortie 24 V.'
     - type: history-graph
       hours_to_show: 48
       grid_options:
         columns: full
-        rows: 4
+        rows: 5
       entities:
-      - entity: binary_sensor.etat_jour_1_nuit_0
-        name: Jour / nuit
+      - entity: light.ruban_led_salon_piano
+        name: Ruban salon piano
       - entity: binary_sensor.ruban_led_salon_piano_alimentation_24v
         name: 24 V salon piano
+      - entity: light.ruban_led_double_hauteur
+        name: Ruban double hauteur
       - entity: binary_sensor.ruban_led_double_hauteur_alimentation_24v
         name: 24 V double hauteur
