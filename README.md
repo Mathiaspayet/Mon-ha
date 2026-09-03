@@ -1245,7 +1245,25 @@ Gain de place : la tuile tombe à **une rangée, 56 px au lieu de 120** pour la 
 appui long ouvre toujours la fiche complète, avec la position au pourcentage — ce qu'on
 n'avait pas avec les touches ▲■▼.
 
-⚠️ Deux pièges traités :
+### L'appui long ouvre la page Volets
+
+Une vingt-deuxième sous-vue, `/maison-v2/volets`, atteinte par un appui long sur l'une
+des deux tuiles :
+
+| Bloc | Contenu |
+|---|---|
+| Tous les volets | Le groupe des huit |
+| Rez-de-chaussée | Le groupe du niveau, puis Buanderie, Bureau, Salon Télé |
+| Étage | Le groupe du niveau, puis les cinq volets |
+
+Chaque tuile porte `cover-open-close` **et** `cover-position` : c'est là que se trouve
+**l'arrêt en cours de course**, que les flèches de l'accueil ne donnent pas, et le
+réglage au pourcentage.
+
+Son `back_path` pointe vers `/maison-v2/maison` et non vers `/pieces` comme les vingt et
+une sous-vues de pièce : on y arrive depuis l'accueil, le bouton retour doit y ramener.
+
+⚠️ Trois pièges traités :
 
 - **`icon_tap_action` en plus de `tap_action`.** Sur une tuile, l'icône a sa propre
   action : sans ça, appuyer sur la flèche elle-même aurait ouvert la fiche au lieu de
@@ -1253,6 +1271,8 @@ n'avait pas avec les touches ▲■▼.
 - **La condition de descente est négative** (`state_not: closed`), ce qui couvre `open`,
   `opening`, `closing` et `unknown`. La tuile ne disparaît donc jamais, y compris
   pendant le mouvement — où l'appui sert alors à inverser.
+- **`icon_hold_action` double `hold_action`**, pour la même raison : sans lui, un appui
+  long sur la flèche ouvrirait la fiche au lieu de la page Volets.
 
 ## ⚠️ Les ancres YAML de `maison.yaml`
 

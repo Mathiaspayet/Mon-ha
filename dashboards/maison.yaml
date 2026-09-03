@@ -114,6 +114,15 @@
 # La condition négative (state_not: closed) côté descente couvre open, opening, closing
 # et unknown : la tuile ne disparaît donc jamais, y compris pendant le mouvement.
 #
+# L'appui LONG ouvre la sous-vue Volets, qui liste les huit volets un par un avec
+# position au pourcentage et bouton d'arrêt, plus les trois groupes en tête de bloc.
+# C'est là que se trouve l'arrêt en cours de course, que les flèches de l'accueil ne
+# donnent pas. icon_hold_action double hold_action pour la même raison que plus haut :
+# l'icône a ses propres gestes.
+#
+# La sous-vue Volets porte back_path vers /maison-v2/maison et non vers /pieces comme
+# les vingt et une sous-vues de pièce : on y arrive depuis l'accueil, on doit y revenir.
+#
 # Ce fichier est régénéré avec ignore_aliases : PyYAML émet sinon des ancres &id001 dès
 # qu'un même objet Python apparaît deux fois, et deux blocs régénérés séparément
 # finissent par se disputer le même identifiant, ce qui casse la relecture.
@@ -506,6 +515,12 @@ views:
       grid_options:
         columns: 6
         rows: 1
+      hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
+      icon_hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
     - type: tile
       entity: cover.volets_rez_de_chaussee
       name: Volets RDC
@@ -527,6 +542,12 @@ views:
       grid_options:
         columns: 6
         rows: 1
+      hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
+      icon_hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
     - type: tile
       entity: cover.volets_etage
       name: Volets étage
@@ -548,6 +569,12 @@ views:
       grid_options:
         columns: 6
         rows: 1
+      hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
+      icon_hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
     - type: tile
       entity: cover.volets_etage
       name: Volets étage
@@ -569,6 +596,12 @@ views:
       grid_options:
         columns: 6
         rows: 1
+      hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
+      icon_hold_action:
+        action: navigate
+        navigation_path: /maison-v2/volets
   - type: grid
     visibility:
     - condition: state
@@ -2371,5 +2404,120 @@ views:
         columns: full
     - type: tile
       entity: light.eclairage_jardin
+      grid_options:
+        columns: full
+- title: Volets
+  path: volets
+  icon: mdi:window-shutter
+  subview: true
+  back_path: /maison-v2/maison
+  type: sections
+  max_columns: 2
+  theme: Backend-selected
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Tous les volets
+      heading_style: title
+      icon: mdi:window-shutter-settings
+    - type: tile
+      entity: cover.tous_les_volets
+      name: Les huit ensemble
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Rez-de-chaussée
+      heading_style: title
+      icon: mdi:home-floor-g
+    - type: tile
+      entity: cover.volets_rez_de_chaussee
+      name: Tout le rez-de-chaussée
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_buanderie
+      name: Buanderie
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_bureau
+      name: Bureau
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_salon_tele
+      name: Salon Télé
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Étage
+      heading_style: title
+      icon: mdi:home-floor-1
+    - type: tile
+      entity: cover.volets_etage
+      name: Tout l'étage
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_parentale
+      name: Chambre parentale
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_auguste
+      name: Chambre Auguste
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_chambre_margaux
+      name: Chambre Margaux
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_salle_de_bain
+      name: Salle de bain
+      features:
+      - type: cover-open-close
+      - type: cover-position
+      grid_options:
+        columns: full
+    - type: tile
+      entity: cover.volet_salle_d_eau
+      name: Salle d'eau
+      features:
+      - type: cover-open-close
+      - type: cover-position
       grid_options:
         columns: full
