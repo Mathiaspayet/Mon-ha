@@ -66,14 +66,35 @@
 #
 # « Allumé en ce moment » est une carte glance et non entities : une grille
 # d'icônes sur trois colonnes au lieu d'une ligne pleine largeur par lampe, soit
-# le tiers de la hauteur. Un appui éteint la lampe (tap_action: toggle), un appui
-# long ouvre sa fiche. Le titre est en heading_style: subtitle pour rester en
-# retrait — c'est une information de passage, pas une commande principale.
+# le tiers de la hauteur. Un appui éteint la lampe, un appui long ouvre sa fiche.
+# Le titre est en heading_style: subtitle pour rester en retrait — c'est une
+# information de passage, pas une commande principale.
 #
-# La carte météo porte show_current: false. Le bloc « conditions du moment »
-# répétait la première colonne de la prévision (mêmes mini et maxi du jour) et la
-# température extérieure est déjà dans les badges, en moyenne des trois sondes.
-# La carte y perd la moitié de sa hauteur sans rien perdre d'utile.
+# ATTENTION : la carte glance ne connaît PAS tap_action au niveau de la carte —
+# la documentation ne le décrit qu'entité par entité. Un tap_action posé sur la
+# carte est ignoré sans erreur, et l'appui retombe sur la fiche détaillée. C'est
+# pourquoi les 31 lampes portent chacune leur tap_action et leur hold_action.
+#
+# ATTENTION : entity-filter ne se masque PAS tout seul quand rien ne correspond.
+# Son option show_empty vaut true par défaut : la carte intérieure s'affiche avec
+# son titre et son icône, et zéro ligne. Les trois entity-filter portent donc
+# show_empty: false. Sans ça, la section Attention montrait « Ouvrants ouverts »
+# et « Défaut ruban LED » vides dès que l'alarme la faisait apparaître.
+#
+# La section « Allumé » teste le groupe OU light.eclairage_jardin. L'éclairage du
+# jardin n'est pas membre de light.toutes_les_lumieres (30 membres pour 31 lampes)
+# — allumé seul, il n'aurait pas déclenché la section. Le trou est dans le groupe,
+# pas ici ; ce OU est un contournement, à retirer quand le groupe sera complété.
+#
+# La tuile « garage bloqué » porte tap_action: more-info. Le défaut d'une tuile de
+# switch est « toggle » : appuyer n'importe où sur la carte relâchait le blocage
+# sans le dire. Seul l'interrupteur le fait maintenant.
+#
+# La carte météo porte show_current: false ET grid_options.rows: 2. Le bloc
+# « conditions du moment » répétait la première colonne de la prévision (mêmes
+# mini et maxi du jour) et la température extérieure est déjà dans les badges, en
+# moyenne des trois sondes. Le gabarit à 2 rangées force ensuite la hauteur : la
+# carte s'auto-dimensionnait à 3 rangées dont une de marge vide.
 #
 # Il n'y a plus de section « La maison » avec des cartes de zone : l'onglet Pièces
 # fait la même chose en mieux, avec les 21 zones rangées par étage au lieu de 6.
@@ -270,6 +291,7 @@ views:
         icon: mdi:window-open-variant
       grid_options:
         columns: full
+      show_empty: false
     - type: entity-filter
       conditions:
       - condition: state
@@ -286,6 +308,7 @@ views:
         icon: mdi:led-strip-variant
       grid_options:
         columns: full
+      show_empty: false
   - type: grid
     cards:
     - type: heading
@@ -371,11 +394,18 @@ views:
       grid_options:
         columns: full
         rows: 2
+      tap_action:
+        action: more-info
   - type: grid
     visibility:
-    - condition: state
-      entity: light.toutes_les_lumieres
-      state: 'on'
+    - condition: or
+      conditions:
+      - condition: state
+        entity: light.toutes_les_lumieres
+        state: 'on'
+      - condition: state
+        entity: light.eclairage_jardin
+        state: 'on'
     cards:
     - type: heading
       heading: Allumé en ce moment
@@ -391,48 +421,169 @@ views:
       - condition: state
         state: 'on'
       entities:
-      - light.buanderie
-      - light.bureau
-      - light.cellier
-      - light.chambre_auguste
-      - light.chambre_d_amis
-      - light.chambre_margaux
-      - light.chambre_parents
-      - light.couloir_etage
-      - light.cuisine
-      - light.dressing
-      - light.eclairage_garage
-      - light.eclairage_jardin
-      - light.entree_couloir
-      - light.luminaire_ilot
-      - light.patio_exterieur
-      - light.porsche_et_travees
-      - light.prise_commandee_salon_baie
-      - light.prise_commandee_salon_tele
-      - light.ruban_led_double_hauteur
-      - light.ruban_led_salon
-      - light.ruban_led_salon_piano
-      - light.salle_a_manger
-      - light.salle_d_eau
-      - light.salle_de_bain
-      - light.salle_de_bain_douche_baignoire
-      - light.salon
-      - light.salon_piano
-      - light.salon_tele
-      - light.terrasse_exterieure
-      - light.wc_etage
-      - light.wc_rdc
+      - entity: light.buanderie
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.bureau
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.cellier
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.chambre_auguste
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.chambre_d_amis
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.chambre_margaux
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.chambre_parents
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.couloir_etage
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.cuisine
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.dressing
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.eclairage_garage
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.eclairage_jardin
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.entree_couloir
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.luminaire_ilot
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.patio_exterieur
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.porsche_et_travees
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.prise_commandee_salon_baie
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.prise_commandee_salon_tele
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.ruban_led_double_hauteur
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.ruban_led_salon
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.ruban_led_salon_piano
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salle_a_manger
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salle_d_eau
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salle_de_bain
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salle_de_bain_douche_baignoire
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salon
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salon_piano
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.salon_tele
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.terrasse_exterieure
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.wc_etage
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
+      - entity: light.wc_rdc
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
       card:
         type: glance
         show_state: false
         state_color: true
         columns: 3
-        tap_action:
-          action: toggle
-        hold_action:
-          action: more-info
       grid_options:
         columns: full
+      show_empty: false
   - type: grid
     cards:
     - type: heading
@@ -458,6 +609,7 @@ views:
       show_forecast: true
       grid_options:
         columns: full
+        rows: 2
     - type: markdown
       grid_options:
         columns: full

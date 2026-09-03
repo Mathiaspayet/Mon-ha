@@ -709,6 +709,70 @@ une rangées par étage. La version courte ne rendait service à personne.
 L'accueil compte donc quatre sections : Attention (masquée quand tout va bien),
 Raccourcis, Allumé en ce moment (masquée quand tout est éteint), Dehors.
 
+## Refonte — deux vrais bugs trouvés au second rendu
+
+### Les deux cartes vides de la section Attention
+
+Un test de Départ a armé l'alarme, la section Attention est apparue — avec la carte
+« Alarme », attendue, mais **aussi « Ouvrants ouverts » et « Défaut ruban LED »,
+vides**. Rien ne les justifiait : au moment du relevé, les onze ouvrants Tydom
+étaient tous `LOCKED` et les quatre capteurs de défaut LED tous à `off`.
+
+Cause : **`entity-filter` ne se masque pas tout seul.** Son option `show_empty` vaut
+`true` par défaut, et la carte intérieure s'affiche alors avec son titre et son
+icône, sans aucune ligne. Le commentaire d'en-tête de `maison.yaml` affirmait
+l'inverse depuis l'étape 2 — c'était faux.
+
+Corrigé par `show_empty: false` sur les trois `entity-filter` du tableau. La section
+Attention n'affiche plus que les cartes qui ont quelque chose à dire.
+
+### L'appui court n'éteignait pas la lampe
+
+Le `tap_action: toggle` était bien posé sur la carte `glance` — mais **la carte
+`glance` ne connaît pas `tap_action` au niveau de la carte.** La documentation ne le
+décrit qu'entité par entité. L'option était ignorée sans erreur, et l'appui
+retombait sur la fiche détaillée.
+
+Les 31 lampes portent maintenant chacune leur `tap_action: toggle` et leur
+`hold_action: more-info`. Appui court pour éteindre, appui long pour la fiche.
+
+### Le blocage du garage se relâchait au moindre appui
+
+Le `tap_action` par défaut d'une tuile de `switch` est `toggle` : appuyer n'importe
+où sur la carte « Garage bloqué » relâchait le blocage, l'information disparaissait
+et les commandes revenaient. La tuile porte désormais `tap_action: more-info` — seul
+l'interrupteur relâche.
+
+### La météo réduite à deux rangées
+
+`grid_options.rows: 2` en plus de `show_current: false`. La carte s'auto-dimensionnait
+à trois rangées, dont une de marge vide sous les températures.
+
+## ⚠️ L'éclairage du jardin manque au groupe « Toutes les Lumières »
+
+Trouvé en vérifiant si la carte pouvait pointer un helper plutôt que 31 entités.
+
+| | |
+|---|---|
+| Membres de `light.toutes_les_lumieres` | **30** |
+| Lampes réelles du système | **31** |
+| Absente du groupe | `light.eclairage_jardin` |
+
+Conséquence : allumé seul, l'éclairage du jardin laisse `light.toutes_les_lumieres`
+à `off`. La section « Allumé en ce moment » ne serait pas apparue, et une extinction
+générale par le groupe ne l'aurait pas éteint.
+
+Contourné dans le tableau — la section teste maintenant le groupe **OU**
+`light.eclairage_jardin`. Le contournement est à retirer une fois le groupe complété
+dans Paramètres > Appareils et services > Aides.
+
+### Pourquoi la carte liste 31 entités et pas un groupe
+
+`entity-filter` exige une liste plate d'entités : on ne peut pas lui donner un groupe,
+il ne l'étendrait pas. La liste de la carte est donc tenue à la main, et c'est cette
+comparaison avec le helper qui a révélé le trou. À refaire après toute création de
+lampe.
+
 ## Où en est la refonte
 
 | Étape | État |
