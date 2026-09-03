@@ -1315,22 +1315,25 @@ Les deux sections de queue sont les plus effaçables : Départ / Retour ne sert 
 deux bouts de la journée, et « Allumé en ce moment » disparaît complètement quand tout
 est éteint. Les mettre en bas garde le haut de page stable.
 
-### Le bouton Départ / Retour : la taille l'emporte sur le centrage
+### Le bouton Départ / Retour : le centrage l'emporte, décision close
 
-Quatre essais sur ce seul bouton :
+Cinq essais sur ce seul bouton, avant que Mathias tranche :
 
 | Essai | Résultat |
 |---|---|
-| Pleine largeur, 2 rangées, centré | Un pavé de 120 px pour un mot |
+| Pleine largeur, 2 rangées, centré | Jugé trop gros |
 | Demi-largeur, 2 rangées, centré | La moitié droite de la section reste vide |
 | Pleine largeur, 1 rangée, à gauche | Compact, mais non centré |
-| Retour au centré sur demande | Toujours trop gros |
-| **Pleine largeur, 1 rangée** | — |
+| Pleine largeur, 2 rangées, centré | Toujours trop gros |
+| Pleine largeur, 1 rangée, à gauche | Pas centré |
+| **Pleine largeur, 2 rangées, centré** | Retenu |
 
-La contrainte est structurelle : **le centrage impose `vertical: true`**, qui empile
-icône et libellé et dépasse les 56 px d'une rangée. On ne peut pas avoir les deux. Pour
-ce bouton-là, c'est la taille qui gagne ; les quatre tuiles de « Général », elles,
-restent centrées puisqu'elles occupent deux rangées de toute façon.
+La contrainte est structurelle et n'a pas de contournement sur une carte `tile` :
+**le centrage impose `vertical: true`**, qui empile icône et libellé au-delà des 56 px
+d'une rangée. Les deux ne sont pas conciliables.
+
+**Décision : centré, 120 px de haut.** Ne pas « optimiser » cette hauteur en repassant
+en horizontal — la question a fait cinq allers-retours et elle est tranchée.
 
 ## Où en est la refonte
 
