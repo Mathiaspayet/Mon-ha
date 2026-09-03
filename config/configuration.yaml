@@ -72,6 +72,24 @@ template:
               {%- endif %}
             {%- endfor -%}
             {{ lights.on}}
+  - trigger:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/30"
+    action:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.launaguet
+        data:
+          type: daily
+        response_variable: reponse
+    sensor:
+      - name: "Prévisions Launaguet"
+        unique_id: previsions_launaguet_quotidiennes
+        state: "{{ reponse['weather.launaguet'].forecast[0].condition }}"
+        attributes:
+          jours: "{{ reponse['weather.launaguet'].forecast[:6] }}"
 alarm_control_panel:
   - platform: manual
     name: Alarme_maison

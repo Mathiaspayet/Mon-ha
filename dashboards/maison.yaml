@@ -86,27 +86,32 @@
 # — allumé seul, il n'aurait pas déclenché la section. Le trou est dans le groupe,
 # pas ici ; ce OU est un contournement, à retirer quand le groupe sera complété.
 #
-# La tuile « garage bloqué » n'a AUCUNE commande : ni feature toggle, ni tap_action
-# par défaut. C'est un panneau d'information, et c'est voulu — tant que le blocage
-# est actif, la porte ne doit pas être manœuvrable depuis l'accueil. Deux essais
-# ont précédé : le tap_action par défaut d'une tuile de switch vaut « toggle »,
-# donc appuyer n'importe où relâchait le blocage ; puis la feature toggle laissait
-# un bandeau qui faisait la même chose d'un doigt. tap_action: more-info ouvre la
-# fiche du switch, seul endroit d'où le relâcher volontairement.
+# La tuile « garage bloqué » est INERTE : tap_action ET hold_action valent « none »,
+# et elle n'a aucune feature. C'est un panneau d'information, et c'est voulu — tant
+# que le blocage est actif, la porte ne doit pas être manœuvrable depuis l'accueil.
+# Trois essais ont précédé : le tap_action par défaut d'une tuile de switch vaut
+# « toggle », donc appuyer n'importe où relâchait le blocage ; puis la feature
+# toggle laissait un bandeau qui faisait la même chose d'un doigt ; puis
+# tap_action: more-info ouvrait la fiche du switch, avec son interrupteur dedans.
+# Le relâchement volontaire se fait depuis Sécurité, ou par le script Retour maison.
 #
-# La carte météo porte forecast_type: hourly, show_current: false et
-# grid_options.rows: 2. Le bloc « conditions du moment » répétait la première
-# colonne de la prévision et la température extérieure est déjà dans les badges,
-# en moyenne des trois sondes.
+# Elle porte rows: 2, comme la tuile de commande qu'elle remplace : sans ça, la
+# section changeait de hauteur au gré du blocage.
 #
-# Le passage à l'horaire n'est pas cosmétique : c'est ce qui permet les deux
-# rangées. Une prévision QUOTIDIENNE affiche jour, icône, maxi ET mini ; à rows: 2
-# la ligne des minimales était rognée, et rows: 3 vaut exactement la hauteur
-# automatique — grid_options ne pouvait donc pas réduire la version quotidienne.
-# L'horaire n'a qu'une température par créneau, donc une ligne de moins, et tient.
+# La météo n'est plus une carte weather-forecast mais une carte markdown, nourrie
+# par sensor.previsions_launaguet (capteur modèle déclenché, dans
+# configuration.yaml). Deux lignes : le jour même en titre, les quatre suivants en
+# dessous. Trois tentatives ont échoué avant :
 #
-# weather.launaguet annonce supported_features = 3, soit quotidien + horaire. Une
-# entité météo qui ne porterait pas le bit 2 rendrait la carte vide.
+#   show_current: false           trop haute encore
+#   rows: 2 en quotidien          rogne la ligne des minimales
+#   rows: 3 en quotidien          vaut exactement la hauteur automatique
+#   forecast_type: hourly         tient en 2 rangées mais perd les jours
+#
+# grid_options ne pouvait pas réduire cette carte : le reste de sa hauteur est sa
+# marge interne, que seul card-mod (HACS, exclu) atteindrait. Il fallait changer le
+# contenu. La prévision n'étant plus exposée en attribut depuis 2024.4, il faut
+# appeler weather.get_forecasts — d'où le capteur.
 #
 # Il n'y a plus de section « La maison » avec des cartes de zone : l'onglet Pièces
 # fait la même chose en mieux, avec les 21 zones rangées par étage au lieu de 6.
@@ -403,8 +408,11 @@ views:
         state: 'on'
       grid_options:
         columns: full
+        rows: 2
       tap_action:
-        action: more-info
+        action: none
+      hold_action:
+        action: none
   - type: grid
     visibility:
     - condition: or
@@ -610,15 +618,27 @@ views:
         state_not: Vert
       grid_options:
         columns: full
-    - type: weather-forecast
-      entity: weather.launaguet
-      name: Launaguet
-      forecast_type: hourly
-      show_current: false
-      show_forecast: true
+    - type: markdown
       grid_options:
         columns: full
-        rows: 2
+      content: |-
+        {% set p = state_attr('sensor.previsions_launaguet','jours') %}
+        {%- if not p %}
+        ### 🌤️ Prévision en attente
+        Le capteur se remplit à la demi-heure, puis toutes les 30 minutes.
+        {%- else %}
+        {%- set ic = {'sunny':'☀️','clear-night':'🌙','partlycloudy':'🌤️','cloudy':'☁️','rainy':'🌦️','pouring':'🌧️','lightning':'🌩️','lightning-rainy':'⛈️','snowy':'🌨️','snowy-rainy':'🌨️','fog':'🌫️','hail':'🧊','windy':'💨','windy-variant':'💨','exceptional':'⚠️'} %}
+        {%- set noms = ['lun','mar','mer','jeu','ven','sam','dim'] %}
+        {%- set a = p[0] %}
+        ### {{ ic.get(a.condition,'•') }} Aujourd'hui {{ a.temperature | round | int }} / {{ a.templow | round | int }} °C
+        {%- set ns = namespace(l=[]) %}
+        {%- for d in p[1:5] %}
+        {%- set j = noms[as_local(as_datetime(d.datetime)).weekday()] %}
+        {%- set ns.l = ns.l + ['%s %s %d/%d' | format(j, ic.get(d.condition,'•'), d.temperature | round | int, d.templow | round | int)] %}
+        {%- endfor %}
+
+        {{ ns.l | join(' · ') }}
+        {%- endif %}
     - type: markdown
       grid_options:
         columns: full

@@ -797,6 +797,94 @@ il ne l'étendrait pas. La liste de la carte est donc tenue à la main, et c'est
 comparaison avec le helper qui a révélé le trou. À refaire après toute création de
 lampe.
 
+## Refonte — la tuile de blocage rendue inerte, la météo réécrite
+
+### Le garage : trois essais avant la bonne réponse
+
+| Essai | Ce qui n'allait pas |
+|---|---|
+| Tuile de switch nue | `tap_action` vaut `toggle` par défaut : appuyer n'importe où relâchait |
+| `tap_action: more-info` + feature `toggle` | Le bandeau de la feature relâchait d'un seul doigt |
+| Feature retirée, `tap_action: more-info` | La fiche du switch s'ouvrait, avec son interrupteur dedans |
+| **`tap_action` et `hold_action` à `none`** | — |
+
+La tuile est maintenant **inerte**. Tant que le blocage est actif, la porte n'est
+pas manœuvrable depuis l'accueil, et rien sur cette carte ne relâche quoi que ce
+soit. Le relâchement volontaire se fait depuis **Sécurité**, ou par le script
+**Retour maison**.
+
+Elle porte aussi `rows: 2`, comme la tuile de commande qu'elle remplace : sans ça,
+la section changeait de hauteur au gré du blocage.
+
+### La météo : une carte markdown et un capteur de prévision
+
+Quatre tentatives sur la carte native avant d'admettre qu'elle ne se réduisait pas.
+
+| Tentative | Résultat |
+|---|---|
+| `show_current: false` | Encore trop haute |
+| `rows: 2` en quotidien | Rogne la ligne des minimales |
+| `rows: 3` en quotidien | Vaut exactement la hauteur automatique |
+| `forecast_type: hourly` | Tient en deux rangées, mais perd les jours |
+
+`grid_options` ne pouvait pas la réduire : le reste de sa hauteur est sa marge
+interne, que seul `card-mod` (HACS, exclu) atteindrait. Il fallait changer le
+**contenu**.
+
+Depuis Home Assistant 2024.4, une entité météo n'expose plus sa prévision en
+attribut — vérifié sur `weather.launaguet`, qui ne porte que les conditions du
+moment. Il faut appeler `weather.get_forecasts`, ce qu'un template de carte ne sait
+pas faire. D'où un capteur modèle **déclenché**, ajouté à `configuration.yaml` :
+
+```yaml
+  - trigger:
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: "/30"
+    action:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.launaguet
+        data:
+          type: daily
+        response_variable: reponse
+    sensor:
+      - name: "Prévisions Launaguet"
+        unique_id: previsions_launaguet_quotidiennes
+        state: "{{ reponse['weather.launaguet'].forecast[0].condition }}"
+        attributes:
+          jours: "{{ reponse['weather.launaguet'].forecast[:6] }}"
+```
+
+La carte markdown le rend en deux lignes :
+
+```
+### ☀️ Aujourd'hui 33 / 15 °C
+
+ven ☀️ 35/16 · sam ☀️ 36/19 · dim ☀️ 38/21 · lun ☀️ 31/20
+```
+
+Le jour même en titre — c'était la demande — et les quatre suivants en dessous. Les
+noms de jours sont mappés à la main : `strftime` ne se localise pas dans les
+templates Home Assistant, `%a` sort en anglais.
+
+⚠️ **Le capteur ne se remplit pas au rechargement des templates.** `template.reload`
+crée l'entité mais n'exécute pas son déclencheur : elle reste à `unknown` jusqu'au
+prochain top de demi-heure ou au prochain démarrage de Home Assistant. La carte
+affiche « Prévision en attente » entre-temps, plutôt qu'un cadre vide.
+
+## ⚠️ Encore à faire côté helpers
+
+L'ajout de `light.eclairage_jardin` au groupe `light.toutes_les_lumieres` a été
+refusé au moment de l'écriture. Le groupe reste à **30 membres pour 31 lampes**, et
+le contournement du tableau (la section « Allumé » teste le groupe **OU**
+l'éclairage du jardin) reste donc en place.
+
+Pour le faire à la main : **Paramètres → Appareils et services → Aides → Toutes les
+Lumières → Modifier**, ajouter `light.eclairage_jardin`, enregistrer. Le
+contournement pourra alors être retiré.
+
 ## Où en est la refonte
 
 | Étape | État |
