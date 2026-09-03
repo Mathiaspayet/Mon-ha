@@ -885,6 +885,134 @@ Pour le faire à la main : **Paramètres → Appareils et services → Aides →
 Lumières → Modifier**, ajouter `light.eclairage_jardin`, enregistrer. Le
 contournement pourra alors être retiré.
 
+## Phase 2 KNX — vérification à 18 h (3 septembre)
+
+Relevé sur les 24 h suivant la mise en service, plus 7 jours d'historique pour les
+diagnostics du bus. **Aucune correction n'a été appliquée : l'hypothèse d'inversion
+était fausse, et le reste relève d'une décision à prendre.**
+
+### Le diagnostic 24 V des rubans : le sens est bon, pas d'`invert`
+
+L'hypothèse était qu'un ruban allumé avec un capteur 24 V resté à `off` trahirait un
+sens inversé. Les faits disent l'inverse — le capteur suit le ruban, à chaque fois.
+
+**Ruban salon piano** (`1.1.15`) :
+
+| Ruban | Capteur 24 V | Écart |
+|---|---|---|
+| 17:02:39 allumé | 17:02:40 on | +0,9 s |
+| 20:33:33 éteint | 20:33:45 off | +12,4 s |
+| 23:16:17 allumé | 23:16:18 on | +0,5 s |
+| 08:07:20 éteint | 08:07:32 off | +12,8 s |
+| 08:46:35 allumé | 08:46:36 on | +0,9 s |
+
+**Ruban double hauteur** (`1.1.37`) : même schéma, +0,5 à +0,9 s à l'allumage et
+**+23,8 s** à l'extinction.
+
+Deux détails que seule l'observation donnait :
+
+- **L'allumage est quasi immédiat, l'extinction non** — 12 à 24 secondes de retard.
+  C'est la temporisation de l'alimentation, pas un défaut.
+- **Les impulsions courtes sont filtrées.** Le ruban salon piano a été éteint puis
+  rallumé en 3 s (20:33:24 → 20:33:27) et en 5 s (07:20:36 → 07:20:41) : le capteur
+  24 V n'a pas bougé, la temporisation d'extinction n'ayant pas expiré.
+
+⚠️ **Le nom induit en erreur.** « Alimentation 24 V » suggère un diagnostic de santé
+de l'alimentation — il serait alors à `on` en permanence. Il s'agit en fait de
+**« sortie 24 V active »**, qui recopie l'état du ruban. Renommer casserait les
+`entity_id` et le tableau de bord ; à trancher.
+
+### Jour / nuit : l'adresse ne dit rien
+
+`binary_sensor.etat_jour_1_nuit_0` (`12/3/0`) n'a **rien reçu en 18 h**, coucher et
+lever de soleil compris. Il aurait dû basculer deux fois. Le sens ne peut donc pas
+être déterminé, et il n'y a rien à inverser : l'adresse est muette, pas à l'envers.
+
+### HCL et objets « à observer » : rien reçu non plus
+
+| Entité | Reçu en 18 h |
+|---|---|
+| `switch.hcl_ruban_led_salon` | rien (`unknown`) |
+| `switch.hcl_ruban_led_double_hauteur` | rien (`unknown`) |
+| `binary_sensor.hcl_en_cours_ruban_led_salon_piano` | rien |
+| `sensor.bus_statut_de_la_visualisation` | rien (`unknown`) |
+| `binary_sensor.bus_defilement_du_message` | rien |
+| `binary_sensor.bus_confirmation_menu` | rien |
+| `binary_sensor.bus_ordre_de_reset` | rien |
+| `binary_sensor.volets_mesure_du_temps_de_deplacement` | rien |
+
+Candidats à la suppression, non supprimés.
+
+### L'horloge du bus : juste
+
+| Entité | Valeur | Reçue à | Écart |
+|---|---|---|---|
+| `datetime.bus_horodatage` | 08:53:43 | 08:53:43,55 | 0,55 s |
+| `time.bus_heure` | 08:53:43 | 08:53:43,16 | 0,16 s |
+| `date.bus_date` | 2026-09-03 | 00:03:43 | bascule correcte |
+
+Télégramme toutes les ~10 minutes. Aucune dérive.
+
+## ⚠️ Trouvaille non prévue : 32 entités KNX sur 158 sont muettes
+
+En élargissant le contrôle à toute l'intégration : **32 entités n'ont rien reçu
+depuis le redémarrage.** Le journal le confirme côté bus — `xknx` a produit
+**1 086 avertissements** en 20 h, par paires « Could not sync group address X » +
+« KNX bus did not respond in time (2.0 secs) », sur une soixantaine d'adresses,
+répétés à peu près toutes les heures.
+
+Une partie est normale : les interrupteurs sans `state_address` (H1, H2, ECS, mode
+été, sirène, forçage salle d'eau) sont optimistes par construction, et les entités
+de diagnostic de l'intégration ne changent qu'à la reconnexion.
+
+**Le reste ne l'est pas — et me concerne directement.**
+
+| Entité | État | Affichée dans |
+|---|---|---|
+| `sensor.courant_du_bus` | `unknown` | Technique, tuile « Courant » |
+| `sensor.tension_du_bus` | `unknown` | Technique, tuile « Tension » |
+| `sensor.utilisation_du_bus` | `unknown` | Technique, **badge « Bus »** + tuile « Charge » |
+| `sensor.temps_de_fonctionnement` | `unknown` | Technique, tuile « Fonctionnement » |
+| `sensor.temps_de_fonctionnement_depuis_redemarrage` | `unknown` | — |
+| `sensor.dernier_evennement` | `unknown` | Technique, « Horloge et journal » |
+| `binary_sensor.alarme_depasement_temperature` | jamais reçu | Technique, « Alarmes du bus » |
+| `binary_sensor.alarme_depasement_courant` | jamais reçu | Technique, « Alarmes du bus » |
+| `binary_sensor.alarme_tension_trop_basse` | jamais reçu | Technique, « Alarmes du bus » |
+| `binary_sensor.alarme_trafic_bus` | jamais reçu | Technique, « Alarmes du bus » |
+| `sensor.temperature_h2_actuelle` | `unknown` | Technique, « Circuits » |
+
+**Ce n'est pas une panne récente.** Sur les 7 jours d'historique conservés, ces
+capteurs n'ont jamais porté autre chose que `unknown` ou `unavailable` — pas une
+seule valeur, jamais. Ils sont antérieurs à la phase 2 et n'ont jamais fonctionné.
+
+La section « Bus KNX » de la vue Technique a donc été construite sur des entités
+supposées vivantes, sans vérification. C'est mon erreur : j'ai repris les noms de
+l'ancienne configuration en tenant leur fonctionnement pour acquis.
+
+Trois voies, à trancher :
+
+1. **Réveiller la source.** Ces adresses correspondent à une alimentation KNX à
+   diagnostic. Si le module existe, ses objets sont probablement non liés dans ETS,
+   ou son envoi cyclique est désactivé. C'est la seule voie qui rende l'information.
+2. **`sync_state: false`** sur les adresses mortes — supprime les 1 086
+   avertissements quotidiens et le trafic de lecture inutile, sans rien retirer.
+3. **Retirer** les entités et les cartes correspondantes.
+
+### Système : rien à signaler
+
+| | |
+|---|---|
+| Base recorder | **202,13 Mio** — pas de gonflement |
+| Disque | 16,0 Go utilisés sur 457,7 |
+| Supervisor | `healthy: true`, `supported: true` |
+| Horloge | `ntp_synchronized: true` |
+| Journal hôte, recherche `usb` | aucune ligne — pas de reset UAS |
+
+À noter : trois interruptions le 2 septembre — 03:00, 10:11 et 15:00. Celles de
+10:11 et 15:00 sont les rechargements de l'entrée KNX. Celle de **03:00 dure 2 min 50
+et touche aussi les entités Tydom**, donc au-delà de KNX ; sans trace au journal
+hôte, elle reste inexpliquée.
+
 ## Où en est la refonte
 
 | Étape | État |
