@@ -117,10 +117,11 @@
 # avaient été essayées : une tuile verticale avec sa rangée de touches tient en 120 px,
 # les 184 px de trois rangées laissaient un tiers de vide.
 #
-# Le bouton Départ / Retour est pleine largeur sur UNE rangée, donc horizontal. Deux
-# essais ont précédé : pleine largeur sur deux rangées faisait un pavé de 120 px pour
-# un seul mot ; en demi-largeur, la moitié droite de la section restait vide. À une
-# rangée il se lit comme une barre d'action et non comme une boîte à moitié remplie.
+# Le bouton Départ / Retour est centré, donc vertical, donc sur deux rangées : il
+# n'existe pas de disposition centrée sur une seule rangée, vertical: true empilant
+# icône et libellé. C'est un arbitrage assumé — trois essais ont précédé, pleine
+# largeur sur deux rangées (un pavé pour un mot), demi-largeur (moitié droite vide),
+# puis une rangée horizontale (compact mais texte à gauche). Le centrage l'emporte.
 #
 # « Tout éteindre » est un bouton d'action et non un interrupteur : son tap_action
 # appelle light.turn_off, donc un appui éteint et ne rallume jamais. L'entité reste
@@ -380,7 +381,7 @@ views:
       entity: script.depart_maison
       name: Départ
       icon: mdi:home-export-outline
-      vertical: false
+      vertical: true
       hide_state: true
       tap_action:
         action: perform-action
@@ -395,12 +396,12 @@ views:
         state: 'off'
       grid_options:
         columns: full
-        rows: 1
+        rows: 2
     - type: tile
       entity: script.retour_maison
       name: Retour
       icon: mdi:home-import-outline
-      vertical: false
+      vertical: true
       hide_state: true
       tap_action:
         action: perform-action
@@ -413,7 +414,7 @@ views:
         state: 'on'
       grid_options:
         columns: full
-        rows: 1
+        rows: 2
   - type: grid
     cards:
     - type: heading
@@ -450,7 +451,7 @@ views:
         rows: 2
     - type: tile
       entity: switch.blocage_porte_de_garage
-      name: Garage bloqué
+      name: Garage bloqué par l'alarme
       icon: mdi:garage-lock
       color: orange
       vertical: true
