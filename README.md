@@ -1308,12 +1308,12 @@ Ordre retenu, de haut en bas :
 | Attention | Y a-t-il un problème ? *(masquée si non)* |
 | Météo | Qu'est-ce qu'il fait dehors ? |
 | Général | Qu'est-ce que je commande ? |
-| Allumé en ce moment | Qu'est-ce qui est allumé ? *(masquée si rien)* |
 | Présence | Je pars ou je rentre |
+| Allumé en ce moment | Qu'est-ce qui est allumé ? *(masquée si rien)* |
 
-« Allumé en ce moment » suit « Général » à dessein : c'est la liste de ce que
-« Tout éteindre », juste au-dessus, va couper. Et Départ / Retour passe en dernier — il
-ne sert qu'aux deux bouts de la journée.
+Les deux sections de queue sont les plus effaçables : Départ / Retour ne sert qu'aux
+deux bouts de la journée, et « Allumé en ce moment » disparaît complètement quand tout
+est éteint. Les mettre en bas garde le haut de page stable.
 
 ### Le bouton Départ / Retour : la taille l'emporte sur le centrage
 

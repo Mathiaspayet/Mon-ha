@@ -156,9 +156,9 @@
 # à la demande, puis de nouveau une rangée — la taille l'emporte pour ce bouton-là.
 #
 # Ordre des sections, de haut en bas : ce qui alerte, ce qu'il fait dehors, ce qu'on
-# commande, ce qui est allumé, et en dernier le départ/retour qui ne sert qu'aux deux
-# bouts de la journée. « Allumé en ce moment » suit « Général » exprès : c'est la liste
-# de ce que « Tout éteindre », juste au-dessus, va couper.
+# commande, le départ/retour, et en dernier ce qui est allumé. Les deux sections de
+# queue sont les plus effaçables — « Allumé » disparaît quand tout est éteint — donc
+# les mettre en bas garde le haut de page stable.
 #
 # « Tout éteindre » est un bouton d'action et non un interrupteur : son tap_action
 # appelle light.turn_off, donc un appui éteint et ne rallume jamais. L'entité reste
@@ -637,6 +637,50 @@ views:
         action: navigate
         navigation_path: /maison-v2/volets
   - type: grid
+    cards:
+    - type: heading
+      heading: Présence
+      heading_style: title
+      icon: mdi:home-account
+    - type: tile
+      entity: script.depart_maison
+      name: Départ
+      icon: mdi:home-export-outline
+      vertical: false
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.depart_maison
+        confirmation:
+          text: Lancer le départ de la maison ?
+      visibility:
+      - condition: state
+        entity: input_boolean.etat_depart_maison
+        state: 'off'
+      grid_options:
+        columns: full
+        rows: 1
+    - type: tile
+      entity: script.retour_maison
+      name: Retour
+      icon: mdi:home-import-outline
+      vertical: false
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.retour_maison
+      visibility:
+      - condition: state
+        entity: input_boolean.etat_depart_maison
+        state: 'on'
+      grid_options:
+        columns: full
+        rows: 1
+  - type: grid
     visibility:
     - condition: state
       entity: light.toutes_les_lumieres
@@ -819,50 +863,6 @@ views:
       grid_options:
         columns: full
       show_empty: false
-  - type: grid
-    cards:
-    - type: heading
-      heading: Présence
-      heading_style: title
-      icon: mdi:home-account
-    - type: tile
-      entity: script.depart_maison
-      name: Départ
-      icon: mdi:home-export-outline
-      vertical: false
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: script.turn_on
-        target:
-          entity_id: script.depart_maison
-        confirmation:
-          text: Lancer le départ de la maison ?
-      visibility:
-      - condition: state
-        entity: input_boolean.etat_depart_maison
-        state: 'off'
-      grid_options:
-        columns: full
-        rows: 1
-    - type: tile
-      entity: script.retour_maison
-      name: Retour
-      icon: mdi:home-import-outline
-      vertical: false
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: script.turn_on
-        target:
-          entity_id: script.retour_maison
-      visibility:
-      - condition: state
-        entity: input_boolean.etat_depart_maison
-        state: 'on'
-      grid_options:
-        columns: full
-        rows: 1
 - title: Pièces
   path: pieces
   icon: mdi:floor-plan
