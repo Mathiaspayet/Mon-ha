@@ -874,16 +874,22 @@ crée l'entité mais n'exécute pas son déclencheur : elle reste à `unknown` j
 prochain top de demi-heure ou au prochain démarrage de Home Assistant. La carte
 affiche « Prévision en attente » entre-temps, plutôt qu'un cadre vide.
 
-## ⚠️ Encore à faire côté helpers
+## Le groupe « Toutes les Lumières » est complet
 
-L'ajout de `light.eclairage_jardin` au groupe `light.toutes_les_lumieres` a été
-refusé au moment de l'écriture. Le groupe reste à **30 membres pour 31 lampes**, et
-le contournement du tableau (la section « Allumé » teste le groupe **OU**
-l'éclairage du jardin) reste donc en place.
+`light.eclairage_jardin` a été ajouté au groupe le 3 septembre.
 
-Pour le faire à la main : **Paramètres → Appareils et services → Aides → Toutes les
-Lumières → Modifier**, ajouter `light.eclairage_jardin`, enregistrer. Le
-contournement pourra alors être retiré.
+| | Avant | Après |
+|---|---|---|
+| Membres du groupe | 30 | **31** |
+| Lampes réelles | 31 | 31 |
+| Absentes | `light.eclairage_jardin` | aucune |
+
+Conséquence immédiate : l'éclairage du jardin compte désormais dans l'état du
+groupe, et une extinction générale l'éteint.
+
+Le contournement posé dans le tableau — la section « Allumé en ce moment » testait
+le groupe **OU** `light.eclairage_jardin` — a été retiré dans la foulée. Elle teste
+de nouveau le seul groupe.
 
 ## Phase 2 KNX — vérification à 18 h (3 septembre)
 

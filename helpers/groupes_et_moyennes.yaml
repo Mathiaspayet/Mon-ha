@@ -38,6 +38,7 @@ group_helpers:
     - light.eclairage_garage
     - light.ruban_led_salon
     - light.ruban_led_salon_piano
+    - light.eclairage_jardin
   Toutes les lumières sauf chambres enfants amis:
     entity_id: light.toutes_les_lumieres_sauf_chambres_enfants_amis
     type: light

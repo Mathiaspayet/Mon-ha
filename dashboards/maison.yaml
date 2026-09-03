@@ -81,10 +81,11 @@
 # show_empty: false. Sans ça, la section Attention montrait « Ouvrants ouverts »
 # et « Défaut ruban LED » vides dès que l'alarme la faisait apparaître.
 #
-# La section « Allumé » teste le groupe OU light.eclairage_jardin. L'éclairage du
-# jardin n'est pas membre de light.toutes_les_lumieres (30 membres pour 31 lampes)
-# — allumé seul, il n'aurait pas déclenché la section. Le trou est dans le groupe,
-# pas ici ; ce OU est un contournement, à retirer quand le groupe sera complété.
+# La section « Allumé » teste le seul groupe light.toutes_les_lumieres, qui compte
+# bien les 31 lampes depuis le 3 septembre. Elle a porté un temps un OU avec
+# light.eclairage_jardin : celui-ci manquait au groupe (30 membres pour 31 lampes),
+# et allumé seul il n'aurait pas déclenché la section. Le trou étant bouché côté
+# helper, le contournement est retiré.
 #
 # La tuile « garage bloqué » est INERTE : tap_action ET hold_action valent « none »,
 # et elle n'a aucune feature. C'est un panneau d'information, et c'est voulu — tant
@@ -415,14 +416,9 @@ views:
         action: none
   - type: grid
     visibility:
-    - condition: or
-      conditions:
-      - condition: state
-        entity: light.toutes_les_lumieres
-        state: 'on'
-      - condition: state
-        entity: light.eclairage_jardin
-        state: 'on'
+    - condition: state
+      entity: light.toutes_les_lumieres
+      state: 'on'
     cards:
     - type: heading
       heading: Allumé en ce moment
