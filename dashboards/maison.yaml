@@ -100,6 +100,24 @@
 # 6 colonnes, 3 rangées, vertical — sinon la grille 2×2 de « Général » se déforme
 # selon l'état du blocage.
 #
+# Les volets n'ont plus de touches : deux tuiles par groupe, une seule visible selon
+# l'état, et la flèche annonce CE QUI VA SE PASSER — ↑ quand c'est fermé et qu'un appui
+# ouvrira, ↓ sinon. Un appui déclenche directement open_cover ou close_cover, sans
+# passer par un toggle dont il faudrait deviner le sens. La tuile tombe ainsi à UNE
+# rangée : 56 px au lieu de 120 pour la paire. Un appui long ouvre toujours la fiche,
+# avec la position au pourcentage.
+#
+# icon_tap_action est posé en plus de tap_action et ce n'est pas redondant : sur une
+# tuile, l'icône a sa propre action, et sans ça appuyer dessus ouvrirait la fiche au
+# lieu de bouger le volet.
+#
+# La condition négative (state_not: closed) côté descente couvre open, opening, closing
+# et unknown : la tuile ne disparaît donc jamais, y compris pendant le mouvement.
+#
+# Ce fichier est régénéré avec ignore_aliases : PyYAML émet sinon des ancres &id001 dès
+# qu'un même objet Python apparaît deux fois, et deux blocs régénérés séparément
+# finissent par se disputer le même identifiant, ce qui casse la relecture.
+#
 # Le centrage (vertical: true) n'est PAS mis partout, et pas par oubli.
 #
 # Une tuile verticale QUI PORTE DES FEATURES ne tient pas en deux rangées : elle
@@ -470,23 +488,87 @@ views:
     - type: tile
       entity: cover.volets_rez_de_chaussee
       name: Volets RDC
-      icon: mdi:window-shutter
-      vertical: false
-      features:
-      - type: cover-open-close
+      icon: mdi:arrow-up-bold
+      tap_action:
+        action: perform-action
+        perform_action: cover.open_cover
+        target:
+          entity_id: cover.volets_rez_de_chaussee
+      icon_tap_action:
+        action: perform-action
+        perform_action: cover.open_cover
+        target:
+          entity_id: cover.volets_rez_de_chaussee
+      visibility:
+      - condition: state
+        entity: cover.volets_rez_de_chaussee
+        state: closed
       grid_options:
         columns: 6
-        rows: 2
+        rows: 1
+    - type: tile
+      entity: cover.volets_rez_de_chaussee
+      name: Volets RDC
+      icon: mdi:arrow-down-bold
+      tap_action:
+        action: perform-action
+        perform_action: cover.close_cover
+        target:
+          entity_id: cover.volets_rez_de_chaussee
+      icon_tap_action:
+        action: perform-action
+        perform_action: cover.close_cover
+        target:
+          entity_id: cover.volets_rez_de_chaussee
+      visibility:
+      - condition: state
+        entity: cover.volets_rez_de_chaussee
+        state_not: closed
+      grid_options:
+        columns: 6
+        rows: 1
     - type: tile
       entity: cover.volets_etage
       name: Volets étage
-      icon: mdi:window-shutter
-      vertical: false
-      features:
-      - type: cover-open-close
+      icon: mdi:arrow-up-bold
+      tap_action:
+        action: perform-action
+        perform_action: cover.open_cover
+        target:
+          entity_id: cover.volets_etage
+      icon_tap_action:
+        action: perform-action
+        perform_action: cover.open_cover
+        target:
+          entity_id: cover.volets_etage
+      visibility:
+      - condition: state
+        entity: cover.volets_etage
+        state: closed
       grid_options:
         columns: 6
-        rows: 2
+        rows: 1
+    - type: tile
+      entity: cover.volets_etage
+      name: Volets étage
+      icon: mdi:arrow-down-bold
+      tap_action:
+        action: perform-action
+        perform_action: cover.close_cover
+        target:
+          entity_id: cover.volets_etage
+      icon_tap_action:
+        action: perform-action
+        perform_action: cover.close_cover
+        target:
+          entity_id: cover.volets_etage
+      visibility:
+      - condition: state
+        entity: cover.volets_etage
+        state_not: closed
+      grid_options:
+        columns: 6
+        rows: 1
   - type: grid
     visibility:
     - condition: state
@@ -754,10 +836,10 @@ views:
       icon: mdi:home-floor-g
     - type: area
       display_type: compact
-      alert_classes: &id001 []
-      sensor_classes: &id002
+      alert_classes: []
+      sensor_classes:
       - temperature
-      grid_options: &id003
+      grid_options:
         columns: 6
       area: entree
       tap_action:
@@ -765,90 +847,110 @@ views:
         navigation_path: /maison-v2/entree
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: cuisine
       tap_action:
         action: navigate
         navigation_path: /maison-v2/cuisine
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salle_a_manger
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salle_a_manger
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salon
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salon
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salon_piano
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salon_piano
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salon_tele
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salon_tele
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: bureau
       tap_action:
         action: navigate
         navigation_path: /maison-v2/bureau
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: buanderie
       tap_action:
         action: navigate
         navigation_path: /maison-v2/buanderie
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: cellier
       tap_action:
         action: navigate
         navigation_path: /maison-v2/cellier
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: wc_rdc
       tap_action:
         action: navigate
         navigation_path: /maison-v2/wc_rdc
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: garage
       tap_action:
         action: navigate
@@ -861,81 +963,99 @@ views:
       icon: mdi:home-floor-1
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: couloir_etage
       tap_action:
         action: navigate
         navigation_path: /maison-v2/couloir_etage
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: chambre_parentale
       tap_action:
         action: navigate
         navigation_path: /maison-v2/chambre_parentale
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: chambre_auguste
       tap_action:
         action: navigate
         navigation_path: /maison-v2/chambre_auguste
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: chambre_margaux
       tap_action:
         action: navigate
         navigation_path: /maison-v2/chambre_margaux
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: chambre
       tap_action:
         action: navigate
         navigation_path: /maison-v2/chambre
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salle_de_bain
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salle_de_bain
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: salle_d_eau
       tap_action:
         action: navigate
         navigation_path: /maison-v2/salle_d_eau
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: wc_etage
       tap_action:
         action: navigate
         navigation_path: /maison-v2/wc_etage
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: patio
       tap_action:
         action: navigate
@@ -948,9 +1068,11 @@ views:
       icon: mdi:tree-outline
     - type: area
       display_type: compact
-      alert_classes: *id001
-      sensor_classes: *id002
-      grid_options: *id003
+      alert_classes: []
+      sensor_classes:
+      - temperature
+      grid_options:
+        columns: 6
       area: exterieur
       tap_action:
         action: navigate

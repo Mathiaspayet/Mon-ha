@@ -1224,6 +1224,52 @@ Deux essais ont précédé : pleine largeur sur deux rangées faisait un pavé d
 un mot ; en demi-largeur, la moitié droite de la section restait vide. À une rangée il se
 lit comme une barre d'action, pas comme une boîte à moitié remplie.
 
+## Les volets : la flèche dit ce qui va se passer
+
+Idée de Mathias, meilleure que ce que je proposais : plutôt que de retirer les touches
+et de renvoyer vers la fiche, garder un appui direct sur la tuile — mais afficher un
+symbole indiquant le sens.
+
+Deux tuiles par groupe, **une seule visible** selon l'état :
+
+| État du groupe | Tuile affichée | Un appui déclenche |
+|---|---|---|
+| `closed` | ↑ **Volets RDC** | `cover.open_cover` |
+| tout le reste | ↓ **Volets RDC** | `cover.close_cover` |
+
+La flèche annonce donc **l'action à venir**, pas l'état courant — et l'action appelée
+correspond exactement à ce que la flèche montre, sans passer par un `toggle` dont il
+faudrait deviner le sens.
+
+Gain de place : la tuile tombe à **une rangée, 56 px au lieu de 120** pour la paire. Un
+appui long ouvre toujours la fiche complète, avec la position au pourcentage — ce qu'on
+n'avait pas avec les touches ▲■▼.
+
+⚠️ Deux pièges traités :
+
+- **`icon_tap_action` en plus de `tap_action`.** Sur une tuile, l'icône a sa propre
+  action : sans ça, appuyer sur la flèche elle-même aurait ouvert la fiche au lieu de
+  bouger le volet.
+- **La condition de descente est négative** (`state_not: closed`), ce qui couvre `open`,
+  `opening`, `closing` et `unknown`. La tuile ne disparaît donc jamais, y compris
+  pendant le mouvement — où l'appui sert alors à inverser.
+
+## ⚠️ Les ancres YAML de `maison.yaml`
+
+En construisant ces tuiles, la régénération du fichier a produit un `maison.yaml`
+illisible : `found duplicate anchor 'id001'`.
+
+PyYAML émet une ancre `&id001` dès qu'un même **objet Python** apparaît deux fois dans
+la structure, et une alias `*id001` aux occurrences suivantes. Le fichier en comptait
+déjà **63**, héritées des cartes de zone de la vue Pièces où `alert_classes: []` était
+un objet partagé. En régénérant un autre bloc séparément, un second `&id001` est apparu
+et les deux se sont disputé l'identifiant.
+
+Correction : `Dumper.ignore_aliases = lambda *a: True` et régénération de la totalité du
+bloc `views:`. Le fichier ne contient plus aucune ancre. C'est un artefact de
+sérialisation seulement — le tableau de bord en direct n'a jamais été affecté, il est
+stocké en JSON.
+
 ## Où en est la refonte
 
 | Étape | État |
