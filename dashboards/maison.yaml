@@ -105,7 +105,14 @@
 # milieu d'un grand vide, ce que donnaient les tuiles pleine largeur.
 #
 # « Général » est une grille 2×2 de tuiles rigoureusement identiques — 6 colonnes,
-# 3 rangées, vertical : Tout éteindre, Garage, Volets RDC, Volets étage.
+# 2 rangées, vertical : Tout éteindre, Garage, Volets RDC, Volets étage. Trois rangées
+# avaient été essayées : une tuile verticale avec sa rangée de touches tient en 120 px,
+# les 184 px de trois rangées laissaient un tiers de vide.
+#
+# Le bouton Départ / Retour est en demi-largeur lui aussi. La hauteur ne peut PAS
+# descendre sous deux rangées tant que vertical: true est posé — icône et libellé
+# empilés dépassent les 56 px d'une rangée et se feraient rogner. C'est donc la largeur
+# qu'on divise. Pleine largeur, il faisait un pavé de 120 px pour un mot.
 #
 # « Tout éteindre » est un bouton d'action et non un interrupteur : son tap_action
 # appelle light.turn_off, donc un appui éteint et ne rallume jamais. L'entité reste
@@ -119,9 +126,12 @@
 # « Présence » isole le bouton Départ / Retour : c'est la seule action qui change
 # l'état de la maison entière, elle ne se range pas avec les commandes courantes.
 #
-# Les badges de température disent « Extérieur » et non « Dehors ». Le titre de
-# section reste « Dehors » : « Extérieur » y désignerait la zone du même nom, qui a
-# sa propre page de pièce.
+# Les badges de température disent « Extérieur » et non « Dehors ». La section, elle,
+# s'appelle « Météo » — ni « Dehors » ni « Extérieur », ce dernier désignant la zone du
+# même nom qui a sa propre page de pièce.
+#
+# La barre de pluie ne sort QUE s'il va pleuvoir. Douze carrés blancs pour dire qu'il
+# ne se passe rien, c'est douze carrés de trop : à sec, une seule ligne suffit.
 #
 # La météo n'est plus une carte weather-forecast mais une carte markdown, nourrie
 # par sensor.previsions_launaguet (capteur modèle déclenché, dans
@@ -376,7 +386,7 @@ views:
         entity: input_boolean.etat_depart_maison
         state: 'off'
       grid_options:
-        columns: full
+        columns: 6
         rows: 2
     - type: tile
       entity: script.retour_maison
@@ -394,7 +404,7 @@ views:
         entity: input_boolean.etat_depart_maison
         state: 'on'
       grid_options:
-        columns: full
+        columns: 6
         rows: 2
   - type: grid
     cards:
@@ -415,7 +425,7 @@ views:
           entity_id: light.toutes_les_lumieres
       grid_options:
         columns: 6
-        rows: 3
+        rows: 2
     - type: tile
       entity: cover.porte_de_garage
       name: Garage
@@ -429,7 +439,7 @@ views:
         state_not: 'on'
       grid_options:
         columns: 6
-        rows: 3
+        rows: 2
     - type: tile
       entity: switch.blocage_porte_de_garage
       name: Garage bloqué
@@ -447,7 +457,7 @@ views:
         state: 'on'
       grid_options:
         columns: 6
-        rows: 3
+        rows: 2
     - type: tile
       entity: cover.volets_rez_de_chaussee
       name: Volets RDC
@@ -457,7 +467,7 @@ views:
       - type: cover-open-close
       grid_options:
         columns: 6
-        rows: 3
+        rows: 2
     - type: tile
       entity: cover.volets_etage
       name: Volets étage
@@ -467,7 +477,7 @@ views:
       - type: cover-open-close
       grid_options:
         columns: 6
-        rows: 3
+        rows: 2
   - type: grid
     visibility:
     - condition: state
@@ -654,7 +664,7 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Dehors
+      heading: Météo
       heading_style: title
       icon: mdi:weather-partly-cloudy
     - type: tile
@@ -706,12 +716,15 @@ views:
         {%- if mouille %}{% set r.detail = r.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
         {%- set r.bar = r.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
         {%- endfor %}
+        {%- if r.debut is none %}
+
+        ☀️ Pas de pluie dans l'heure
+        {%- else %}
 
         ---
-        {% if r.debut is none %}☀️ **Pas de pluie dans l'heure**{% else %}🌧️ **{{ r.debut[1] }} {{ 'maintenant' if r.debut[0] == 0 else 'dans %d min' | format(r.debut[0]) }}**{% endif %}
+        🌧️ **{{ r.debut[1] }} {{ 'maintenant' if r.debut[0] == 0 else 'dans %d min' | format(r.debut[0]) }}**
 
         maintenant {{ r.bar }} +1 h
-        {%- if r.detail %}
 
         {{ r.detail | join(' · ') }}
         {%- endif %}

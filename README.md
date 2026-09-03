@@ -1105,7 +1105,7 @@ l'état de la maison entière — alarme, simulation de présence, blocage du ga
 
 ### « Général » est une grille 2×2 rigoureusement régulière
 
-Quatre tuiles au même gabarit : 6 colonnes, 3 rangées, verticales.
+Quatre tuiles au même gabarit : 6 colonnes, 2 rangées, verticales.
 
 ```
 ┌─────────────────┬─────────────────┐
@@ -1151,11 +1151,48 @@ ven ☀️ 35/16 · sam ☀️ 34/20 · dim ☀️ 38/20 · lun ☀️ 31/20
 maintenant ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ +1 h
 ```
 
-### « Dehors » devient « Extérieur » — sur les badges seulement
+### « Dehors » devient « Extérieur » sur les badges, « Météo » sur la section
 
-Les badges de température de Maison et de Confort, plus la légende de la courbe
-hebdomadaire. Le **titre de section reste « Dehors »** : « Extérieur » y désignerait la
-zone du même nom, qui a sa propre page de pièce dans l'onglet Pièces.
+Les badges de température de Maison et de Confort disent « Extérieur », ainsi que la
+légende de la courbe hebdomadaire. La section, elle, s'appelle **« Météo »** — ni l'un
+ni l'autre : « Extérieur » y désignerait la zone du même nom, qui a sa propre page de
+pièce dans l'onglet Pièces.
+
+## Refonte — l'accueil dégraissé
+
+Trois corrections après le rendu de la version resserrée.
+
+### La barre de pluie disparaît quand il ne pleut pas
+
+Douze carrés blancs pour dire qu'il ne se passe rien, c'est douze carrés de trop. À sec,
+la carte se termine par une ligne :
+
+```
+### ☀️ Aujourd'hui 33 / 15 °C
+
+ven ☀️ 35/16 · sam ☀️ 34/20 · dim ☀️ 38/20 · lun ☀️ 32/20
+
+☀️ Pas de pluie dans l'heure
+```
+
+La barre, le filet de séparation et le détail des créneaux ne sortent que si de la pluie
+est annoncée. Les deux branches ont été vérifiées au moteur de templates avant écriture,
+la sèche sur les données réelles et l'humide sur un jeu simulé.
+
+### Les deux blocs de boutons rétrécissent
+
+| | Avant | Après |
+|---|---|---|
+| Départ / Retour | pleine largeur, 2 rangées | **demi-largeur**, 2 rangées |
+| Les quatre tuiles de « Général » | 6 colonnes, 3 rangées | 6 colonnes, **2 rangées** |
+
+Sur « Général », trois rangées valaient 184 px alors qu'une tuile verticale avec sa
+rangée de touches en occupe environ 120 : un tiers de vide.
+
+⚠️ Sur Départ / Retour, **la hauteur ne peut pas descendre sous deux rangées** tant que
+`vertical: true` est posé : icône et libellé empilés dépassent les 56 px d'une rangée et
+se feraient rogner. C'est donc la largeur qui a été divisée. Pleine largeur, le bouton
+faisait un pavé de 120 px pour un seul mot.
 
 ## Où en est la refonte
 
