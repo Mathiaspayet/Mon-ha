@@ -1222,7 +1222,8 @@ interne diffère et cela ne se remarque pas.
 Le bouton Départ / Retour repasse pleine largeur sur **une** rangée, donc horizontal.
 Deux essais ont précédé : pleine largeur sur deux rangées faisait un pavé de 120 px pour
 un mot ; en demi-largeur, la moitié droite de la section restait vide. À une rangée il se
-lit comme une barre d'action, pas comme une boîte à moitié remplie.
+lit comme une barre d'action, pas comme une boîte à moitié remplie. *(Il finira en carte
+`button` et non en tuile — voir plus bas.)*
 
 ## Les volets : la flèche dit ce qui va se passer
 
@@ -1315,9 +1316,9 @@ Les deux sections de queue sont les plus effaçables : Départ / Retour ne sert 
 deux bouts de la journée, et « Allumé en ce moment » disparaît complètement quand tout
 est éteint. Les mettre en bas garde le haut de page stable.
 
-### Le bouton Départ / Retour : le centrage l'emporte, décision close
+### ⚠️ Une tuile ne sait pas être centrée *et* sur une rangée — la carte `button`, si
 
-Cinq essais sur ce seul bouton, avant que Mathias tranche :
+Six essais sur ce seul bouton, tous sur une carte `tile`, tous obligés de choisir :
 
 | Essai | Résultat |
 |---|---|
@@ -1326,14 +1327,34 @@ Cinq essais sur ce seul bouton, avant que Mathias tranche :
 | Pleine largeur, 1 rangée, à gauche | Compact, mais non centré |
 | Pleine largeur, 2 rangées, centré | Toujours trop gros |
 | Pleine largeur, 1 rangée, à gauche | Pas centré |
-| **Pleine largeur, 2 rangées, centré** | Retenu |
+| Pleine largeur, 2 rangées, centré | Toujours trop gros |
 
-La contrainte est structurelle et n'a pas de contournement sur une carte `tile` :
-**le centrage impose `vertical: true`**, qui empile icône et libellé au-delà des 56 px
-d'une rangée. Les deux ne sont pas conciliables.
+La contrainte est structurelle et sans contournement **sur une tuile** : le centrage
+n'y existe que via `vertical: true`, qui empile icône et libellé au-delà des 56 px
+d'une rangée. J'ai fait six allers-retours en cherchant le compromis dans la mauvaise
+carte, jusqu'à en conclure que la demande était contradictoire. Elle ne l'était pas :
+c'était la carte qui était mauvaise.
 
-**Décision : centré, 120 px de haut.** Ne pas « optimiser » cette hauteur en repassant
-en horizontal — la question a fait cinq allers-retours et elle est tranchée.
+**La carte `button` centre son contenu par construction**, sans avoir besoin d'empiler
+quoi que ce soit. Avec `show_icon: false` il ne reste que le libellé, qui tient
+largement dans une rangée :
+
+```yaml
+type: button
+entity: script.depart_maison
+name: Départ
+show_icon: false          # ← sans ça, icône AU-DESSUS du nom : deux rangées à nouveau
+show_name: true
+show_state: false
+grid_options: {columns: full, rows: 1}
+```
+
+**Retenu : centré, pleine largeur, une rangée — 56 px au lieu de 120.** Le prix payé
+est l'icône : la carte `button` empile toujours icône et nom, jamais côte à côte. Pour
+un bouton pleine largeur dont le libellé tient en un mot, le texte seul suffit.
+
+*Leçon générale : avant de conclure qu'une demande de mise en page est contradictoire,
+vérifier que la contrainte vient bien du besoin et non du type de carte choisi.*
 
 ## Où en est la refonte
 

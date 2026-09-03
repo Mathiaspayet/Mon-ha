@@ -149,11 +149,12 @@
 # avaient été essayées : une tuile verticale avec sa rangée de touches tient en 120 px,
 # les 184 px de trois rangées laissaient un tiers de vide.
 #
-# Le bouton Départ / Retour est CENTRÉ, donc vertical: true, donc sur deux rangées et
-# 120 px de haut. C'est le choix explicite de Mathias, redemandé après avoir vu la
-# version compacte : les deux ne sont pas conciliables sur une carte tile, le centrage
-# empilant icône et libellé au-delà des 56 px d'une rangée. Ne pas « optimiser » cette
-# hauteur en repassant en horizontal : la question a été tranchée.
+# Le bouton Départ / Retour n'est PAS une tuile mais une carte « button » : centré ET
+# sur une seule rangée. Une tuile ne sait pas faire les deux — son centrage passe par
+# vertical: true, qui empile icône et libellé au-delà des 56 px d'une rangée. La carte
+# button, elle, centre son contenu par construction ; avec show_icon: false il ne reste
+# que le libellé, qui tient largement en 56 px. C'est le prix payé : plus d'icône.
+# Six essais ont précédé, tous sur une tuile, tous à choisir entre centrage et hauteur.
 #
 # Ordre des sections, de haut en bas : ce qui alerte, ce qu'il fait dehors, ce qu'on
 # commande, le départ/retour, et en dernier ce qui est allumé. Les deux sections de
@@ -642,12 +643,12 @@ views:
       heading: Présence
       heading_style: title
       icon: mdi:home-account
-    - type: tile
+    - type: button
       entity: script.depart_maison
       name: Départ
-      icon: mdi:home-export-outline
-      vertical: true
-      hide_state: true
+      show_icon: false
+      show_name: true
+      show_state: false
       tap_action:
         action: perform-action
         perform_action: script.turn_on
@@ -655,31 +656,35 @@ views:
           entity_id: script.depart_maison
         confirmation:
           text: Lancer le départ de la maison ?
+      hold_action:
+        action: none
       visibility:
       - condition: state
         entity: input_boolean.etat_depart_maison
         state: 'off'
       grid_options:
         columns: full
-        rows: 2
-    - type: tile
+        rows: 1
+    - type: button
       entity: script.retour_maison
       name: Retour
-      icon: mdi:home-import-outline
-      vertical: true
-      hide_state: true
+      show_icon: false
+      show_name: true
+      show_state: false
       tap_action:
         action: perform-action
         perform_action: script.turn_on
         target:
           entity_id: script.retour_maison
+      hold_action:
+        action: none
       visibility:
       - condition: state
         entity: input_boolean.etat_depart_maison
         state: 'on'
       grid_options:
         columns: full
-        rows: 2
+        rows: 1
   - type: grid
     visibility:
     - condition: state
