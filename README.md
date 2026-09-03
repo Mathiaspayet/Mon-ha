@@ -1194,6 +1194,36 @@ rangée de touches en occupe environ 120 : un tiers de vide.
 se feraient rogner. C'est donc la largeur qui a été divisée. Pleine largeur, le bouton
 faisait un pavé de 120 px pour un seul mot.
 
+## ⚠️ `grid_options.rows` ne contraint pas une tuile verticale à features
+
+Le rendu a montré que la grille 2×2 n'était pas régulière du tout : les deux tuiles du
+haut faisaient 120 px comme demandé, les deux volets 184 px — trois rangées, alors que
+`rows: 2` était posé sur les quatre.
+
+**Une tuile `vertical: true` qui porte des `features` s'étale sur trois rangées quoi
+qu'on demande.** Elle empile icône, nom, état, puis la rangée de touches : le contenu
+dépasse 120 px et la carte grandit. `grid_options.rows` agit ici comme un plancher, pas
+comme un plafond — l'inverse du comportement observé sur la carte météo, où il rognait.
+
+En **horizontal**, la même tuile tient en deux rangées : icône, nom et état partagent
+une seule ligne au-dessus des touches. C'est exactement ce que faisait la tuile
+« Volets » d'origine, avant qu'on cherche à centrer.
+
+D'où le panachage retenu :
+
+| Tuile | Disposition | Pourquoi |
+|---|---|---|
+| Tout éteindre, Garage bloqué | **verticale** | Pas de touches — remplit bien ses 120 px, texte centré |
+| Garage, Volets RDC, Volets étage | **horizontale** | Porte des touches — ne tient en 120 px qu'ainsi |
+
+Les quatre cases font la même taille, ce qui est ce qui compte à l'œil ; l'alignement
+interne diffère et cela ne se remarque pas.
+
+Le bouton Départ / Retour repasse pleine largeur sur **une** rangée, donc horizontal.
+Deux essais ont précédé : pleine largeur sur deux rangées faisait un pavé de 120 px pour
+un mot ; en demi-largeur, la moitié droite de la section restait vide. À une rangée il se
+lit comme une barre d'action, pas comme une boîte à moitié remplie.
+
 ## Où en est la refonte
 
 | Étape | État |
