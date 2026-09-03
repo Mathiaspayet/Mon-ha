@@ -645,6 +645,70 @@ Le titre lit le premier créneau mouillé et le libellé de Météo-France tel q
 absent — la prévision minute n'est pas disponible partout en France — la carte le dit
 au lieu d'afficher une barre vide.
 
+## Refonte — l'accueil repris au rendu
+
+Cinq remarques sur la première version de l'accueil, cinq corrections.
+
+### Un seul bouton, Départ ou Retour
+
+Les deux tuiles occupaient une ligne entière pour proposer en permanence l'action
+qu'on ne voulait pas. Elles sont désormais conditionnées sur
+`input_boolean.etat_depart_maison` — exactement la mécanique de l'ancien accueil : à
+la maison on voit **Départ**, absent on voit **Retour**, jamais les deux. Le bouton
+restant prend toute la largeur.
+
+Le Départ garde sa confirmation, le Retour n'en a pas : armer l'alarme en mode
+vacances par erreur coûte plus cher que la désarmer.
+
+### Le garage cache ses commandes quand il est bloqué
+
+Deux tuiles s'excluent :
+
+| Blocage | Ce qui s'affiche |
+|---|---|
+| Inactif | « Porte de garage », avec les trois touches ▲ ■ ▼ |
+| Actif | « Garage bloqué par l'alarme », en orange, avec un interrupteur pour le relâcher |
+
+Les commandes disparaissent quand elles ne serviraient à rien — c'était la demande.
+
+⚠️ **Les deux conditions ne sont pas symétriques, et c'est voulu.** La tuile de
+commande est conditionnée en négatif (`state_not: 'on'`), la tuile « bloqué » en
+positif (`state: 'on'`). Au redémarrage, `switch.blocage_porte_de_garage` passe
+quelques secondes par `unavailable` : avec deux conditions positives, le garage
+disparaîtrait complètement de l'accueil pendant ce temps. Avec celle-ci, ce sont les
+commandes qui restent — le bon défaut quand on ne sait pas.
+
+Le nom dit « par l'alarme » parce que c'est ce qui se passe en pratique : seul
+`script.depart_maison` pose ce blocage, et il arme l'alarme en mode vacances dans le
+même mouvement. Rien n'interdit de basculer le switch à la main depuis Sécurité, et
+le libellé serait alors approximatif.
+
+### La météo réduite de moitié
+
+`show_current: false` sur la carte `weather-forecast`. Le bloc « conditions du
+moment » répétait la première colonne de la prévision — mêmes mini et maxi du jour —
+et la température extérieure est déjà dans les badges, en moyenne des trois sondes.
+La carte perd la moitié de sa hauteur sans rien perdre d'utile. Repasser le drapeau à
+`true` restaure le bloc.
+
+### Les lumières allumées en grille
+
+`entity-filter` rend maintenant une carte `glance` au lieu d'une carte `entities` :
+une grille d'icônes sur trois colonnes au lieu d'une ligne pleine largeur par lampe,
+soit le tiers de la hauteur. Le titre passe en `heading_style: subtitle` pour rester
+en retrait.
+
+Le contrôle individuel est conservé, il change juste de geste : **un appui éteint la
+lampe** (`tap_action: toggle`), un appui long ouvre sa fiche.
+
+### La section « La maison » est supprimée
+
+Six cartes de zone en bas de l'accueil, quand l'onglet Pièces en présente vingt et
+une rangées par étage. La version courte ne rendait service à personne.
+
+L'accueil compte donc quatre sections : Attention (masquée quand tout va bien),
+Raccourcis, Allumé en ce moment (masquée quand tout est éteint), Dehors.
+
 ## Où en est la refonte
 
 | Étape | État |

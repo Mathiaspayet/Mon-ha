@@ -50,8 +50,33 @@
 # ATTENTION : switch.blocage_porte_de_garage est une adresse KNX 16/0/8 SANS
 # state_address. Home Assistant n'a donc aucun retour : l'état affiché est
 # seulement ce qu'il a écrit en dernier. Un blocage qui n'a pas pris s'affiche
-# quand même « activé ». La tuile qui l'accompagne, conditionnée sur cet état,
-# reste le meilleur indice disponible, pas une certitude.
+# quand même « activé ». Les deux tuiles qui en dépendent restent le meilleur
+# indice disponible, pas une certitude.
+#
+# La tuile de commande du garage est conditionnée en NÉGATIF (state_not: 'on') et
+# la tuile « bloqué » en positif. Ce n'est pas symétrique par hasard : au
+# redémarrage, le switch passe quelques secondes par « unavailable ». Avec deux
+# conditions positives, le garage disparaîtrait complètement de l'accueil pendant
+# ce temps. Avec celle-ci, ce sont les commandes qui restent — le bon défaut.
+#
+# Un seul bouton Départ OU Retour, jamais les deux : chacun est conditionné sur
+# input_boolean.etat_depart_maison. C'est la mécanique de l'ancien accueil,
+# reprise telle quelle. Le Départ garde sa confirmation, pas le Retour : armer
+# l'alarme en mode vacances par erreur coûte plus cher que la désarmer.
+#
+# « Allumé en ce moment » est une carte glance et non entities : une grille
+# d'icônes sur trois colonnes au lieu d'une ligne pleine largeur par lampe, soit
+# le tiers de la hauteur. Un appui éteint la lampe (tap_action: toggle), un appui
+# long ouvre sa fiche. Le titre est en heading_style: subtitle pour rester en
+# retrait — c'est une information de passage, pas une commande principale.
+#
+# La carte météo porte show_current: false. Le bloc « conditions du moment »
+# répétait la première colonne de la prévision (mêmes mini et maxi du jour) et la
+# température extérieure est déjà dans les badges, en moyenne des trois sondes.
+# La carte y perd la moitié de sa hauteur sans rien perdre d'utile.
+#
+# Il n'y a plus de section « La maison » avec des cartes de zone : l'onglet Pièces
+# fait la même chose en mieux, avec les 21 zones rangées par étage au lieu de 6.
 #
 # La barre de pluie du bloc Dehors est en émojis (⬜ / 🟦) et non en caractères
 # semi-graphiques : les blocs ░▒▓█ n'existent pas dans toutes les polices et
@@ -279,8 +304,12 @@ views:
           entity_id: script.depart_maison
         confirmation:
           text: Lancer le départ de la maison ?
+      visibility:
+      - condition: state
+        entity: input_boolean.etat_depart_maison
+        state: 'off'
       grid_options:
-        columns: 6
+        columns: full
     - type: tile
       entity: script.retour_maison
       name: Retour
@@ -291,17 +320,21 @@ views:
         perform_action: script.turn_on
         target:
           entity_id: script.retour_maison
+      visibility:
+      - condition: state
+        entity: input_boolean.etat_depart_maison
+        state: 'on'
       grid_options:
-        columns: 6
+        columns: full
     - type: tile
       entity: light.toutes_les_lumieres
       name: Lumières
       icon: mdi:lightbulb-group-outline
+      state_content:
+      - state
       grid_options:
         columns: 6
         rows: 2
-      state_content:
-      - state
     - type: tile
       entity: cover.tous_les_volets
       name: Volets
@@ -316,82 +349,28 @@ views:
       icon: mdi:garage-variant
       features:
       - type: cover-open-close
+      visibility:
+      - condition: state
+        entity: switch.blocage_porte_de_garage
+        state_not: 'on'
       grid_options:
         columns: full
         rows: 2
     - type: tile
       entity: switch.blocage_porte_de_garage
-      name: Blocage du garage
-      icon: mdi:lock-alert-outline
+      name: Garage bloqué par l'alarme
+      icon: mdi:garage-lock
       color: orange
+      hide_state: true
+      features:
+      - type: toggle
       visibility:
       - condition: state
         entity: switch.blocage_porte_de_garage
         state: 'on'
       grid_options:
         columns: full
-  - type: grid
-    cards:
-    - type: heading
-      heading: Dehors
-      heading_style: title
-      icon: mdi:weather-partly-cloudy
-    - type: tile
-      entity: sensor.31_weather_alert
-      name: Vigilance Haute-Garonne
-      icon: mdi:alert-decagram-outline
-      color: red
-      visibility:
-      - condition: state
-        entity: sensor.31_weather_alert
-        state_not: Vert
-      grid_options:
-        columns: full
-    - type: weather-forecast
-      entity: weather.launaguet
-      name: Launaguet
-      forecast_type: daily
-      show_current: true
-      show_forecast: true
-      grid_options:
-        columns: full
-    - type: markdown
-      grid_options:
-        columns: full
-      content: |-
-        {% set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
-        {%- if f is not mapping or f | count == 0 %}
-        ### 🌧️ Pluie dans l'heure
-        Météo-France ne donne pas la prévision minute pour Launaguet en ce moment.
-        {%- else %}
-        {%- set ns = namespace(rows=[]) %}
-        {%- for k, v in f.items() %}
-        {%- set ns.rows = ns.rows + [[k.split(' ')[0] | int, v]] %}
-        {%- endfor %}
-        {%- set rows = ns.rows | sort(attribute='0') %}
-        {%- set n = rows | count %}
-        {%- set b = namespace(bar='', debut=none, detail=[]) %}
-        {%- for i in range(n) %}
-        {%- set m = rows[i][0] %}
-        {%- set lab = rows[i][1] %}
-        {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
-        {%- set mouille = 'pluie' in (lab | lower) %}
-        {%- if mouille and b.debut is none %}{% set b.debut = [m, lab] %}{% endif %}
-        {%- if mouille %}{% set b.detail = b.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
-        {%- set b.bar = b.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
-        {%- endfor %}
-        {%- if b.debut is none %}
-        ### ☀️ Pas de pluie dans l'heure
-        {%- else %}
-        ### 🌧️ {{ b.debut[1] }} {{ 'maintenant' if b.debut[0] == 0 else 'dans %d min' | format(b.debut[0]) }}
-        {%- endif %}
-
-        maintenant {{ b.bar }} +1 h
-        {%- if b.detail %}
-
-        {{ b.detail | join(' · ') }}
-        {%- endif %}
-        {%- endif %}
+        rows: 2
   - type: grid
     visibility:
     - condition: state
@@ -400,7 +379,7 @@ views:
     cards:
     - type: heading
       heading: Allumé en ce moment
-      heading_style: title
+      heading_style: subtitle
       icon: mdi:lightbulb-on-outline
       badges:
       - type: entity
@@ -444,70 +423,78 @@ views:
       - light.wc_etage
       - light.wc_rdc
       card:
-        type: entities
+        type: glance
+        show_state: false
         state_color: true
+        columns: 3
+        tap_action:
+          action: toggle
+        hold_action:
+          action: more-info
       grid_options:
         columns: full
   - type: grid
     cards:
     - type: heading
-      heading: La maison
+      heading: Dehors
       heading_style: title
-      icon: mdi:floor-plan
-    - type: area
-      area: salon
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
+      icon: mdi:weather-partly-cloudy
+    - type: tile
+      entity: sensor.31_weather_alert
+      name: Vigilance Haute-Garonne
+      icon: mdi:alert-decagram-outline
+      color: red
+      visibility:
+      - condition: state
+        entity: sensor.31_weather_alert
+        state_not: Vert
       grid_options:
-        columns: 6
-    - type: area
-      area: salon_tele
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
+        columns: full
+    - type: weather-forecast
+      entity: weather.launaguet
+      name: Launaguet
+      forecast_type: daily
+      show_current: false
+      show_forecast: true
       grid_options:
-        columns: 6
-    - type: area
-      area: cuisine
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
+        columns: full
+    - type: markdown
       grid_options:
-        columns: 6
-    - type: area
-      area: chambre_parentale
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
-      grid_options:
-        columns: 6
-    - type: area
-      area: garage
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
-      grid_options:
-        columns: 6
-    - type: area
-      area: exterieur
-      display_type: compact
-      alert_classes: []
-      sensor_classes:
-      - temperature
-      features_position: bottom
-      grid_options:
-        columns: 6
+        columns: full
+      content: |-
+        {% set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
+        {%- if f is not mapping or f | count == 0 %}
+        ### 🌧️ Pluie dans l'heure
+        Météo-France ne donne pas la prévision minute pour Launaguet en ce moment.
+        {%- else %}
+        {%- set ns = namespace(rows=[]) %}
+        {%- for k, v in f.items() %}
+        {%- set ns.rows = ns.rows + [[k.split(' ')[0] | int, v]] %}
+        {%- endfor %}
+        {%- set rows = ns.rows | sort(attribute='0') %}
+        {%- set n = rows | count %}
+        {%- set b = namespace(bar='', debut=none, detail=[]) %}
+        {%- for i in range(n) %}
+        {%- set m = rows[i][0] %}
+        {%- set lab = rows[i][1] %}
+        {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
+        {%- set mouille = 'pluie' in (lab | lower) %}
+        {%- if mouille and b.debut is none %}{% set b.debut = [m, lab] %}{% endif %}
+        {%- if mouille %}{% set b.detail = b.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
+        {%- set b.bar = b.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
+        {%- endfor %}
+        {%- if b.debut is none %}
+        ### ☀️ Pas de pluie dans l'heure
+        {%- else %}
+        ### 🌧️ {{ b.debut[1] }} {{ 'maintenant' if b.debut[0] == 0 else 'dans %d min' | format(b.debut[0]) }}
+        {%- endif %}
+
+        maintenant {{ b.bar }} +1 h
+        {%- if b.detail %}
+
+        {{ b.detail | join(' · ') }}
+        {%- endif %}
+        {%- endif %}
 - title: Pièces
   path: pieces
   icon: mdi:floor-plan
