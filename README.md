@@ -1082,6 +1082,81 @@ rubans et l'horloge du bus. Une section « Sortie 24 V et rubans » est ajoutée
 superpose chaque ruban et sa sortie 24 V sur 48 h, ce qui rend la corrélation
 vérifiable d'un coup d'œil plutôt que sur parole.
 
+## Refonte — l'accueil resserré
+
+Sept retouches d'un coup, toutes tournées vers la cohérence visuelle.
+
+### Les textes sont centrés dans les boutons
+
+`vertical: true` sur toutes les tuiles d'action : icône au-dessus, libellé centré
+dessous. En horizontal, l'icône colle à gauche et le texte flotte au milieu d'un grand
+vide — c'est exactement ce que donnaient les tuiles pleine largeur « Départ »,
+« Retour » et « Garage bloqué ».
+
+### « Raccourcis » se scinde en « Présence » et « Général »
+
+| Section | Contenu |
+|---|---|
+| **Présence** | Le seul bouton Départ **ou** Retour, pleine largeur |
+| **Général** | Tout éteindre, Garage, Volets RDC, Volets étage |
+
+Départ / Retour sort des commandes courantes parce que c'est la seule action qui change
+l'état de la maison entière — alarme, simulation de présence, blocage du garage.
+
+### « Général » est une grille 2×2 rigoureusement régulière
+
+Quatre tuiles au même gabarit : 6 colonnes, 3 rangées, verticales.
+
+```
+┌─────────────────┬─────────────────┐
+│  Tout éteindre  │     Garage      │
+├─────────────────┼─────────────────┤
+│   Volets RDC    │  Volets étage   │
+└─────────────────┴─────────────────┘
+```
+
+La tuile « Garage bloqué » reprend **exactement** le même gabarit que la tuile de
+commande qu'elle remplace : sans ça, la grille se déforme selon l'état du blocage.
+
+### « Lumières » devient « Tout éteindre »
+
+L'ancienne tuile affichait « Allumé » ou « Éteint » — une information qu'on a déjà par
+la section « Allumé en ce moment » juste dessous — et un deuxième appui rallumait tout.
+
+La nouvelle est un **bouton d'action** : son `tap_action` appelle `light.turn_off` sur
+le groupe. Un appui éteint, il ne rallume jamais. L'entité reste le groupe, ce qui fait
+que la tuile se colore tant qu'il reste quelque chose à éteindre.
+
+### Un bouton de volets par niveau
+
+`cover.volets_rez_de_chaussee` (Buanderie, Bureau, Salon Télé) et `cover.volets_etage`
+(chambres Auguste, Margaux, parentale, salle d'eau, salle de bain). **Les deux groupes
+existaient déjà** — 3 + 5 = 8, le compte exact de `cover.tous_les_volets` — il n'y avait
+rien à créer. Chacun occupe la moitié de la largeur au lieu de la tuile unique
+précédente.
+
+### La météo et la pluie fusionnent
+
+Deux cartes markdown qui se suivaient, deux informations de même nature. Une seule
+désormais, séparée par un filet :
+
+```
+### ☀️ Aujourd'hui 33 / 15 °C
+
+ven ☀️ 35/16 · sam ☀️ 34/20 · dim ☀️ 38/20 · lun ☀️ 31/20
+
+---
+☀️ **Pas de pluie dans l'heure**
+
+maintenant ⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜ +1 h
+```
+
+### « Dehors » devient « Extérieur » — sur les badges seulement
+
+Les badges de température de Maison et de Confort, plus la légende de la courbe
+hebdomadaire. Le **titre de section reste « Dehors »** : « Extérieur » y désignerait la
+zone du même nom, qui a sa propre page de pièce dans l'onglet Pièces.
+
 ## Où en est la refonte
 
 | Étape | État |

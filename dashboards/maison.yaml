@@ -96,13 +96,38 @@
 # tap_action: more-info ouvrait la fiche du switch, avec son interrupteur dedans.
 # Le relâchement volontaire se fait depuis Sécurité, ou par le script Retour maison.
 #
-# Elle porte rows: 2, comme la tuile de commande qu'elle remplace : sans ça, la
-# section changeait de hauteur au gré du blocage.
+# Elle reprend EXACTEMENT le gabarit de la tuile de commande qu'elle remplace —
+# 6 colonnes, 3 rangées, vertical — sinon la grille 2×2 de « Général » se déforme
+# selon l'état du blocage.
+#
+# Toutes les tuiles d'action portent vertical: true — icône au-dessus, libellé
+# centré dessous. En horizontal, l'icône colle à gauche et le texte flotte au
+# milieu d'un grand vide, ce que donnaient les tuiles pleine largeur.
+#
+# « Général » est une grille 2×2 de tuiles rigoureusement identiques — 6 colonnes,
+# 3 rangées, vertical : Tout éteindre, Garage, Volets RDC, Volets étage.
+#
+# « Tout éteindre » est un bouton d'action et non un interrupteur : son tap_action
+# appelle light.turn_off, donc un appui éteint et ne rallume jamais. L'entité reste
+# le groupe pour que la tuile se colore tant qu'il reste quelque chose à éteindre.
+# L'ancienne tuile « Lumières » n'affichait que « Allumé », doublon de la section
+# juste dessous, et rallumait tout au deuxième appui.
+#
+# Les volets passent par cover.volets_rez_de_chaussee et cover.volets_etage, deux
+# groupes qui existaient déjà — 3 et 5 volets, 8 au total comme cover.tous_les_volets.
+#
+# « Présence » isole le bouton Départ / Retour : c'est la seule action qui change
+# l'état de la maison entière, elle ne se range pas avec les commandes courantes.
+#
+# Les badges de température disent « Extérieur » et non « Dehors ». Le titre de
+# section reste « Dehors » : « Extérieur » y désignerait la zone du même nom, qui a
+# sa propre page de pièce.
 #
 # La météo n'est plus une carte weather-forecast mais une carte markdown, nourrie
 # par sensor.previsions_launaguet (capteur modèle déclenché, dans
-# configuration.yaml). Deux lignes : le jour même en titre, les quatre suivants en
-# dessous. Trois tentatives ont échoué avant :
+# configuration.yaml). Elle porte AUSSI la pluie dans l'heure, sous un filet
+# horizontal : deux informations de même nature, deux cartes qui se suivaient, une
+# seule désormais. Trois tentatives ont échoué avant :
 #
 #   show_current: false           trop haute encore
 #   rows: 2 en quotidien          rogne la ligne des minimales
@@ -143,7 +168,7 @@ views:
     show_state: true
   - type: entity
     entity: sensor.moyenne_temperature_exterieure
-    name: Dehors
+    name: Extérieur
     icon: mdi:sun-thermometer-outline
     show_name: true
     show_state: true
@@ -330,13 +355,14 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Raccourcis
+      heading: Présence
       heading_style: title
-      icon: mdi:gesture-tap-button
+      icon: mdi:home-account
     - type: tile
       entity: script.depart_maison
       name: Départ
       icon: mdi:home-export-outline
+      vertical: true
       hide_state: true
       tap_action:
         action: perform-action
@@ -351,10 +377,12 @@ views:
         state: 'off'
       grid_options:
         columns: full
+        rows: 2
     - type: tile
       entity: script.retour_maison
       name: Retour
       icon: mdi:home-import-outline
+      vertical: true
       hide_state: true
       tap_action:
         action: perform-action
@@ -367,27 +395,32 @@ views:
         state: 'on'
       grid_options:
         columns: full
+        rows: 2
+  - type: grid
+    cards:
+    - type: heading
+      heading: Général
+      heading_style: title
+      icon: mdi:gesture-tap-button
     - type: tile
       entity: light.toutes_les_lumieres
-      name: Lumières
-      icon: mdi:lightbulb-group-outline
-      state_content:
-      - state
+      name: Tout éteindre
+      icon: mdi:lightbulb-off-outline
+      vertical: true
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: light.turn_off
+        target:
+          entity_id: light.toutes_les_lumieres
       grid_options:
         columns: 6
-        rows: 2
-    - type: tile
-      entity: cover.tous_les_volets
-      name: Volets
-      features:
-      - type: cover-open-close
-      grid_options:
-        columns: 6
-        rows: 2
+        rows: 3
     - type: tile
       entity: cover.porte_de_garage
-      name: Porte de garage
+      name: Garage
       icon: mdi:garage-variant
+      vertical: true
       features:
       - type: cover-open-close
       visibility:
@@ -395,25 +428,46 @@ views:
         entity: switch.blocage_porte_de_garage
         state_not: 'on'
       grid_options:
-        columns: full
-        rows: 2
+        columns: 6
+        rows: 3
     - type: tile
       entity: switch.blocage_porte_de_garage
-      name: Garage bloqué par l'alarme
+      name: Garage bloqué
       icon: mdi:garage-lock
       color: orange
+      vertical: true
       hide_state: true
+      tap_action:
+        action: none
+      hold_action:
+        action: none
       visibility:
       - condition: state
         entity: switch.blocage_porte_de_garage
         state: 'on'
       grid_options:
-        columns: full
-        rows: 2
-      tap_action:
-        action: none
-      hold_action:
-        action: none
+        columns: 6
+        rows: 3
+    - type: tile
+      entity: cover.volets_rez_de_chaussee
+      name: Volets RDC
+      icon: mdi:window-shutter
+      vertical: true
+      features:
+      - type: cover-open-close
+      grid_options:
+        columns: 6
+        rows: 3
+    - type: tile
+      entity: cover.volets_etage
+      name: Volets étage
+      icon: mdi:window-shutter
+      vertical: true
+      features:
+      - type: cover-open-close
+      grid_options:
+        columns: 6
+        rows: 3
   - type: grid
     visibility:
     - condition: state
@@ -619,12 +673,11 @@ views:
         columns: full
       content: |-
         {% set p = state_attr('sensor.previsions_launaguet','jours') %}
-        {%- if not p %}
-        ### 🌤️ Prévision en attente
-        Le capteur se remplit à la demi-heure, puis toutes les 30 minutes.
-        {%- else %}
         {%- set ic = {'sunny':'☀️','clear-night':'🌙','partlycloudy':'🌤️','cloudy':'☁️','rainy':'🌦️','pouring':'🌧️','lightning':'🌩️','lightning-rainy':'⛈️','snowy':'🌨️','snowy-rainy':'🌨️','fog':'🌫️','hail':'🧊','windy':'💨','windy-variant':'💨','exceptional':'⚠️'} %}
         {%- set noms = ['lun','mar','mer','jeu','ven','sam','dim'] %}
+        {%- if not p %}
+        ### 🌤️ Prévision en attente
+        {%- else %}
         {%- set a = p[0] %}
         ### {{ ic.get(a.condition,'•') }} Aujourd'hui {{ a.temperature | round | int }} / {{ a.templow | round | int }} °C
         {%- set ns = namespace(l=[]) %}
@@ -635,41 +688,32 @@ views:
 
         {{ ns.l | join(' · ') }}
         {%- endif %}
-    - type: markdown
-      grid_options:
-        columns: full
-      content: |-
-        {% set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
-        {%- if f is not mapping or f | count == 0 %}
-        ### 🌧️ Pluie dans l'heure
-        Météo-France ne donne pas la prévision minute pour Launaguet en ce moment.
-        {%- else %}
-        {%- set ns = namespace(rows=[]) %}
+        {%- set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
+        {%- if f is mapping and f | count > 0 %}
+        {%- set b = namespace(rows=[]) %}
         {%- for k, v in f.items() %}
-        {%- set ns.rows = ns.rows + [[k.split(' ')[0] | int, v]] %}
+        {%- set b.rows = b.rows + [[k.split(' ')[0] | int, v]] %}
         {%- endfor %}
-        {%- set rows = ns.rows | sort(attribute='0') %}
+        {%- set rows = b.rows | sort(attribute='0') %}
         {%- set n = rows | count %}
-        {%- set b = namespace(bar='', debut=none, detail=[]) %}
+        {%- set r = namespace(bar='', debut=none, detail=[]) %}
         {%- for i in range(n) %}
         {%- set m = rows[i][0] %}
         {%- set lab = rows[i][1] %}
         {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
         {%- set mouille = 'pluie' in (lab | lower) %}
-        {%- if mouille and b.debut is none %}{% set b.debut = [m, lab] %}{% endif %}
-        {%- if mouille %}{% set b.detail = b.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
-        {%- set b.bar = b.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
+        {%- if mouille and r.debut is none %}{% set r.debut = [m, lab] %}{% endif %}
+        {%- if mouille %}{% set r.detail = r.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
+        {%- set r.bar = r.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
         {%- endfor %}
-        {%- if b.debut is none %}
-        ### ☀️ Pas de pluie dans l'heure
-        {%- else %}
-        ### 🌧️ {{ b.debut[1] }} {{ 'maintenant' if b.debut[0] == 0 else 'dans %d min' | format(b.debut[0]) }}
-        {%- endif %}
 
-        maintenant {{ b.bar }} +1 h
-        {%- if b.detail %}
+        ---
+        {% if r.debut is none %}☀️ **Pas de pluie dans l'heure**{% else %}🌧️ **{{ r.debut[1] }} {{ 'maintenant' if r.debut[0] == 0 else 'dans %d min' | format(r.debut[0]) }}**{% endif %}
 
-        {{ b.detail | join(' · ') }}
+        maintenant {{ r.bar }} +1 h
+        {%- if r.detail %}
+
+        {{ r.detail | join(' · ') }}
         {%- endif %}
         {%- endif %}
 - title: Pièces
@@ -904,7 +948,7 @@ views:
     icon: mdi:home-thermometer-outline
   - type: entity
     entity: sensor.moyenne_temperature_exterieure
-    name: Dehors
+    name: Extérieur
     show_name: true
     show_state: true
     icon: mdi:sun-thermometer-outline
@@ -1066,7 +1110,7 @@ views:
       - entity: sensor.moyenne_temperature_interieure
         name: Intérieur
       - entity: sensor.moyenne_temperature_exterieure
-        name: Dehors (moyenne)
+        name: Extérieur (moyenne)
 - title: Sécurité
   path: securite
   icon: mdi:shield-home-outline
