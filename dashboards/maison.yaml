@@ -149,11 +149,16 @@
 # avaient été essayées : une tuile verticale avec sa rangée de touches tient en 120 px,
 # les 184 px de trois rangées laissaient un tiers de vide.
 #
-# Le bouton Départ / Retour est centré, donc vertical, donc sur deux rangées : il
-# n'existe pas de disposition centrée sur une seule rangée, vertical: true empilant
-# icône et libellé. C'est un arbitrage assumé — trois essais ont précédé, pleine
-# largeur sur deux rangées (un pavé pour un mot), demi-largeur (moitié droite vide),
-# puis une rangée horizontale (compact mais texte à gauche). Le centrage l'emporte.
+# Le bouton Départ / Retour est sur UNE rangée, donc horizontal, donc non centré. Le
+# centrage impose vertical: true, qui empile icône et libellé et déborde des 56 px
+# d'une rangée. Quatre essais : pleine largeur sur deux rangées (un pavé de 120 px pour
+# un mot), demi-largeur (moitié droite vide), une rangée horizontale, retour au centré
+# à la demande, puis de nouveau une rangée — la taille l'emporte pour ce bouton-là.
+#
+# Ordre des sections, de haut en bas : ce qui alerte, ce qu'il fait dehors, ce qu'on
+# commande, ce qui est allumé, et en dernier le départ/retour qui ne sert qu'aux deux
+# bouts de la journée. « Allumé en ce moment » suit « Général » exprès : c'est la liste
+# de ce que « Tout éteindre », juste au-dessus, va couper.
 #
 # « Tout éteindre » est un bouton d'action et non un interrupteur : son tap_action
 # appelle light.turn_off, donc un appui éteint et ne rallume jamais. L'entité reste
@@ -406,47 +411,71 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Présence
+      heading: Météo
       heading_style: title
-      icon: mdi:home-account
+      icon: mdi:weather-partly-cloudy
     - type: tile
-      entity: script.depart_maison
-      name: Départ
-      icon: mdi:home-export-outline
-      vertical: true
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: script.turn_on
-        target:
-          entity_id: script.depart_maison
-        confirmation:
-          text: Lancer le départ de la maison ?
+      entity: sensor.31_weather_alert
+      name: Vigilance Haute-Garonne
+      icon: mdi:alert-decagram-outline
+      color: red
       visibility:
       - condition: state
-        entity: input_boolean.etat_depart_maison
-        state: 'off'
+        entity: sensor.31_weather_alert
+        state_not: Vert
       grid_options:
         columns: full
-        rows: 2
-    - type: tile
-      entity: script.retour_maison
-      name: Retour
-      icon: mdi:home-import-outline
-      vertical: true
-      hide_state: true
-      tap_action:
-        action: perform-action
-        perform_action: script.turn_on
-        target:
-          entity_id: script.retour_maison
-      visibility:
-      - condition: state
-        entity: input_boolean.etat_depart_maison
-        state: 'on'
+    - type: markdown
       grid_options:
         columns: full
-        rows: 2
+      content: |-
+        {% set p = state_attr('sensor.previsions_launaguet','jours') %}
+        {%- set ic = {'sunny':'☀️','clear-night':'🌙','partlycloudy':'🌤️','cloudy':'☁️','rainy':'🌦️','pouring':'🌧️','lightning':'🌩️','lightning-rainy':'⛈️','snowy':'🌨️','snowy-rainy':'🌨️','fog':'🌫️','hail':'🧊','windy':'💨','windy-variant':'💨','exceptional':'⚠️'} %}
+        {%- set noms = ['lun','mar','mer','jeu','ven','sam','dim'] %}
+        {%- if not p %}
+        ### 🌤️ Prévision en attente
+        {%- else %}
+        {%- set a = p[0] %}
+        ### {{ ic.get(a.condition,'•') }} Aujourd'hui {{ a.temperature | round | int }} / {{ a.templow | round | int }} °C
+        {%- set ns = namespace(l=[]) %}
+        {%- for d in p[1:5] %}
+        {%- set j = noms[as_local(as_datetime(d.datetime)).weekday()] %}
+        {%- set ns.l = ns.l + ['%s %s %d/%d' | format(j, ic.get(d.condition,'•'), d.temperature | round | int, d.templow | round | int)] %}
+        {%- endfor %}
+
+        {{ ns.l | join(' · ') }}
+        {%- endif %}
+        {%- set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
+        {%- if f is mapping and f | count > 0 %}
+        {%- set b = namespace(rows=[]) %}
+        {%- for k, v in f.items() %}
+        {%- set b.rows = b.rows + [[k.split(' ')[0] | int, v]] %}
+        {%- endfor %}
+        {%- set rows = b.rows | sort(attribute='0') %}
+        {%- set n = rows | count %}
+        {%- set r = namespace(bar='', debut=none, detail=[]) %}
+        {%- for i in range(n) %}
+        {%- set m = rows[i][0] %}
+        {%- set lab = rows[i][1] %}
+        {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
+        {%- set mouille = 'pluie' in (lab | lower) %}
+        {%- if mouille and r.debut is none %}{% set r.debut = [m, lab] %}{% endif %}
+        {%- if mouille %}{% set r.detail = r.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
+        {%- set r.bar = r.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
+        {%- endfor %}
+        {%- if r.debut is none %}
+
+        ☀️ Pas de pluie dans l'heure
+        {%- else %}
+
+        ---
+        🌧️ **{{ r.debut[1] }} {{ 'maintenant' if r.debut[0] == 0 else 'dans %d min' | format(r.debut[0]) }}**
+
+        maintenant {{ r.bar }} +1 h
+
+        {{ r.detail | join(' · ') }}
+        {%- endif %}
+        {%- endif %}
   - type: grid
     cards:
     - type: heading
@@ -793,71 +822,47 @@ views:
   - type: grid
     cards:
     - type: heading
-      heading: Météo
+      heading: Présence
       heading_style: title
-      icon: mdi:weather-partly-cloudy
+      icon: mdi:home-account
     - type: tile
-      entity: sensor.31_weather_alert
-      name: Vigilance Haute-Garonne
-      icon: mdi:alert-decagram-outline
-      color: red
+      entity: script.depart_maison
+      name: Départ
+      icon: mdi:home-export-outline
+      vertical: false
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.depart_maison
+        confirmation:
+          text: Lancer le départ de la maison ?
       visibility:
       - condition: state
-        entity: sensor.31_weather_alert
-        state_not: Vert
+        entity: input_boolean.etat_depart_maison
+        state: 'off'
       grid_options:
         columns: full
-    - type: markdown
+        rows: 1
+    - type: tile
+      entity: script.retour_maison
+      name: Retour
+      icon: mdi:home-import-outline
+      vertical: false
+      hide_state: true
+      tap_action:
+        action: perform-action
+        perform_action: script.turn_on
+        target:
+          entity_id: script.retour_maison
+      visibility:
+      - condition: state
+        entity: input_boolean.etat_depart_maison
+        state: 'on'
       grid_options:
         columns: full
-      content: |-
-        {% set p = state_attr('sensor.previsions_launaguet','jours') %}
-        {%- set ic = {'sunny':'☀️','clear-night':'🌙','partlycloudy':'🌤️','cloudy':'☁️','rainy':'🌦️','pouring':'🌧️','lightning':'🌩️','lightning-rainy':'⛈️','snowy':'🌨️','snowy-rainy':'🌨️','fog':'🌫️','hail':'🧊','windy':'💨','windy-variant':'💨','exceptional':'⚠️'} %}
-        {%- set noms = ['lun','mar','mer','jeu','ven','sam','dim'] %}
-        {%- if not p %}
-        ### 🌤️ Prévision en attente
-        {%- else %}
-        {%- set a = p[0] %}
-        ### {{ ic.get(a.condition,'•') }} Aujourd'hui {{ a.temperature | round | int }} / {{ a.templow | round | int }} °C
-        {%- set ns = namespace(l=[]) %}
-        {%- for d in p[1:5] %}
-        {%- set j = noms[as_local(as_datetime(d.datetime)).weekday()] %}
-        {%- set ns.l = ns.l + ['%s %s %d/%d' | format(j, ic.get(d.condition,'•'), d.temperature | round | int, d.templow | round | int)] %}
-        {%- endfor %}
-
-        {{ ns.l | join(' · ') }}
-        {%- endif %}
-        {%- set f = state_attr('sensor.launaguet_next_rain','1_hour_forecast') %}
-        {%- if f is mapping and f | count > 0 %}
-        {%- set b = namespace(rows=[]) %}
-        {%- for k, v in f.items() %}
-        {%- set b.rows = b.rows + [[k.split(' ')[0] | int, v]] %}
-        {%- endfor %}
-        {%- set rows = b.rows | sort(attribute='0') %}
-        {%- set n = rows | count %}
-        {%- set r = namespace(bar='', debut=none, detail=[]) %}
-        {%- for i in range(n) %}
-        {%- set m = rows[i][0] %}
-        {%- set lab = rows[i][1] %}
-        {%- set fin = rows[i + 1][0] if i + 1 < n else 60 %}
-        {%- set mouille = 'pluie' in (lab | lower) %}
-        {%- if mouille and r.debut is none %}{% set r.debut = [m, lab] %}{% endif %}
-        {%- if mouille %}{% set r.detail = r.detail + ['%d min : %s' | format(m, lab | lower | replace('pluie ', ''))] %}{% endif %}
-        {%- set r.bar = r.bar + ('🟦' if mouille else '⬜') * (((fin - m) / 5) | round | int) %}
-        {%- endfor %}
-        {%- if r.debut is none %}
-
-        ☀️ Pas de pluie dans l'heure
-        {%- else %}
-
-        ---
-        🌧️ **{{ r.debut[1] }} {{ 'maintenant' if r.debut[0] == 0 else 'dans %d min' | format(r.debut[0]) }}**
-
-        maintenant {{ r.bar }} +1 h
-
-        {{ r.detail | join(' · ') }}
-        {%- endif %}
-        {%- endif %}
+        rows: 1
 - title: Pièces
   path: pieces
   icon: mdi:floor-plan

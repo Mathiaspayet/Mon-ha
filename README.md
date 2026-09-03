@@ -1299,6 +1299,39 @@ bloc `views:`. Le fichier ne contient plus aucune ancre. C'est un artefact de
 sérialisation seulement — le tableau de bord en direct n'a jamais été affecté, il est
 stocké en JSON.
 
+## L'ordre de l'accueil, et le bouton Présence dégonflé
+
+Ordre retenu, de haut en bas :
+
+| Section | Ce qu'elle répond |
+|---|---|
+| Attention | Y a-t-il un problème ? *(masquée si non)* |
+| Météo | Qu'est-ce qu'il fait dehors ? |
+| Général | Qu'est-ce que je commande ? |
+| Allumé en ce moment | Qu'est-ce qui est allumé ? *(masquée si rien)* |
+| Présence | Je pars ou je rentre |
+
+« Allumé en ce moment » suit « Général » à dessein : c'est la liste de ce que
+« Tout éteindre », juste au-dessus, va couper. Et Départ / Retour passe en dernier — il
+ne sert qu'aux deux bouts de la journée.
+
+### Le bouton Départ / Retour : la taille l'emporte sur le centrage
+
+Quatre essais sur ce seul bouton :
+
+| Essai | Résultat |
+|---|---|
+| Pleine largeur, 2 rangées, centré | Un pavé de 120 px pour un mot |
+| Demi-largeur, 2 rangées, centré | La moitié droite de la section reste vide |
+| Pleine largeur, 1 rangée, à gauche | Compact, mais non centré |
+| Retour au centré sur demande | Toujours trop gros |
+| **Pleine largeur, 1 rangée** | — |
+
+La contrainte est structurelle : **le centrage impose `vertical: true`**, qui empile
+icône et libellé et dépasse les 56 px d'une rangée. On ne peut pas avoir les deux. Pour
+ce bouton-là, c'est la taille qui gagne ; les quatre tuiles de « Général », elles,
+restent centrées puisqu'elles occupent deux rangées de toute façon.
+
 ## Où en est la refonte
 
 | Étape | État |
