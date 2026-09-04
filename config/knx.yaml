@@ -32,6 +32,24 @@
 # binary_sensor.detection_chan_1 (12/5/2) est muet lui aussi mais n'a pas été
 # retiré : son rôle n'est pas établi.
 
+# sync_state — 4 septembre 2026. Après la purge il restait 348 avertissements
+# xknx par jour, tous sur 7 adresses : les 6 objets « mode de fonctionnement »
+# des thermostats (3/1/4 7/1/4 8/1/4 9/1/4 10/1/4 11/1/4) et 12/5/2. Par défaut
+# sync_state vaut « expire 60 », donc une relecture par heure et par adresse ;
+# sur une adresse qui ne répond pas, ce sont deux lignes de log par tentative.
+#
+# ATTENTION : sync_state est une option PAR ENTITÉ, jamais par adresse. Sur un
+# thermostat elle couvre aussi temperature_address et les consignes, qui elles
+# répondent parfaitement — d'où « init » et non « false » : lecture au démarrage
+# seulement. Les six thermostats gardent donc leur relecture initiale, et
+# l'adresse morte n'est réessayée qu'une fois par redémarrage au lieu de 24 fois
+# par jour.
+#
+# Et « false » n'est de toute façon PAS accepté sur la plateforme Climate (ni
+# Light, Cover, Switch, Number, Text) : la doc renvoie vers la suppression de
+# l'adresse d'état. Sur binary_sensor il l'est, d'où false pour 12/5/2 dont la
+# seule adresse est morte.
+
 # capteurs binaires#
 binary_sensor:
   #Capteur alarme
@@ -129,6 +147,7 @@ binary_sensor:
     state_address: "11/1/8"
   - name: "detection chan 1"
     state_address: "12/5/2"
+    sync_state: false
 
   #thermostat
   - name: "actionneur de chauffe Salle d'eau"
@@ -464,6 +483,7 @@ climate:
     target_temperature_state_address: "7/1/1"
     operation_mode_address: "7/0/5"
     operation_mode_state_address: "7/1/4"
+    sync_state: init
   - name: "thermostat Salle de bain"
     temperature_address: "11/1/0"
     setpoint_shift_address: "11/0/4"
@@ -471,6 +491,7 @@ climate:
     target_temperature_state_address: "11/1/1"
     operation_mode_address: "11/0/5"
     operation_mode_state_address: "11/1/4"
+    sync_state: init
   - name: "thermostat chambre Parents"
     temperature_address: "3/1/0"
     setpoint_shift_address: "3/0/4"
@@ -478,6 +499,7 @@ climate:
     target_temperature_state_address: "3/1/1"
     operation_mode_address: "3/0/5"
     operation_mode_state_address: "3/1/4"
+    sync_state: init
   - name: "thermostat chambre Margaux"
     temperature_address: "8/1/0"
     setpoint_shift_address: "8/0/4"
@@ -485,6 +507,7 @@ climate:
     target_temperature_state_address: "8/1/1"
     operation_mode_address: "8/0/5"
     operation_mode_state_address: "8/1/4"
+    sync_state: init
   - name: "thermostat chambre Auguste"
     temperature_address: "9/1/0"
     setpoint_shift_address: "9/0/4"
@@ -492,6 +515,7 @@ climate:
     target_temperature_state_address: "9/1/1"
     operation_mode_address: "9/0/5"
     operation_mode_state_address: "9/1/4"
+    sync_state: init
   - name: "thermostat chambre amis"
     temperature_address: "10/1/0"
     setpoint_shift_address: "10/0/4"
@@ -499,6 +523,7 @@ climate:
     target_temperature_state_address: "10/1/1"
     operation_mode_address: "10/0/5"
     operation_mode_state_address: "10/1/4"
+    sync_state: init
 
 # Horloge du bus. L'heure est censée venir d'un serveur de temps configuré dans
 # l'alimentation KNX ; ces trois entités servent à le vérifier. Home Assistant

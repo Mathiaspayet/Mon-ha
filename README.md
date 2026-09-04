@@ -1458,6 +1458,93 @@ Le script porte `continue_on_error` sur l'envoi : un appareil injoignable n'inte
 plus la suite de l'automatisation appelante — c'était la cause du silence complet des
 alertes avant le 2 septembre 2026.
 
+## Diagnostic du 4 septembre 2026 — la sous-tension pendant la sauvegarde
+
+Passage sur 24 h. Le résultat qui compte n'était pas dans les journaux de Home
+Assistant mais dans ses réparations : **`rpi_power / under_voltage_detected`,
+sévérité critique**, apparue dans la nuit.
+
+| Heure | Événement |
+|---|---|
+| 05:10:49 | Sauvegarde automatique démarrée |
+| **05:11:22** | `binary_sensor.rpi_power_status` → **on** (rail 5 V sous ~4,63 V) |
+| **05:11:53** | Retour à la normale, 30 s plus tard |
+| 05:12:05 | Sauvegarde terminée avec succès |
+
+La sous-tension commence **34 s après le début de la sauvegarde** et se termine
+**12 s avant sa fin**. Le SSD tire du courant à l'écriture, le rail flanche.
+
+Ça éclaire la mesure du 3 septembre, où les resets UAS se déclenchaient sur des
+**rafales d'écriture** et jamais au repos, sans mécanisme identifié. En voici un.
+
+**Mais il faut résister à la conclusion facile, et deux faits s'y opposent :**
+
+1. **Une seule sous-tension sur 7 jours**, alors que la sauvegarde tourne chaque
+   nuit. Si le courant d'écriture suffisait à faire chuter le rail, ce serait
+   quotidien. L'alimentation est donc *à la limite*, pas sous-dimensionnée.
+2. **Aucune sous-tension pendant les 12 resets USB du 3 septembre.** Si la
+   sous-tension causait les resets, elle aurait dû se déclencher là aussi.
+
+Ce sont donc deux symptômes qui pointent tous deux vers « les rafales d'écriture
+mettent ce montage en difficulté », sans qu'on puisse dire que l'un cause l'autre.
+
+D'où la mesure plutôt que l'achat. Un compteur `history_stats`
+(`sensor.raspberry_pi_sous_tensions_pi_7_jours`, type `count` sur 7 jours) et une
+section « Alimentation du Pi » sur la vue Technique : compteur, graphe 7 jours
+superposant la sous-tension et l'état du gestionnaire de sauvegarde, et journal à
+la seconde. Si le compteur monte, l'alimentation ou le câble passent avant le
+`usb-storage.quirks` — qui demande de toute façon un accès physique.
+
+⚠️ Le compteur est plafonné par le `purge_keep_days` du recorder (13 jours
+d'historique ici) : une fenêtre de 7 jours passe, 30 jours ne passerait pas.
+
+### ⚠️ `sync_state` est une option par entité, jamais par adresse
+
+Après la purge KNX il restait **348 avertissements xknx par jour** — mesure
+confirmée : 464 lignes sur 32 h, sur exactement les 7 adresses prévues (les six
+objets « mode de fonctionnement » des thermostats et `12/5/2`). Par défaut
+`sync_state` vaut « expire 60 » : une relecture par heure et par adresse, deux
+lignes de log par tentative sur une adresse qui ne répond pas.
+
+Le remède annoncé était `sync_state: false`. Il était faux, deux fois :
+
+1. **`sync_state` porte sur l'entité entière.** Sur un thermostat, elle couvre
+   aussi `temperature_address` et les consignes — qui répondent parfaitement.
+   Le poser à `false` aurait supprimé le bruit *et* la relecture des adresses
+   saines.
+2. **`false` n'est pas accepté sur la plateforme Climate**, ni sur Light, Cover,
+   Switch, Number ou Text. La documentation renvoie vers la suppression de
+   l'adresse d'état. Seuls binary_sensor, sensor, select, date, datetime, time,
+   fan et weather l'acceptent.
+
+D'où le panachage retenu :
+
+| Entités | Valeur | Pourquoi |
+|---|---|---|
+| Les 6 thermostats | `sync_state: init` | Lecture au démarrage seulement : les adresses saines sont relues, la morte n'est réessayée qu'une fois par redémarrage au lieu de 24 fois par jour |
+| `binary_sensor` « detection chan 1 » (`12/5/2`) | `sync_state: false` | Sa seule adresse est morte, rien à perdre — et `false` est accepté sur cette plateforme |
+
+Vérifié après `knx.reload` : les six thermostats sont vivants et
+`thermostat_salle_d_eau` a bien relu sa température (25,1 °C) et sa consigne au
+rechargement. Le `init` fait exactement son travail.
+
+### Le reste du passage
+
+| Constat | Mesure | Décision |
+|---|---|---|
+| `recorder/import_statistics` sans `mean_type` ni `unit_class` | **1 376 lignes / 32 h**, première source de bruit | L'add-on MyElectricalData 0.13.4 importe les statistiques Enedis. **S'arrêtera de fonctionner en HA Core 2026.11.** À surveiller |
+| `binary_sensor.interphone_motion` | **321 changements d'état / 24 h**, dont **zéro entre 07:00 et 18:30** | Faux positifs nocturnes : l'infrarouge de la Reolink attire les insectes. À traiter côté caméra (zone, sensibilité, détection *personne*) |
+| Bail DHCP renouvelé toutes les 5 min | Redémarre `systemd-timesyncd` à chaque fois | Sans conséquence. Une réservation DHCP pour 192.168.0.95 y mettrait fin |
+
+Et un faux positif à ne pas corriger : les 16 `bouclage ECS automatique: Already
+running` **ne sont pas un bug**. L'automatisation se termine par un `delay` de
+15 minutes qui sert de temporisation, et c'est `mode: single` qui la fait
+respecter. L'avertissement, c'est la temporisation qui fonctionne.
+
+Reste sain par ailleurs : Core 2026.9.0, `healthy: true`, `supported: true`,
+configuration valide, **0 mise à jour en attente**, disque à 16 Go sur 457, base à
+206 Mio, sauvegarde de la nuit réussie, **une seule ERROR** au journal système.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD USB via un pont Realtek RTL9210, dont le pilote UAS

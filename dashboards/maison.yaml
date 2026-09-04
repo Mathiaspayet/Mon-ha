@@ -1689,6 +1689,50 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Alimentation du Pi
+      heading_style: title
+      icon: mdi:flash-alert
+    - type: markdown
+      content: |-
+        Le Pi signale une **sous-tension** quand son rail 5 V passe sous ~4,63 V.
+
+        Le 4 septembre à 05:11, elle est apparue **34 s après le début de la sauvegarde** et s'est effacée 12 s avant sa fin : le SSD tire du courant à l'écriture et le rail flanche.
+
+        Mais **une seule occurrence sur 7 jours**, alors que la sauvegarde tourne chaque nuit. L'alimentation est donc à la limite, pas franchement sous-dimensionnée.
+
+        *Si le compteur monte, c'est l'alimentation ou le câble qu'il faut changer — avant de toucher au paramètre noyau usb-storage.quirks.*
+      grid_options:
+        columns: full
+    - type: tile
+      entity: binary_sensor.rpi_power_status
+      name: Sous-tension
+      color: red
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.raspberry_pi_sous_tensions_pi_7_jours
+      name: Sur 7 jours
+      grid_options:
+        columns: 6
+    - type: history-graph
+      hours_to_show: 168
+      grid_options:
+        columns: full
+      entities:
+      - entity: binary_sensor.rpi_power_status
+        name: Sous-tension
+      - entity: sensor.backup_etat_du_gestionnaire_de_sauvegarde
+        name: Sauvegarde
+    - type: logbook
+      title: Chaque événement, à la seconde
+      hours_to_show: 168
+      target:
+        entity_id: binary_sensor.rpi_power_status
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
       heading: Alertes critiques
       heading_style: title
       icon: mdi:bell-alert
