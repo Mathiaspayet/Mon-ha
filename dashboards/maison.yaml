@@ -1696,11 +1696,11 @@ views:
       content: |-
         Le Pi signale une **sous-tension** quand son rail 5 V passe sous ~4,63 V.
 
-        Le 4 septembre à 05:11, elle est apparue **34 s après le début de la sauvegarde** et s'est effacée 12 s avant sa fin : le SSD tire du courant à l'écriture et le rail flanche.
+        **Le verdict est tombé : 20 sous-tensions en 7 jours**, contre 1 en septembre. Début net le 5 octobre au soir, puis 14 le 6, 4 le 7 — à toute heure, et plus seulement pendant la sauvegarde.
 
-        Mais **une seule occurrence sur 7 jours**, alors que la sauvegarde tourne chaque nuit. L'alimentation est donc à la limite, pas franchement sous-dimensionnée.
+        Ce n'est donc plus une alimentation « à la limite » : c'est du matériel qui lâche. Rail qui chute → reset du pont USB → erreur d'E/S sur le SSD de démarrage → Home Assistant tombe.
 
-        *Si le compteur monte, c'est l'alimentation ou le câble qu'il faut changer — avant de toucher au paramètre noyau usb-storage.quirks.*
+        *Correctif : alimentation officielle 5,1 V / 3 A, câble USB-C court et épais, et si possible un hub alimenté pour sortir le SSD du rail du Pi.*
       grid_options:
         columns: full
     - type: tile

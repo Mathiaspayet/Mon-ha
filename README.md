@@ -1545,6 +1545,72 @@ Reste sain par ailleurs : Core 2026.9.0, `healthy: true`, `supported: true`,
 configuration valide, **0 mise à jour en attente**, disque à 16 Go sur 457, base à
 206 Mio, sauvegarde de la nuit réussie, **une seule ERROR** au journal système.
 
+## 7 octobre 2026 — le compteur a tranché : 1 → 20
+
+Le 4 septembre on avait posé un compteur plutôt que d'acheter une alimentation, en
+écrivant : *« si le compteur monte, c'est l'alimentation ou le câble qu'il faut changer,
+avant de toucher au `usb-storage.quirks` »*. Le Pi a replanté, Mathias a basculé sur le
+NAS puis est revenu sur le Pi. Relevé au retour :
+
+| | 4 septembre | 7 octobre |
+|---|---:|---:|
+| `sensor.raspberry_pi_sous_tensions_pi_7_jours` | **1** | **20** |
+
+Et le motif est aussi parlant que le nombre. Les 20 événements :
+
+| Période | Heures | Nombre |
+|---|---|---:|
+| 30 sept → 5 oct | *(rien)* | **0** |
+| 5 octobre | 22:26, 22:37 | 2 |
+| 6 octobre | 04:46, 07:25, 07:51, 07:53, 12:00, 13:42, 14:32, 14:46, 15:30, 16:01, 20:08, 21:37, 21:51, 21:52 | **14** |
+| 7 octobre | 04:19, 04:22, 04:50, 05:02 | 4 |
+
+Deux conclusions, toutes deux contraires à ce qu'on écrivait en septembre :
+
+1. **Le lien avec la sauvegarde est rompu.** En septembre l'unique événement tombait pile
+   dans la fenêtre d'écriture de la sauvegarde nocturne. Désormais ça se déclenche à
+   4 h, 7 h, midi, 13 h, 14 h, 15 h, 16 h, 20 h, 21 h, 22 h. La rafale d'écriture n'est
+   plus le déclencheur.
+2. **Il y a une date de début nette : le 5 octobre au soir.** Rien pendant les cinq jours
+   précédents, puis 2, puis 14, puis 4. Ce n'est pas une dérive lente — c'est un
+   basculement, signature d'un composant qui lâche et non d'un dimensionnement trop juste.
+
+La prudence de septembre (« à la limite, pas franchement sous-dimensionnée ») n'a donc
+plus lieu d'être : **c'est le matériel d'alimentation**. La chaîne jusqu'au plantage est
+cohérente de bout en bout — rail 5 V qui chute, reset du pont USB RTL9210, erreur d'E/S
+sur le SSD de démarrage, Home Assistant qui tombe.
+
+Correctif, par ordre d'efficacité : alimentation officielle 5,1 V / 3 A, câble USB-C
+court et épais, et surtout **un hub USB alimenté pour le SSD** — seul moyen de sortir
+complètement sa consommation du rail du Pi, et le seul correctif qui traite à la fois
+les sous-tensions et les resets UAS.
+
+La carte « Alimentation du Pi » de la vue Technique a été réécrite en conséquence : son
+texte affirmait encore « une seule occurrence sur 7 jours », ce qui est devenu faux et
+trompeur.
+
+### ✅ `sync_state: init` validé sur un mois
+
+Le correctif KNX du 4 septembre tient. Sur la fenêtre de journal du 7 octobre, chacune
+des 7 adresses mortes apparaît **exactement une fois**, toutes à 13:19:5x — c'est-à-dire
+au redémarrage, et nulle part ailleurs.
+
+| | Avant | Après |
+|---|---:|---:|
+| Avertissements xknx | **348 / jour** | **12 par redémarrage** |
+
+### ⏳ MyElectricalData : l'échéance approche
+
+Toujours **352 avertissements en 5 h** (`recorder/import_statistics` sans `mean_type` ni
+`unit_class`), et l'add-on est toujours en **0.13.4** — aucune mise à jour depuis
+septembre. L'échéance annoncée est **HA Core 2026.11**, soit la version suivante. Si rien
+ne bouge d'ici là, la conso Enedis cessera de remonter.
+
+### Nouveau depuis septembre
+
+`waze_travel_time` produit **36 erreurs en 5 h** (« Unexpected error fetching
+waze_travel_time data »), en continu et des deux côtés du redémarrage. Non diagnostiqué.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD USB via un pont Realtek RTL9210, dont le pilote UAS
