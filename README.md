@@ -1545,35 +1545,60 @@ Reste sain par ailleurs : Core 2026.9.0, `healthy: true`, `supported: true`,
 configuration valide, **0 mise à jour en attente**, disque à 16 Go sur 457, base à
 206 Mio, sauvegarde de la nuit réussie, **une seule ERROR** au journal système.
 
-## 7 octobre 2026 — le compteur a tranché : 1 → 20
+## 7 octobre 2026 — le compteur a tranché, et une erreur de lecture corrigée
 
 Le 4 septembre on avait posé un compteur plutôt que d'acheter une alimentation, en
 écrivant : *« si le compteur monte, c'est l'alimentation ou le câble qu'il faut changer,
 avant de toucher au `usb-storage.quirks` »*. Le Pi a replanté, Mathias a basculé sur le
 NAS puis est revenu sur le Pi. Relevé au retour :
 
-| | 4 septembre | 7 octobre |
-|---|---:|---:|
-| `sensor.raspberry_pi_sous_tensions_pi_7_jours` | **1** | **20** |
+Le compteur affichait **20**, contre **1** en septembre. Les 20 événements :
 
-Et le motif est aussi parlant que le nombre. Les 20 événements :
-
-| Période | Heures | Nombre |
+| Jour | Heures | Nombre |
 |---|---|---:|
-| 30 sept → 5 oct | *(rien)* | **0** |
 | 5 octobre | 22:26, 22:37 | 2 |
 | 6 octobre | 04:46, 07:25, 07:51, 07:53, 12:00, 13:42, 14:32, 14:46, 15:30, 16:01, 20:08, 21:37, 21:51, 21:52 | **14** |
 | 7 octobre | 04:19, 04:22, 04:50, 05:02 | 4 |
 
-Deux conclusions, toutes deux contraires à ce qu'on écrivait en septembre :
+### ⚠️ L'erreur : « 20 par semaine » était faux, et trop optimiste
 
-1. **Le lien avec la sauvegarde est rompu.** En septembre l'unique événement tombait pile
-   dans la fenêtre d'écriture de la sauvegarde nocturne. Désormais ça se déclenche à
-   4 h, 7 h, midi, 13 h, 14 h, 15 h, 16 h, 20 h, 21 h, 22 h. La rafale d'écriture n'est
-   plus le déclencheur.
-2. **Il y a une date de début nette : le 5 octobre au soir.** Rien pendant les cinq jours
-   précédents, puis 2, puis 14, puis 4. Ce n'est pas une dérive lente — c'est un
-   basculement, signature d'un composant qui lâche et non d'un dimensionnement trop juste.
+Premier jet de cette analyse : « rien du 30 septembre au 5 octobre, donc une date de
+début nette le 5 octobre au soir — un composant qui lâche ». **C'était une mauvaise
+lecture**, et Mathias l'a signalée en disant que le Pi était arrêté depuis deux ou trois
+semaines.
+
+Vérification faite, il avait raison : `sensor.cpu_temperature` ne porte **aucun
+enregistrement** du 10 septembre au 5 octobre 18:00, alors que la rétention du recorder
+couvre largement la fin de cette période. Le Pi était éteint. Le « rien » n'était pas une
+absence d'événements, c'était une absence de machine.
+
+Les sauvegardes quotidiennes le confirment par un autre chemin, et c'est joli : du
+22 septembre au 5 octobre elles déclarent la version **2026.8.3** — c'est le conteneur du
+NAS, resté figé sur l'image tirée le 31 août, exactement comme prévu quand on a écrit
+qu'il ne fallait pas laisser le tag `:stable` sur une instance de secours. À partir du
+6 octobre elles passent en **2026.9.0** : le Pi est de retour.
+
+**Conséquence, et elle aggrave le diagnostic** :
+
+| Lecture | Taux |
+|---|---|
+| ❌ 20 événements / 7 jours | ~3 par jour |
+| ✅ 20 événements / **~41 h de fonctionnement réel** | **~12 par jour** |
+
+Contre **1 sur une semaine entière** de fonctionnement continu en septembre. Ce n'est
+donc pas un facteur 20 mais plutôt 80, et surtout : **le Pi sous-tensionne dès qu'il est
+allumé**, pas à partir d'une date de bascule.
+
+La seule conclusion de septembre qui tient est l'autre :
+
+**Le lien avec la sauvegarde est rompu.** En septembre l'unique événement tombait pile
+dans la fenêtre d'écriture de la sauvegarde nocturne. Désormais ça se déclenche à 4 h,
+7 h, midi, 13 h, 14 h, 15 h, 16 h, 20 h, 21 h, 22 h. La rafale d'écriture n'est plus le
+déclencheur — c'est permanent.
+
+⚠️ **Piège à retenir** : un compteur `history_stats` compte sur une fenêtre de temps
+*calendaire*, pas de temps de fonctionnement. Sur une machine qui tombe, son
+dénominateur ment. La carte du tableau de bord porte maintenant cet avertissement.
 
 La prudence de septembre (« à la limite, pas franchement sous-dimensionnée ») n'a donc
 plus lieu d'être : **c'est le matériel d'alimentation**. La chaîne jusqu'au plantage est
@@ -1585,9 +1610,10 @@ court et épais, et surtout **un hub USB alimenté pour le SSD** — seul moyen 
 complètement sa consommation du rail du Pi, et le seul correctif qui traite à la fois
 les sous-tensions et les resets UAS.
 
-La carte « Alimentation du Pi » de la vue Technique a été réécrite en conséquence : son
-texte affirmait encore « une seule occurrence sur 7 jours », ce qui est devenu faux et
-trompeur.
+La carte « Alimentation du Pi » de la vue Technique a été réécrite deux fois dans la
+journée : son texte affirmait encore « une seule occurrence sur 7 jours », puis la
+première correction reprenait le taux faux. Elle porte maintenant le taux ramené au temps
+de fonctionnement, et l'avertissement sur la fenêtre du compteur.
 
 ### ✅ `sync_state: init` validé sur un mois
 

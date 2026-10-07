@@ -1696,9 +1696,11 @@ views:
       content: |-
         Le Pi signale une **sous-tension** quand son rail 5 V passe sous ~4,63 V.
 
-        **Le verdict est tombé : 20 sous-tensions en 7 jours**, contre 1 en septembre. Début net le 5 octobre au soir, puis 14 le 6, 4 le 7 — à toute heure, et plus seulement pendant la sauvegarde.
+        ⚠️ **Ne pas lire le compteur comme « 20 par semaine ».** Sa fenêtre est de 7 jours, mais le Pi était arrêté de début septembre au 5 octobre 19:50. Les 20 événements tiennent donc dans **~41 h de fonctionnement réel**, soit environ **12 par jour**.
 
-        Ce n'est donc plus une alimentation « à la limite » : c'est du matériel qui lâche. Rail qui chute → reset du pont USB → erreur d'E/S sur le SSD de démarrage → Home Assistant tombe.
+        Pour comparaison : **1 seul** en septembre, sur une semaine entière de fonctionnement continu. Le Pi sous-tensionne dès qu'il est allumé, à toute heure, et plus seulement pendant la sauvegarde.
+
+        Rail qui chute → reset du pont USB → erreur d'E/S sur le SSD de démarrage → Home Assistant tombe.
 
         *Correctif : alimentation officielle 5,1 V / 3 A, câble USB-C court et épais, et si possible un hub alimenté pour sortir le SSD du rail du Pi.*
       grid_options:
