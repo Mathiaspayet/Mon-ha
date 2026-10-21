@@ -1639,10 +1639,33 @@ waze_travel_time data »), en continu et des deux côtés du redémarrage. Non d
 
 ## Stockage et écritures disque
 
-Le Pi démarre sur un SSD USB via un pont Realtek RTL9210, dont le pilote UAS
+Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS
 déclenche des resets sous charge d'écriture soutenue. Correctif définitif :
 `usb-storage.quirks=0bda:9210:u` en tête de `cmdline.txt` sur la partition de
-démarrage — **nécessite un accès physique au support**, non appliqué à ce jour.
+démarrage.
+
+✅ **Appliqué le 21 octobre 2026**, le disque ayant enfin été démonté et branché sur
+un PC. Procédure complète dans `docs/procedure-quirk-uas.html`. Contenu final du
+fichier :
+
+```
+usb-storage.quirks=0bda:9210:u dwc_otg.lpm_enable=0 console=tty1
+```
+
+L'identifiant `0bda:9210` n'est plus une déduction : il a été relevé sur le matériel
+via la propriété **Parent** du disque dans le Gestionnaire de périphériques Windows —
+`USB\VID_0BDA&PID_9210\MSFT30012345678904`. Le préfixe `MSFT30` du numéro de série
+est la convention par laquelle un périphérique de stockage USB déclare supporter UAS :
+il confirme au passage que le boîtier tournait bien en UAS.
+
+⏳ **Vérification en attente.** Le Pi est reparti — donc `cmdline.txt` est valide — mais
+la ligne `Quirks match for vid 0bda pid 9210` du journal de l'hôte n'a pas encore été
+lue : le connecteur MCP était en échec (502 côté passerelle) au moment du redémarrage.
+
+⚠️ **À revérifier après chaque mise à jour de HAOS.** La documentation officielle
+confirme la méthode mais ne garantit nulle part que `cmdline.txt` survive à une montée
+de version : les réglages explicitement persistants vivent sur la partition *overlay*,
+dont ce fichier ne fait pas partie.
 
 En attendant, les écritures sont réduites. Réglages appliqués le 2026-09-02
 (ils vivent dans `.storage`, pas dans ce dépôt) :
@@ -1712,7 +1735,9 @@ qui ont suivi, alors que Home Assistant tournait normalement.
 
 Le réglage `commit_interval: 30` du recorder réduit l'écriture continue et reste utile,
 mais il ne peut rien contre une rafale de mise à jour. **`usb-storage.quirks` demeure le
-seul remède**, et il attend toujours un accès physique au support.
+seul remède** — appliqué le 21 octobre 2026 (voir « Stockage et écritures disque »). Le
+vrai test grandeur nature sera la prochaine mise à jour de Core : si elle passe sans
+reset, le correctif est confirmé.
 
 En pratique : chaque mise à jour est un passage à risque. Celle-ci est passée — le
 système de fichiers et la base sont indemnes — mais quatorze erreurs de lecture, c'est
@@ -1800,6 +1825,7 @@ Ordre à respecter pour reconstruire depuis zéro :
 | `docs/procedure-ha-sur-nas.html` | 31 août | Mode opératoire de secours : remonter HA sur le Synology DS218+ depuis la sauvegarde. **Validé sur le terrain** — KNX opérationnel |
 | `docs/procedure-compagnon-tailscale.html` | 31 août | Connecter l'app Compagnon à l'instance du NAS via Tailscale |
 | `docs/procedure-autopsie-pi.html` | 31 août | Que vérifier dans les journaux au redémarrage du Pi pour identifier la cause de la panne |
+| `docs/procedure-quirk-uas.html` | 21 octobre | **Désactiver UAS sur le SSD de démarrage.** Relever le VID:PID par la propriété « Parent », éditer `cmdline.txt`, vérifier la ligne `Quirks match` dans le journal de l'hôte, et le retour arrière |
 
 Les correctifs n'ont **pas** encore été appliqués : ce dépôt reflète l'état du système
 *avant* intervention. C'est le point de départ.

@@ -1,0 +1,480 @@
+<title>Désactiver UAS sur le SSD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chivo:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+:root{
+  --paper:#EFF1EC;
+  --card:#FAFBF8;
+  --sunk:#E4E8DF;
+  --ink:#16211A;
+  --ink-2:#3D4A42;
+  --muted:#65706A;
+  --rule:#D2D8CD;
+  --rule-2:#BFC7B9;
+  --accent:#2F6B45;
+  --accent-soft:#DCE8DF;
+  --crit:#9E2B25;
+  --crit-soft:#F2DEDC;
+  --warn:#9A6714;
+  --warn-soft:#F3E7D2;
+  --info:#3B5C79;
+  --info-soft:#DEE7EF;
+  --good:#2F6B45;
+  --shadow:0 1px 0 rgba(22,33,26,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131711;
+    --card:#1A1F18;
+    --sunk:#232A21;
+    --ink:#E7EBE2;
+    --ink-2:#C2CABB;
+    --muted:#8E998B;
+    --rule:#2C3529;
+    --rule-2:#3C4738;
+    --accent:#77C193;
+    --accent-soft:#1F3327;
+    --crit:#E5847B;
+    --crit-soft:#3A2321;
+    --warn:#D9A857;
+    --warn-soft:#382D1A;
+    --info:#8FB4D2;
+    --info-soft:#1E2C38;
+    --good:#77C193;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131711;
+  --card:#1A1F18;
+  --sunk:#232A21;
+  --ink:#E7EBE2;
+  --ink-2:#C2CABB;
+  --muted:#8E998B;
+  --rule:#2C3529;
+  --rule-2:#3C4738;
+  --accent:#77C193;
+  --accent-soft:#1F3327;
+  --crit:#E5847B;
+  --crit-soft:#3A2321;
+  --warn:#D9A857;
+  --warn-soft:#382D1A;
+  --info:#8FB4D2;
+  --info-soft:#1E2C38;
+  --good:#77C193;
+  --shadow:none;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  font-size:16.5px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px 96px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding:56px 0 26px;margin-bottom:0}
+.eyebrow{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;
+}
+.eyebrow .dot{width:4px;height:4px;background:var(--rule-2);border-radius:50%}
+h1{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;
+  font-size:clamp(38px,7vw,68px);line-height:.98;letter-spacing:-.025em;
+  margin:0 0 18px;text-wrap:balance;
+}
+.lede{font-size:19px;line-height:1.55;color:var(--ink-2);max-width:60ch;margin:0}
+
+.specs{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0 0;
+}
+.spec{background:var(--paper);padding:14px 16px}
+.spec dt{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:0 0 5px;
+}
+.spec dd{
+  margin:0;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink);
+}
+
+/* ---------- immediate alert ---------- */
+.now{
+  margin:44px 0 0;border:1px solid var(--crit);border-left:4px solid var(--crit);
+  background:var(--crit-soft);padding:22px 24px;
+}
+.now h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--crit);margin:0 0 10px;
+}
+.now p{margin:0 0 10px;color:var(--ink)}
+.now p:last-child{margin-bottom:0}
+
+/* ---------- scorecard ---------- */
+.scores{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:44px 0 0;
+}
+.score{background:var(--card);padding:18px 16px 16px}
+.score .n{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:40px;
+  line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;
+}
+.score .l{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  display:block;margin-top:7px;
+}
+.score.c .n{color:var(--crit)} .score.f .n{color:var(--warn)}
+.score.h .n{color:var(--info)} .score.a .n{color:var(--accent)}
+
+/* ---------- sections ---------- */
+section.block{margin-top:64px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--ink);padding-bottom:10px;margin-bottom:8px}
+.sechead h2{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:clamp(22px,3.4vw,30px);
+  letter-spacing:-.02em;margin:0;flex:1;text-wrap:balance;
+}
+.sechead .count{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;color:var(--muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.secnote{color:var(--muted);font-size:15.5px;margin:14px 0 30px;max-width:66ch}
+
+/* ---------- finding ---------- */
+.finding{
+  display:grid;grid-template-columns:96px 1fr;gap:0;
+  background:var(--card);border:1px solid var(--rule);border-left:3px solid var(--rule-2);
+  margin-bottom:14px;box-shadow:var(--shadow);
+}
+.finding.crit{border-left-color:var(--crit)}
+.finding.warn{border-left-color:var(--warn)}
+.finding.info{border-left-color:var(--info)}
+.finding.good{border-left-color:var(--accent)}
+.rail{padding:20px 0 20px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.rail .id{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:17px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums;
+}
+.finding.crit .rail .id{color:var(--crit)}
+.finding.warn .rail .id{color:var(--warn)}
+.finding.info .rail .id{color:var(--info)}
+.finding.good .rail .id{color:var(--accent)}
+.chip{
+  font-family:"Chivo",system-ui,sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;white-space:nowrap;
+}
+.chip.crit{background:var(--crit-soft);color:var(--crit)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.good{background:var(--accent-soft);color:var(--accent)}
+.fbody{padding:20px 22px 20px 8px;min-width:0}
+.fbody h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:700;font-size:18.5px;
+  line-height:1.3;letter-spacing:-.012em;margin:0 0 10px;text-wrap:balance;
+}
+.fbody p{margin:0 0 11px}
+.fbody p:last-child{margin-bottom:0}
+.fbody ul{margin:0 0 11px;padding-left:19px}
+.fbody li{margin-bottom:5px}
+.fbody li::marker{color:var(--rule-2)}
+
+code,.mono{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.855em;
+  background:var(--sunk);padding:1px 5px;border-radius:2px;
+  word-break:break-word;
+}
+.fix{
+  border-top:1px dashed var(--rule-2);padding-top:11px;margin-top:13px !important;
+  font-size:15.5px;color:var(--ink-2);
+}
+.fix b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:4px;
+}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--rule);margin:0 0 11px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  background:var(--sunk);white-space:nowrap;
+}
+tr:last-child td{border-bottom:none}
+td.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- plan ---------- */
+.phase{border-top:1px solid var(--ink);padding-top:18px;margin-top:30px}
+.phase h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:15px;
+  letter-spacing:.03em;margin:0 0 4px;
+}
+.phase .when{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+}
+.phase ol{margin:0;padding-left:20px}
+.phase li{margin-bottom:7px}
+.phase li::marker{font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:500}
+
+footer{
+  margin-top:72px;border-top:2px solid var(--ink);padding-top:18px;
+  font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 20px;
+  font-family:"Chivo",system-ui,sans-serif;
+}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .wrap{padding:0 18px 72px}
+  .finding{grid-template-columns:1fr}
+  .rail{flex-direction:row;align-items:center;padding:16px 18px 0}
+  .fbody{padding:14px 18px 18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+
+/* --- composants propres au mode opératoire --- */
+.step{border-top:1px solid var(--ink);padding-top:20px;margin-top:38px}
+.step-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.step-num{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:.1em;color:var(--accent);white-space:nowrap;
+}
+.step h3{
+  font-family:"Chivo",system-ui,sans-serif;font-weight:900;font-size:22px;
+  letter-spacing:-.015em;margin:0;flex:1;text-wrap:balance;
+}
+.step .dur{
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;
+  color:var(--muted);white-space:nowrap;
+}
+pre{
+  background:var(--sunk);border:1px solid var(--rule);padding:14px 16px;
+  overflow-x:auto;font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:13px;line-height:1.6;margin:0 0 14px;
+}
+pre code{background:none;padding:0;font-size:inherit}
+.warn-box{
+  border:1px solid var(--warn);border-left:4px solid var(--warn);
+  background:var(--warn-soft);padding:16px 18px;margin:0 0 14px;
+}
+.warn-box b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--warn);
+  display:block;margin-bottom:6px;
+}
+.check{
+  border:1px solid var(--accent);border-left:4px solid var(--accent);
+  background:var(--accent-soft);padding:16px 18px;margin:0 0 14px;
+}
+.check b{
+  font-family:"Chivo",system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+  display:block;margin-bottom:6px;
+}
+.check ul,.warn-box ul{margin:8px 0 0;padding-left:19px}
+.step p{margin:0 0 14px}
+.step ul{margin:0 0 14px;padding-left:20px}
+.step li{margin-bottom:6px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">
+    <span>Mode opératoire</span><span class="dot"></span>
+    <span>Raspberry Pi 4 · HAOS</span><span class="dot"></span>
+    <span>partition hassos-boot</span><span class="dot"></span>
+    <span>sans SSH</span>
+  </div>
+  <h1>Désactiver UAS sur le SSD de démarrage</h1>
+  <p class="lede">Le Pi démarre sur un SSD NVMe derrière un pont Realtek RTL9210, dont le pilote UAS provoque des resets USB sous rafale d'écriture — jusqu'à l'erreur d'E/S qui fait tomber Home Assistant. Le correctif tient en un paramètre noyau ajouté à <code>cmdline.txt</code>. Il exige d'avoir le disque en main : c'est pour ça qu'il a attendu deux mois.</p>
+
+  <dl class="specs">
+    <div class="spec"><dt>Durée</dt><dd>≈ 15 min</dd></div>
+    <div class="spec"><dt>Réversible</dt><dd>Oui</dd></div>
+    <div class="spec"><dt>Prérequis</dt><dd>disque sur un PC</dd></div>
+    <div class="spec"><dt>Étapes</dt><dd>6 · sans SSH</dd></div>
+    <div class="spec"><dt>Appliqué</dt><dd>21 oct. 2026</dd></div>
+  </dl>
+</header>
+
+<div class="now">
+  <h2>⚠ Les deux règles à ne pas enfreindre</h2>
+  <p><b>1. <code>cmdline.txt</code> tient sur UNE seule ligne.</b> Le chargeur d'amorçage ne lit que la première. Une ligne coupée en deux, et la moitié des paramètres de démarrage disparaît silencieusement. C'est la seule vraie façon de casser le démarrage ici.</p>
+  <p><b>2. Fais la copie de secours avant de toucher au fichier.</b> Un <code>cmdline.txt</code> dupliqué sur la même partition, et le retour arrière prend trente secondes. Sans elle, tu devras réécrire de mémoire une ligne que tu n'auras plus sous les yeux.</p>
+</div>
+
+<section class="block">
+  <div class="sechead"><h2>Ce que ça règle — et ce que ça ne règle pas</h2><span class="count">à savoir avant</span></div>
+
+  <div class="tablewrap"><table>
+    <thead><tr><th>Symptôme</th><th>Effet attendu</th><th>Pourquoi</th></tr></thead>
+    <tbody>
+      <tr><td><b>Resets USB sous rafale d'écriture</b> — 12 resets en 16 min et 14 erreurs d'E/S mesurés pendant la mise à jour 2026.9.0</td><td style="color:var(--good)"><b>✓ Traité</b></td><td>Le disque repasse en BOT, protocole plus ancien et nettement plus stable sur ces ponts Realtek</td></tr>
+      <tr><td>Corruption de base après une coupure brutale</td><td style="color:var(--good)"><b>✓ Moins probable</b></td><td>Moins de resets en cours d'écriture, donc moins d'occasions de laisser la base à moitié écrite</td></tr>
+      <tr><td><b>Sous-tensions du rail 5 V</b> — 17 épisodes sur 8 jours en octobre</td><td style="color:var(--crit)"><b>✗ Sans effet</b></td><td>Cause distincte : alimentation, câble ou connecteur. Le compteur continuera de bouger</td></tr>
+      <tr><td>Débit du disque</td><td style="color:var(--warn)"><b>⚠ Un peu plus bas</b></td><td>BOT est plus lent qu'UAS. Invisible à l'usage sur une box domotique</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="warn-box">
+    <b>Ne pas confondre les deux pannes</b>
+    Pendant des semaines on a cru que les resets USB et les sous-tensions étaient le même problème. Ils ne le sont pas. Les sous-tensions arrivent par salves séparées de plusieurs jours de silence, à toute heure, alors que le Pi fonctionne ; les resets UAS arrivent sous charge d'écriture. Ce document ne traite que les seconds.
+  </div>
+</section>
+
+<section class="block">
+  <div class="sechead"><h2>Procédure</h2><span class="count">6 étapes</span></div>
+
+  <!-- 1 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 1</span><h3>Relever le VID:PID réel du boîtier</h3><span class="dur">2 min</span></div>
+    <div class="warn-box">
+      <b>Ne pas sauter — un mauvais identifiant ne produit aucune erreur</b>
+      Le noyau ignore silencieusement un identifiant qui ne correspond à rien. Si tu te trompes, tout démarrera normalement et le correctif ne fera simplement rien. Tu ne t'en apercevras qu'au prochain reset.
+    </div>
+    <p>Branche le SSD sur un PC Windows. Dans le <b>Gestionnaire de périphériques</b>, déplie <b>Lecteurs de disque</b> : ton boîtier apparaît sous son nom de puce, par exemple <code>Realtek RTL9210 NVME SCSI Disk Device</code>.</p>
+    <p><b>Clic droit → Propriétés → onglet Détails → liste déroulante → « Parent ».</b></p>
+    <pre><code>USB\VID_0BDA&amp;PID_9210\MSFT30012345678904</code></pre>
+    <div class="check">
+      <b>Deux choses à lire dans cette valeur</b>
+      <ul>
+        <li><b><code>VID_0BDA&amp;PID_9210</code></b> → l'identifiant à poser dans <code>cmdline.txt</code>, sous la forme <code>0bda:9210</code>.</li>
+        <li><b>Le préfixe <code>MSFT30</code></b> du numéro de série. Ce n'est pas décoratif : c'est la convention par laquelle un périphérique de stockage USB déclare à Windows qu'il <b>supporte UAS</b>. Sa présence confirme que le boîtier tourne bien en UAS — donc que ce correctif a un objet.</li>
+      </ul>
+    </div>
+    <div class="warn-box">
+      <b>Pourquoi passer par « Parent » et pas par « ID matériel »</b>
+      Sur un disque, <code>ID matériel</code> renvoie <code>USBSTOR\Disk&amp;Ven_Realtek&amp;Prod_RTL9210_NVME…</code> — le fabricant et le modèle, mais <b>ni VID ni PID</b>. Le couple VID:PID vit sur le périphérique USB parent, d'où ce détour. C'est la seule propriété qui y remonte en un clic.
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 2</span><h3>Ouvrir la partition de démarrage et sauvegarder le fichier</h3><span class="dur">2 min</span></div>
+    <p>Windows monte automatiquement la première partition du SSD, étiquetée <b><code>hassos-boot</code></b>. C'est une FAT d'une centaine de méga-octets, contenant <code>cmdline.txt</code>, <code>config.txt</code>, des fichiers <code>.dtb</code> et un dossier <code>overlays</code>. Les autres partitions (ext4) restent invisibles sous Windows : c'est normal et sans conséquence.</p>
+    <p><b>Clic droit sur <code>cmdline.txt</code> → Copier → Coller</b>, dans le même dossier. Tu obtiens <code>cmdline - Copie.txt</code>. C'est tout ce qu'il faut : un fichier inconnu du chargeur d'amorçage ne gêne personne.</p>
+    <div class="check">
+      <b>Vérification</b>
+      La partition s'appelle bien <code>hassos-boot</code> et contient <code>cmdline.txt</code>. Si tu ne vois ni l'un ni l'autre, tu n'es pas sur le bon disque — arrête-toi.
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 3</span><h3>Ajouter le paramètre en tête de ligne</h3><span class="dur">3 min</span></div>
+    <p>Ouvre <code>cmdline.txt</code> avec le <b>Bloc-notes</b> — pas un traitement de texte. Le fichier est court :</p>
+    <pre><code>dwc_otg.lpm_enable=0 console=tty1</code></pre>
+    <p>Il est court parce que, sur HAOS, le chargeur d'amorçage <b>ajoute lui-même</b> le reste de la ligne de commande (<code>root=</code>, etc.). Ce fichier ne porte que les paramètres <i>supplémentaires</i> — ce qui rend l'opération moins risquée que sur Raspberry Pi OS, où tout y figure.</p>
+    <p>Place le curseur <b>tout au début</b> et insère le paramètre suivi d'un espace :</p>
+    <pre><code>usb-storage.quirks=0bda:9210:u dwc_otg.lpm_enable=0 console=tty1</code></pre>
+    <div class="warn-box">
+      <b>En tête, jamais en fin de ligne</b>
+      Ce n'est pas une question de goût. Le Bloc-notes peut ajouter un retour chariot <code>\r</code> en fin de fichier, qui se colle alors au <b>dernier</b> paramètre et le corrompt. En écrivant en tête, ton ajout est à l'abri quoi qu'il arrive à la fin de la ligne.
+    </div>
+    <div class="check">
+      <b>Trois contrôles dans la barre d'état du Bloc-notes</b>
+      <ul>
+        <li><b><code>Ln 1</code></b> quand le curseur est en fin de ligne → il n'y a bien qu'une seule ligne.</li>
+        <li><b><code>Unix (LF)</code></b> → pas de conversion en CRLF.</li>
+        <li><b><code>UTF-8</code></b> et non « UTF-8 avec BOM » → aucun octet parasite avant ton paramètre.</li>
+      </ul>
+      La colonne affichée en fin de ligne donne aussi le compte exact de caractères : avec la ligne ci-dessus, <code>Col 65</code>, soit 64 caractères. Un écart signale un caractère de trop.
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 4</span><h3>Enregistrer, éjecter, remonter</h3><span class="dur">3 min</span></div>
+    <ol>
+      <li><b>Ctrl+S.</b> L'astérisque devant le nom du fichier, dans la barre de titre, doit disparaître — c'est lui qui signale les modifications non enregistrées.</li>
+      <li>Ferme le Bloc-notes.</li>
+      <li><b>Éjecte <code>hassos-boot</code> proprement</b> par l'icône de la zone de notification. C'est du FAT : l'écriture peut rester en cache et un débranchement direct peut laisser le fichier à moitié écrit.</li>
+      <li><b>Profite d'avoir tout en main</b> pour inspecter le connecteur USB-C d'alimentation du Pi — jeu, oxydation, broches tordues. Ça ne concerne pas ce correctif, mais tu n'auras pas le boîtier ouvert de sitôt.</li>
+      <li>Rebranche le SSD sur le Pi et démarre. Compte deux à trois minutes avant que Home Assistant réponde.</li>
+    </ol>
+    <div class="check">
+      <b>Premier verdict, gratuit</b>
+      Si le Pi redémarre et que Home Assistant répond, <code>cmdline.txt</code> est syntaxiquement valide. Reste à savoir si le paramètre a <i>mordu</i> — c'est l'étape suivante.
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 5</span><h3>Vérifier dans le journal du noyau</h3><span class="dur">2 min</span></div>
+    <p>Dans Home Assistant : <b>Paramètres → Système → Journaux</b>, puis le menu déroulant en haut à droite — celui qui affiche « Home Assistant Core » — et choisis <b>« Hôte »</b>. C'est le journal du noyau.</p>
+    <p>Cherche <b><code>quirk</code></b> :</p>
+    <pre><code>usb-storage 2-2:1.0: Quirks match for vid 0bda pid 9210: 800000
+usb-storage 2-2:1.0: USB Mass Storage device detected</code></pre>
+    <div class="check">
+      <b>C'est la ligne « Quirks match » qui tranche</b>
+      Elle prouve deux choses d'un coup : le noyau a bien lu ton paramètre, <b>et</b> il a reconnu ton boîtier. La valeur hexadécimale finale est le masque du drapeau <code>IGNORE_UAS</code>.
+    </div>
+    <div class="warn-box">
+      <b>Si tu ne la trouves pas</b>
+      Cherche <code>uas</code>. Une ligne <code>USB Attached SCSI device detected</code> encore présente pour ce disque signifie qu'UAS est toujours actif : soit le VID:PID est faux (reprends l'étape 1), soit le fichier n'a pas été enregistré, soit il comporte plus d'une ligne.
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="step">
+    <div class="step-head"><span class="step-num">ÉTAPE 6</span><h3>Le retour arrière, si le Pi ne repart pas</h3><span class="dur">5 min</span></div>
+    <p>C'est tout l'intérêt d'avoir le disque physiquement accessible : il n'existe pas de situation sans issue.</p>
+    <ol>
+      <li>Rebranche le SSD sur le PC.</li>
+      <li>Supprime <code>cmdline.txt</code>.</li>
+      <li>Renomme <code>cmdline - Copie.txt</code> en <code>cmdline.txt</code>.</li>
+      <li>Éjecte proprement, remonte sur le Pi.</li>
+    </ol>
+    <p>Tu es revenu exactement à l'état d'avant, sans avoir touché à la configuration ni aux données.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="sechead"><h2>Après chaque mise à jour de HAOS</h2><span class="count">à ne pas oublier</span></div>
+
+  <div class="warn-box">
+    <b>La persistance n'est pas garantie</b>
+    La documentation officielle confirme la méthode — <i>« Add kernel parameters to <code>cmdline.txt</code> on the boot partition. The bootloader reads it and appends it to the kernel command line »</i> — mais elle ne dit <b>nulle part</b> qu'une modification de ce fichier survit à une mise à jour de l'OS. Les réglages explicitement garantis persistants vivent sur la partition <i>overlay</i> (<code>/etc/modules-load.d</code>, <code>/etc/udev/rules.d</code>, etc.), et <code>cmdline.txt</code> n'en fait pas partie.
+  </div>
+
+  <p>Donc, après chaque montée de version de Home Assistant OS : <b>refais l'étape 5</b>. Elle prend deux minutes et ne demande ni PC ni démontage. Si la ligne <code>Quirks match</code> a disparu, il faudra ressortir le disque et refaire les étapes 2 à 4.</p>
+
+  <p>Sur le Pi en fonctionnement, ce fichier est monté en <code>/mnt/boot/cmdline.txt</code> — utile le jour où l'add-on Terminal sera installé, car il permettrait alors de vérifier et de corriger sans démonter quoi que ce soit.</p>
+</section>
+
+<section class="block">
+  <div class="sechead"><h2>Pour mémoire</h2><span class="count">historique</span></div>
+
+  <div class="finding info">
+    <div class="rail"><span class="id">UAS</span><span class="chip info">mesuré</span></div>
+    <div class="fbody">
+      <h3>Pourquoi ce correctif a attendu deux mois</h3>
+      <p>Identifié dès l'audit d'août, il figurait dans le dépôt sous la mention « <i>nécessite un accès physique au support, non appliqué à ce jour</i> ». Entre-temps on a réduit les écritures pour limiter la casse : désactivation du redémarrage hebdomadaire de l'hôte, <code>commit_interval: 30</code> sur le recorder.</p>
+      <p>Ces mesures atténuent l'écriture continue mais ne peuvent rien contre une rafale. La mise à jour vers 2026.9.0 l'a montré sans ambiguïté : <b>12 resets en 16 minutes</b> pendant la mise à jour, <b>zéro dans les 47 minutes suivantes</b> alors que Home Assistant tournait normalement.</p>
+      <p class="fix"><b>Le vrai test</b>La prochaine mise à jour de Home Assistant Core. Si elle passe sans reset, le correctif est confirmé en conditions réelles.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Domolaunaguet · Launaguet (31)</span>
+  <span>Mode opératoire du 21 octobre 2026 · rév. 1</span>
+  <span>Pont USB : Realtek RTL9210 — 0bda:9210</span>
+  <span>Config de référence : Mathiaspayet/Mon-ha</span>
+</footer>
+
+</div>
