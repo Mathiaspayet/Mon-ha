@@ -1637,6 +1637,100 @@ ne bouge d'ici là, la conso Enedis cessera de remonter.
 `waze_travel_time` produit **36 erreurs en 5 h** (« Unexpected error fetching
 waze_travel_time data »), en continu et des deux côtés du redémarrage. Non diagnostiqué.
 
+## 21 octobre 2026 — le bug UAS réglé par un déplacement de fiche
+
+Soirée de dépannage qui a fini par résoudre, en dix secondes, ce que deux mois de
+diagnostic n'avaient pas réglé.
+
+### Le quirk appliqué puis rendu inutile
+
+`usb-storage.quirks=0bda:9210:u` a été posé dans `cmdline.txt` (voir
+`docs/procedure-quirk-uas.html`), avec l'identifiant relevé sur le matériel cette fois :
+`USB\VID_0BDA&PID_9210`. Puis une panne de démarrage a conduit à tout remettre à plat,
+et le disque a fini **branché sur un port USB 2.0** — un des deux ports noirs.
+
+C'est ce dernier geste qui a tout changé :
+
+```
+usb 1-1.4: Product: RTL9210                            ← bus 1 = USB 2.0
+usb-storage 1-1.4:1.0: USB Mass Storage device detected ← et non « scsi host0: uas »
+```
+
+**L'UAS a besoin des *streams* SuperSpeed de l'USB 3.0. Sur un port USB 2.0 il est
+structurellement impossible.** Le port noir fait donc ce que faisait le quirk, en mieux :
+
+| | `usb-storage.quirks` | Port USB 2.0 |
+|---|---|---|
+| Désactive UAS | ✅ | ✅ |
+| Survit à une mise à jour de HAOS | ❌ à revérifier à chaque fois | ✅ rien à maintenir |
+| Fichier à ne pas casser | ⚠️ `cmdline.txt` | ✅ aucun |
+
+**Le coût est réel** — environ 35-40 Mo/s au lieu de 300+ — et assumé : sur une box
+domotique dont les écritures sont petites et groupées (`commit_interval: 30`), la
+stabilité vaut mieux qu'un débit dont on ne fait rien.
+
+### Le test grandeur nature, passé
+
+La mise à jour de Core qui a suivi est le plus gros volume d'écriture qu'une installation
+subisse. C'est exactement ce qui avait fait tomber le Pi en septembre :
+
+| | 2026.9.0 (septembre, UAS actif) | 2026.10.2 (ce soir, BOT) |
+|---|---:|---:|
+| Resets USB | **12 en 16 min** | **0** |
+| Erreurs d'E/S | **14** | **0** |
+
+### Le ventilateur ne refroidissait rien
+
+Relevé pendant la panne : le ventilateur tournait **par à-coups**. C'est un modèle à
+3 fils — rouge, noir, bleu — câblé selon le schéma officiel (broches 4, 6 et 8).
+
+⚠️ Sur un ventilateur à **3 fils**, le troisième est un **retour tachymétrique**, pas une
+commande : la vitesse ne se pilote pas, il tourne à fond dès qu'il a 5 V. Et la broche 8
+est **GPIO 14, la sortie TX de la liaison série** — donc soit deux sorties se battent sur
+le même fil, soit le ventilateur reçoit les messages de démarrage du noyau en guise de
+signal. Dans les deux cas : **ne pas brancher le fil bleu.**
+
+Mesure après débranchement complet :
+
+| Date | Température | Ventilateur |
+|---|---:|---|
+| 7 octobre | 72,1 °C | branché |
+| 11 octobre | 67-69 °C | branché |
+| 15 octobre | 65,7 °C | branché |
+| **21 octobre** | **52,1 °C** | **débranché** |
+
+**20 °C de moins sans ventilateur qu'avec.** Un ventilateur qui cale ne déplace pas
+d'air et fait obstacle à la convection. Réserve honnête : le boîtier était ouvert au
+moment de la mesure, et le passage du disque en USB 2.0 soulage aussi le contrôleur
+VL805 — la comparaison n'est donc pas isolée. À refaire boîtier fermé.
+
+### La cause de fond, enfin nommée
+
+Un **NVMe en boîtier USB** est parmi les charges les plus lourdes pour un Pi 4, dont les
+quatre ports USB partagent **1,2 A, soit 6 W**. Un NVMe en charge en consomme 3 à 6 W à
+lui seul. La chaleur du boîtier en était la mesure directe.
+
+Ça invalide un conseil donné plus tôt dans ce dépôt : **changer l'alimentation n'aurait
+rien réglé**, puisque le goulot n'est pas le bloc secteur mais la limite de courant des
+ports, qui est fixe. Le remède reste **un hub USB alimenté** ou un boîtier à alimentation
+séparée — à moins que le passage en USB 2.0 ne suffise, ce que le compteur de
+sous-tensions dira dans les jours qui viennent.
+
+### Ce qui a été ajouté à la vue Technique
+
+Une courbe `statistics-graph` de `sensor.cpu_temperature` sur 30 jours (min / moyenne /
+max, échelle 40-85 °C pour que le seuil de bridage à 80 °C reste lisible). Les
+statistiques long terme survivent au `purge_keep_days` du recorder, contrairement à un
+`history-graph` — la courbe gardera donc la trace du palier à 70 °C et de la chute de ce
+soir.
+
+### Un dernier relevé
+
+L'horodatage des messages noyau dans le journal de l'hôte est **faux au démarrage** :
+tout apparaît daté du 25 juin 2025. Le Pi 4 n'a pas d'horloge sauvegardée et repart sur
+une date de repli avant que NTP corrige. Pour savoir de quel démarrage vient une ligne,
+lire la version du noyau qu'elle contient (`Linux 6.18.39-haos-raspi`), pas son heure.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

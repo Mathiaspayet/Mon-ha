@@ -1640,6 +1640,22 @@ views:
       name: Temp. du NAS
       grid_options:
         columns: 6
+    - type: statistics-graph
+      title: Température du processeur — 30 jours
+      entities:
+      - sensor.cpu_temperature
+      days_to_show: 30
+      period: hour
+      stat_types:
+      - min
+      - mean
+      - max
+      chart_type: line
+      min_y_axis: 40
+      max_y_axis: 85
+      fit_y_data: true
+      grid_options:
+        columns: full
     - type: tile
       entity: sensor.stockagereseau_volume_2_volume_utilise
       name: Volume NAS utilisé
