@@ -1716,13 +1716,33 @@ ports, qui est fixe. Le remède reste **un hub USB alimenté** ou un boîtier à
 séparée — à moins que le passage en USB 2.0 ne suffise, ce que le compteur de
 sous-tensions dira dans les jours qui viennent.
 
-### Ce qui a été ajouté à la vue Technique
+### ⚠️ Pas de statistiques long terme sur `sensor.cpu_temperature`
 
-Une courbe `statistics-graph` de `sensor.cpu_temperature` sur 30 jours (min / moyenne /
-max, échelle 40-85 °C pour que le seuil de bridage à 80 °C reste lisible). Les
-statistiques long terme survivent au `purge_keep_days` du recorder, contrairement à un
-`history-graph` — la courbe gardera donc la trace du palier à 70 °C et de la chute de ce
-soir.
+Une courbe `statistics-graph` sur 30 jours a d'abord été posée sur la vue Technique. Elle
+affichait **« Aucune statistique trouvée »**.
+
+Cause : le capteur est un `command_line` défini dans `commandline.yaml` et **inchangé
+depuis le 14 juin 2023**. Il n'a ni `device_class` ni `state_class` :
+
+```yaml
+sensor:
+  name: CPU Temperature
+  command: "cat /sys/class/thermal/thermal_zone0/temp"
+  unit_of_measurement: "°C"
+  value_template: "{{ value | multiply(0.001) | round(1) }}"
+```
+
+**Sans `state_class: measurement`, Home Assistant ne génère aucune statistique long terme
+pour un capteur** — une carte `statistics-graph` n'a alors rien à afficher. L'absence de
+`device_class: temperature` explique par ailleurs l'icône d'œil au lieu d'un thermomètre
+sur la tuile.
+
+La carte a donc été remplacée par un `history-graph` sur 336 h, qui lit directement le
+recorder et fonctionne immédiatement — au prix de la fenêtre du `purge_keep_days`.
+
+⚠️ **Les statistiques ne se rattrapent pas.** Ajouter `state_class` maintenant les ferait
+démarrer à cette date, sans rien récupérer du passé : le palier à 70 °C de début octobre
+est définitivement hors de portée d'une carte de statistiques.
 
 ### Un dernier relevé
 
