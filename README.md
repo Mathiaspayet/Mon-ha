@@ -1956,6 +1956,125 @@ français qui n'en portent pas la trace évidente, méritent une vérification a
 câblées dans une carte. Le tableau d'origine contenait déjà la réponse : il suffisait de
 le lire avant d'en écrire un nouveau.
 
+## 22 octobre 2026 — le forçage du sèche-serviettes, et deux conclusions fausses
+
+Mathias a demandé un regard sur l'automatisation « forçage salle d'eau », dont l'objet est de
+sécher les serviettes après une douche. Elle avait quatre choses à redire, dont deux que j'ai
+inventées.
+
+### Ce que j'ai affirmé à tort
+
+**« Pendant 2 h de forçage, rien n'a chauffé ».** Faux. Je m'étais appuyé sur
+`binary_sensor.actionneur_de_chauffe_salle_d_eau` (`7/1/2`) et
+`sensor.pourcentage_de_chauffe_salle_d_eau` (`7/1/3`), restés à l'arrêt et à 0 % pendant tout le
+forçage, pour conclure que rien ne chauffait.
+
+Mathias a corrigé : **`7/1/2` est la demande envoyée à l'actionneur, pas sa sortie.** Une
+temporisation anti-battement est réglée dans l'actionneur KNX pour éviter les commutations trop
+rapprochées, et c'est `12/4/1` qui porte l'état réel de chauffe. Ses données le démontrent
+proprement :
+
+| `7/1/2` (demande) | `12/4/1` (sortie réelle) |
+|---|---|
+| on 08:34:23 | on 08:35:23 |
+| off 08:40:23 | off 08:41:23 |
+| on 08:49:23 | on 08:50:23 |
+| off 08:53:15 | off 08:54:15 |
+| **on 09:04:23 → off 09:04:53** | **rien** |
+
+Exactement 60 s de retard sur chaque front, et une impulsion de demande de 30 s qui n'atteint
+jamais la sortie : la temporisation filtre sous mes yeux. Et la température de la pièce est montée
+de **22,2 à 22,9 °C**, en continuant de grimper 22 minutes après la coupure du forçage — l'inertie
+d'une masse chauffée deux heures. Le creux de 25 minutes au début, qui m'avait égaré, c'était le
+radiateur qui montait en température avant que la pièce suive.
+
+**Et le correctif que je proposais aurait été une faute.** Je voulais donner
+`state_address: "12/4/1"` au commutateur de forçage `12/4/0`, croyant que `12/4/1` était l'accusé
+de réception du forçage. Comme c'est la sortie de chauffe, la tuile « Forçage salle d'eau » se
+serait affichée allumée à chaque cycle de chauffe nocturne. Le commutateur reste donc optimiste
+par construction, comme les autres interrupteurs KNX sans `state_address` déjà recensés plus haut.
+
+Dans la même erreur, j'avais signalé un faux bug : les lignes « Salle d'eau » et « Mur chauffant »
+de la carte des vannes affichent `12/4/1` et `12/4/2` là où les quatre chambres affichent
+`17/3/x`. Ce n'est pas une incohérence — ces deux lignes montrent la sortie réelle, c'est le
+signal le plus juste.
+
+### Pourquoi elle était désactivée — la vraie raison
+
+Elle l'était depuis le 5 octobre, volontairement, et aucun de mes griefs n'était la cause :
+**la simulation de présence peut allumer `light.salle_d_eau` alors que personne n'est là**, ce qui
+lançait une heure de sèche-serviettes pour rien. Le défaut n'était pas dans le minutage mais dans
+l'absence de garde-fou.
+
+D'où la condition ajoutée, et la raison pour laquelle il ne faut pas la retirer :
+
+```yaml
+- condition: state
+  entity_id: switch.presence_simulation
+  state: "off"
+```
+
+`switch.presence_simulation` expose aussi un attribut `active_entities` listant les entités
+qu'elle pilote à l'instant : une garde plus fine est possible si le besoin apparaît, mais pendant
+la simulation on est absent, donc on ne veut jamais le sèche-serviettes.
+
+### Le défaut réel : un `for:` ne survit pas à un redémarrage
+
+L'arrêt reposait sur un déclencheur « lumière éteinte **depuis 1 h** ». La référence des bonnes
+pratiques est explicite : *« On restart the state is restored but `last_changed` is re-stamped to
+start-up time, so the duration clock restarts from zero »*, et *« a long `for:` is unreliable as a
+safety backstop »*.
+
+Mesuré ce jour-là :
+
+| | |
+|---|---|
+| Lumière éteinte | 11:16:16 |
+| Arrêt attendu | 12:16:16 |
+| Redémarrage de HA | 11:49:52 — remise à zéro du `last_changed` |
+| Arrêt réel | **13:00:00**, soit **44 minutes de trop** |
+
+Dans une pièce déjà à 22,2 °C, avec un thermostat qui ne demandait rien. Et il y a eu six
+redémarrages la veille au soir. L'ancienne description affirmait pourtant qu'« un redémarrage de HA
+ne peut plus laisser le chauffage allumé indéfiniment » : vrai pour *indéfiniment*, faux pour
+*inchangé*.
+
+**Correctif : l'heure est désormais tenue par `timer.sechage_salle_d_eau`, avec `restore: true`.**
+Un minuteur reprend où il en était après un redémarrage. La référence propose aussi un
+`input_datetime` horodaté ; le minuteur a été préféré parce qu'il est fait pour un décompte borné et
+qu'il fournit un déclencheur natif `timer.finished` — déclencheur dédié depuis 2026.5, à préférer à
+l'ancienne forme `event_type: timer.finished`.
+
+### La forme retenue
+
+Spécification de Mathias : chauffe pendant la douche, puis 1 h après.
+
+| Déclencheur | Condition | Action |
+|---|---|---|
+| Lumière allumée depuis 2 min | simulation à l'arrêt | forçage en marche |
+| Lumière rallumée | simulation à l'arrêt, séchage en cours | annule le minuteur |
+| Lumière éteinte | forçage en marche | démarre le minuteur (1 h) |
+| `timer.finished` | — | coupe le forçage |
+| Démarrage de HA + toutes les 15 min | forçage actif, minuteur à l'arrêt, lumière éteinte depuis 2 min | coupe le forçage |
+
+`mode: queued` (`max: 5`) remplace `single` : avec six déclencheurs dont un rattrapage au quart
+d'heure, `single` peut faire tomber un événement arrivé pendant qu'un autre s'exécute.
+
+Le rattrapage couvre deux cas que le minuteur seul ne couvre pas : une échéance tombée pendant que
+HA était arrêté, et un événement d'extinction manqué sur le bus KNX.
+
+L'alias passe de « Forçage chauffage salle **de bain** » à « salle **d'eau** » — tout son contenu
+désignait la salle d'eau depuis l'origine. **L'`entity_id` reste
+`automation.forcage_chauffage_salle_de_bain`** : le renommer ne casserait rien d'identifié dans ce
+dépôt, mais ne vaut pas le risque pour une question de cosmétique.
+
+### Non retenu
+
+Un seuil d'allumage relevé de 2 à 5 min, ou une heure de séchage réservée aux allumages de plus de
+8 min, pour qu'un passage de deux minutes ne déclenche pas une heure de chauffe. Hors de la
+spécification demandée ; la garde « simulation de présence » traite la cause citée. À proposer si le
+gaspillage se voit sur les relevés.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

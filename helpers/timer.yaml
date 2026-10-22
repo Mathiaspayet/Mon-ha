@@ -1,0 +1,15 @@
+# Helpers timer (mode storage).
+# Export Home Assistant du 2026-10-22.
+---
+sechage_salle_d_eau:
+  name: Séchage salle d'eau
+  icon: mdi:hair-dryer
+  duration: '1:00:00'
+  restore: true
+  # restore: true n'est PAS cosmétique. C'est tout l'intérêt de ce minuteur :
+  # il reprend où il en était après un redémarrage de Home Assistant, là où un
+  # « for: » de trigger repart de zéro (le last_changed de l'entité est
+  # réestampillé à l'heure du démarrage). Lu par
+  # automation.forcage_chauffage_salle_de_bain, qui tenait auparavant son heure
+  # de séchage avec un « for: 01:00:00 » — et la rallongeait de 44 minutes à
+  # chaque redémarrage. Voir README, section du 22 octobre 2026.
