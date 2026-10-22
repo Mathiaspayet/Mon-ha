@@ -1,18 +1,39 @@
 # Alarme / éteindre la sirene
 # entity_id : automation.eteindre_la_sirene
-# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+# Export Home Assistant du 2026-10-22 — ne pas éditer à la main sans réimport.
 ---
 id: 1870b1eaf5724453904b4a7076f368d7
 alias: Alarme / éteindre la sirene
-description: ''
+description: 'Coupe la sirène extérieure dès que le panneau quitte l''état « triggered », quelle que soit sa destination.
+
+
+  ⚠️ NE PAS remettre « to: disarmed » seul. Cette automatisation ne déclenchait que sur triggered → disarmed, et
+  c''était un trou : la documentation du panneau manual dit que « when trigger_time expires, the alarm returns to
+  the state it was in before triggering », et disarm_after_trigger n''est pas activé dans configuration.yaml. Après
+  les 600 s de trigger_time, le panneau repasse donc en armed_night ou armed_vacation, PAS en disarmed — et la sirène
+  tournait jusqu''à un désarmement manuel. Exactement le scénario des vacances. Corrigé le 22 octobre 2026.
+
+
+  Les cinq états d''arrivée sont listés explicitement plutôt que d''omettre « to: » : ça reste entièrement natif
+  et ça exclut un passage par unavailable / unknown lors d''un redémarrage de HA, qui couperait la sirène en pleine
+  alarme sans la rallumer ensuite.
+
+
+  Les deux scripts de clignotement n''ont pas besoin du même traitement : ils bouclent sur « while: alarme = triggered
+  » (resp. pending) et s''arrêtent donc d''eux-mêmes.'
 triggers:
-- entity_id:
-  - alarm_control_panel.alarme_maison
-  to: disarmed
+- entity_id: alarm_control_panel.alarme_maison
   from: triggered
+  to:
+  - disarmed
+  - armed_home
+  - armed_away
+  - armed_night
+  - armed_vacation
   trigger: state
+conditions: []
 actions:
-- service: switch.turn_off
-  data: {}
+- action: switch.turn_off
   target:
     entity_id: switch.sirene_exterieure
+mode: single

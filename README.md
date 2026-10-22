@@ -2119,6 +2119,81 @@ pile 8 min                        -> True
 rattrapage (pas un trigger state) -> False
 ```
 
+## 22 octobre 2026 — l'alarme : deux trous, dont un de mon fait
+
+Mathias a demandé s'il existait mieux que ses cinq automatisations d'alarme. Réponse : non, et sa
+structure est bonne. Mais les lire a révélé deux défauts.
+
+### Pourquoi cinq automatisations, ce n'est pas trop
+
+Elles forment deux couches nettement séparées :
+
+| Couche | Automatisations | Rôle |
+|---|---|---|
+| Entrée | détection nuit, détection vacances | capteurs → machine à états du panneau |
+| Sortie | pré-alerte, déclenchement, extinction sirène | machine à états → effets physiques |
+
+Le panneau `manual` tient la machine à états lui-même (`arming_time: 30`, `delay_time: 60`,
+`trigger_time: 600`) ; les automatisations ne font que traduire dans un sens puis dans l'autre.
+Avec cette plateforme, cinq est proche du plancher.
+
+**Fusionner les deux détections a été envisagé et écarté.** Elles ne diffèrent que par le mode armé,
+le jeu de capteurs (patio exclu en vacances) et le libellé. Les fusionner demanderait un template sur
+le chemin critique d'un système d'alarme pour économiser un fichier.
+
+**Alarmo (HACS) a été proposé et refusé par Mathias.** C'était la seule vraie alternative : il
+absorbe toute la couche d'entrée dans sa propre interface. Trois contreparties pesaient contre :
+c'est une intégration tierce qu'une mise à jour de HA peut casser, la migration touche la tuile, les
+badges, les quatre booléens `critique_*` et `script.alerte_famille`, et surtout **sa configuration
+vit dans `.storage`, donc hors de ce dépôt** — l'alarme cesserait d'être documentée dans git.
+
+### ⚠️ La sirène ne s'arrêtait jamais toute seule
+
+`automation.eteindre_la_sirene` déclenchait sur `from: triggered` **et `to: disarmed`**. Or la
+documentation du panneau `manual` est explicite : *« When `trigger_time` expires, the alarm returns
+to the state it was in before triggering »*, sauf si `disarm_after_trigger` est vrai — et il n'est
+pas réglé dans `configuration.yaml`.
+
+Donc après les 600 s de `trigger_time`, le panneau passe `triggered → armed_night` ou
+`armed_vacation`, jamais `disarmed`. **La transition attendue n'arrivait pas, et la sirène
+extérieure tournait jusqu'à un désarmement manuel** — précisément le scénario où personne n'est à la
+maison.
+
+Corrigé en listant les cinq états d'arrivée dans `to:`. Les états sont énumérés plutôt que `to:`
+omis : ça reste entièrement natif, et ça exclut un passage par `unavailable` au redémarrage de HA,
+qui couperait la sirène en pleine alarme sans la rallumer.
+
+**Les deux scripts de clignotement n'avaient pas ce défaut** : ils bouclent sur
+`while: alarme = triggered` (resp. `pending`) et s'arrêtent d'eux-mêmes. Vérifié avant de conclure.
+
+### ⚠️ `armed_home` et `armed_away` n'armaient rien — et c'est moi qui ai ouvert le trou
+
+Aucune automatisation, script, scène ni aide ne référence ces deux états. Le panneau pouvait s'y
+armer, décompter ses 30 secondes, et aucun capteur ne l'aurait jamais déclenché.
+
+Le tableau d'origine était juste : sa carte `custom:mushroom-alarm-control-panel-card` n'expose que
+`armed_night` et `armed_vacation`, les deux modes qui fonctionnent. **La tuile construite pour la
+vue Sécurité en proposait cinq**, sans vérification que la logique existait. Deux modes décoratifs
+sur un système d'alarme.
+
+Ramenée à `disarmed` / `armed_night` / `armed_vacation`, avec un commentaire dans
+`dashboards/maison.yaml` interdisant de les rajouter sans écrire la détection correspondante.
+
+### La leçon
+
+Reprendre un tableau de bord existant, c'est aussi reprendre les décisions qu'il encode. Les deux
+modes absents de la carte Mushroom n'étaient pas un oubli : c'était la seule documentation du fait
+que la détection n'existait pas. Je l'ai élargie sans me demander pourquoi elle était étroite —
+la même erreur que pour les caméras, où le tableau d'origine portait déjà la réponse.
+
+### Restes identifiés, non traités
+
+- `binary_sensor.capteur_porche` et `binary_sensor.capteur_couloir_etage` sont affichés dans la vue
+  Sécurité mais ne déclenchent aucune détection. Probablement volontaire (le facteur sur le porche,
+  les allers-retours nocturnes dans le couloir), à confirmer.
+- Aucun blocage d'armement si un ouvrant est ouvert. Devenu facile depuis que les 11 capteurs
+  d'ouvrants parlent français : une condition sur `Ouvert` / `Oscillo-battant` suffirait.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

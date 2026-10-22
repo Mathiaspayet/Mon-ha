@@ -1340,10 +1340,13 @@ views:
       name: Alarme maison
       features:
       - type: alarm-modes
+        # Seuls armed_night et armed_vacation ont une automatisation de détection.
+        # armed_home et armed_away ont été retirés le 2026-10-22 : la tuile les
+        # proposait, le panneau s'armait, et aucun capteur ne l'aurait jamais
+        # déclenché. Le tableau d'origine n'exposait déjà que ces deux modes.
+        # Ne pas les rajouter sans écrire la détection correspondante.
         modes:
         - disarmed
-        - armed_home
-        - armed_away
         - armed_night
         - armed_vacation
       grid_options:
