@@ -1856,18 +1856,10 @@ les capteurs français. Plus aucune carte ne les affiche :
 | Maison | carte `entity-filter` « Ouvrants ouverts » | 11 entités + la condition |
 | Maison | vue Sécurité, carte « Ouvrants » | 11 entités |
 | Aperçu | carte historique « fenêtres et détecteurs » | 10 entités |
-| Aperçu | carte `entities` des ouvrants | 11 entités — **⚠️ écrit dans ce dépôt, pas encore appliqué côté Home Assistant** (voir ci-dessous) |
+| Aperçu | carte `entities` des ouvrants | 11 entités |
 
 Conséquence à anticiper : **la section « Attention » va désormais s'allumer pour de vrai**
 quand une fenêtre est ouverte. Elle ne le faisait pas pour neuf ouvrants sur onze.
-
-**⚠️ Une divergence connue entre ce dépôt et l'instance.** Le serveur MCP qui pilote
-Home Assistant a renvoyé une erreur 502 au milieu de l'opération, après l'écriture des
-quatre premiers emplacements. La carte `entities` des ouvrants du tableau Aperçu est donc
-repointée **dans ce dépôt mais pas encore sur l'instance** : elle y affiche toujours les
-capteurs bruts, en anglais. À appliquer dès que la connexion revient, avec un
-`python_transform` sur `lovelace` → `views[3]`. Tant que ce paragraphe est présent, la
-divergence n'est pas résorbée.
 
 La carte historique perd l'antériorité des ouvrants : les capteurs français n'ont pas
 d'historique avant 11 h 27 ce jour-là. La carte affiche 72 h, elle se remplit donc d'
