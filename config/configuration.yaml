@@ -90,6 +90,40 @@ template:
         state: "{{ reponse['weather.launaguet'].forecast[0].condition }}"
         attributes:
           jours: "{{ reponse['weather.launaguet'].forecast[:6] }}"
+  - sensor:
+      - name: "Baie vitrée gauche état"
+        unique_id: ouvrant_baie_vitree_gauche_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_baie_vitree_gauche')) | trim }}"
+      - name: "Baie vitrée droite état"
+        unique_id: ouvrant_baie_vitree_droite_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_baie_vitree_droit')) | trim }}"
+      - name: "Fenêtre buanderie état"
+        unique_id: ouvrant_fenetre_buanderie_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_fenetre_buanderie')) | trim }}"
+      - name: "Fenêtre bureau état"
+        unique_id: ouvrant_fenetre_bureau_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_fenetre_bureau')) | trim }}"
+      - name: "Fenêtre salon télé état"
+        unique_id: ouvrant_fenetre_salon_tele_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit')) | trim }}"
+      - name: "Fenêtre chambre d'amis état"
+        unique_id: ouvrant_fenetre_chambre_amis_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_2')) | trim }}"
+      - name: "Fenêtre salle de bain état"
+        unique_id: ouvrant_fenetre_salle_de_bain_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_3')) | trim }}"
+      - name: "Fenêtre chambre Auguste état"
+        unique_id: ouvrant_fenetre_chambre_auguste_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_4')) | trim }}"
+      - name: "Fenêtre chambre Margaux état"
+        unique_id: ouvrant_fenetre_chambre_margaux_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_5')) | trim }}"
+      - name: "Fenêtre chambre parentale état"
+        unique_id: ouvrant_fenetre_chambre_parentale_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_6')) | trim }}"
+      - name: "Fenêtre salle d'eau état"
+        unique_id: ouvrant_fenetre_salle_d_eau_etat
+        state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_7')) | trim }}"
 alarm_control_panel:
   - platform: manual
     name: Alarme_maison

@@ -1,0 +1,32 @@
+{#-
+  Correspondance des états d'ouvrant Tydom vers des libellés français.
+
+  Vocabulaire VÉRIFIÉ ouvrant par ouvrant le 22 octobre 2026, en ouvrant puis
+  refermant chaque type de menuiserie et en relisant le recorder :
+
+    LOCKED       fermé et verrouillé              les 11 ouvrants
+    UNLOCKED     coulissant ouvert                baies vitrées gauche et droite
+    OPEN_FRENCH  battant ouvert                   fenêtre salle de bain
+    OPEN_HOPPER  entrebâillé en oscillo-battant   fenêtre chambre d'amis
+
+  ATTENTION : sur un coulissant, « UNLOCKED » EST l'état ouvert. Ne jamais le
+  traiter comme un simple déverrouillage sans conséquence : ce serait sortir les
+  deux baies vitrées du périmètre des alertes « ouvrant ouvert ».
+
+  Delta Dore ne publie pas cette énumération — ni sa documentation, ni
+  tydom2mqtt, ni l'intégration communautaire hass-deltadore-tydom-component.
+  Tout état non reconnu est donc renvoyé TEL QUEL plutôt que rangé de force
+  dans une catégorie : un état inconnu doit se voir sur le tableau de bord.
+
+  Le piège à ne pas refaire : l'absence d'un état dans l'historique ne prouve
+  pas qu'il n'existe pas. « UNLOCKED » était absent de 17 jours de recorder
+  simplement parce que personne n'avait ouvert une baie depuis le 5 octobre.
+-#}
+{%- macro etat_ouvrant(brut) -%}
+{%- if brut in ['unknown', 'unavailable', 'none', '', none] -%}Inconnu
+{%- elif brut == 'LOCKED' -%}Fermé
+{%- elif brut == 'OPEN_HOPPER' -%}Oscillo-battant
+{%- elif brut == 'UNLOCKED' or brut.startswith('OPEN') -%}Ouvert
+{%- else -%}{{ brut }}
+{%- endif -%}
+{%- endmacro -%}

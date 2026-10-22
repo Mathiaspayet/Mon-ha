@@ -10,9 +10,17 @@
 # n'apparaît pas du tout quand tout va bien. Chaque carte à l'intérieur porte en
 # plus sa propre condition, donc seule la ligne concernée s'affiche.
 #
-# Les ouvrants Tydom parlent en LOCKED / UNLOCKED, plus « unknown » au démarrage.
-# Les conditions filtrent sur UNLOCKED et OPENED — une correspondance positive,
-# pour qu'un « unknown » transitoire ne déclenche pas de fausse alerte.
+# Les conditions ne portent PLUS sur les capteurs Tydom bruts mais sur les 11
+# capteurs modèles « … état » (voir config/configuration.yaml et la macro
+# config/custom_templates/tydom.jinja), qui traduisent le vocabulaire Delta Dore
+# en français. Elles filtrent sur « Ouvert » et « Oscillo-battant » — une
+# correspondance positive, pour qu'un « Inconnu » transitoire au démarrage ne
+# déclenche pas de fausse alerte.
+#
+# Avant le 22/10/2026 elles filtraient sur UNLOCKED et OPENED. « OPENED » n'existe
+# pas dans le vocabulaire de la box : les 9 fenêtres, qui remontent OPEN_FRENCH ou
+# OPEN_HOPPER, n'ont donc jamais été signalées. Seules les 2 baies, qui remontent
+# bien UNLOCKED, fonctionnaient.
 #
 # Les badges portent show_name ET show_state : sans show_name, une puce n'affiche
 # que sa valeur, sans dire de quoi elle parle.
@@ -248,60 +256,60 @@ views:
         entity: sensor.pression_chaudiere_en_bar
         below: 1
       - condition: state
-        entity: sensor.openstate_tydom_baie_vitree_gauche
+        entity: sensor.baie_vitree_gauche_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_baie_vitree_droit
+        entity: sensor.baie_vitree_droite_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_fenetre_buanderie
+        entity: sensor.fenetre_buanderie_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_fenetre_bureau
+        entity: sensor.fenetre_bureau_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit
+        entity: sensor.fenetre_salon_tele_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_2
+        entity: sensor.fenetre_chambre_d_amis_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_3
+        entity: sensor.fenetre_salle_de_bain_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_4
+        entity: sensor.fenetre_chambre_auguste_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_5
+        entity: sensor.fenetre_chambre_margaux_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_6
+        entity: sensor.fenetre_chambre_parentale_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
-        entity: sensor.openstate_tydom_ouvrant_droit_7
+        entity: sensor.fenetre_salle_d_eau_etat
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       - condition: state
         entity: binary_sensor.ruban_led_salon_piano_erreur_courant
         state: 'on'
@@ -359,30 +367,30 @@ views:
       conditions:
       - condition: state
         state:
-        - UNLOCKED
-        - OPENED
+        - Ouvert
+        - Oscillo-battant
       entities:
-      - entity: sensor.openstate_tydom_baie_vitree_gauche
+      - entity: sensor.baie_vitree_gauche_etat
         name: Baie vitrée gauche
-      - entity: sensor.openstate_tydom_baie_vitree_droit
+      - entity: sensor.baie_vitree_droite_etat
         name: Baie vitrée droite
-      - entity: sensor.openstate_tydom_fenetre_buanderie
+      - entity: sensor.fenetre_buanderie_etat
         name: Fenêtre buanderie
-      - entity: sensor.openstate_tydom_fenetre_bureau
+      - entity: sensor.fenetre_bureau_etat
         name: Fenêtre bureau
-      - entity: sensor.openstate_tydom_ouvrant_droit
+      - entity: sensor.fenetre_salon_tele_etat
         name: Fenêtre salon télé
-      - entity: sensor.openstate_tydom_ouvrant_droit_2
+      - entity: sensor.fenetre_chambre_d_amis_etat
         name: Fenêtre chambre d'amis
-      - entity: sensor.openstate_tydom_ouvrant_droit_3
+      - entity: sensor.fenetre_salle_de_bain_etat
         name: Fenêtre salle de bain
-      - entity: sensor.openstate_tydom_ouvrant_droit_4
+      - entity: sensor.fenetre_chambre_auguste_etat
         name: Fenêtre chambre Auguste
-      - entity: sensor.openstate_tydom_ouvrant_droit_5
+      - entity: sensor.fenetre_chambre_margaux_etat
         name: Fenêtre chambre Margaux
-      - entity: sensor.openstate_tydom_ouvrant_droit_6
+      - entity: sensor.fenetre_chambre_parentale_etat
         name: Fenêtre chambre parentale
-      - entity: sensor.openstate_tydom_ouvrant_droit_7
+      - entity: sensor.fenetre_salle_d_eau_etat
         name: Fenêtre salle d'eau
       card:
         type: entities
@@ -1394,27 +1402,27 @@ views:
       grid_options:
         columns: full
       entities:
-      - entity: sensor.openstate_tydom_baie_vitree_gauche
+      - entity: sensor.baie_vitree_gauche_etat
         name: Baie vitrée gauche
-      - entity: sensor.openstate_tydom_baie_vitree_droit
+      - entity: sensor.baie_vitree_droite_etat
         name: Baie vitrée droite
-      - entity: sensor.openstate_tydom_fenetre_buanderie
+      - entity: sensor.fenetre_buanderie_etat
         name: Fenêtre buanderie
-      - entity: sensor.openstate_tydom_fenetre_bureau
+      - entity: sensor.fenetre_bureau_etat
         name: Fenêtre bureau
-      - entity: sensor.openstate_tydom_ouvrant_droit
+      - entity: sensor.fenetre_salon_tele_etat
         name: Fenêtre salon télé
-      - entity: sensor.openstate_tydom_ouvrant_droit_2
+      - entity: sensor.fenetre_chambre_d_amis_etat
         name: Fenêtre chambre d'amis
-      - entity: sensor.openstate_tydom_ouvrant_droit_3
+      - entity: sensor.fenetre_salle_de_bain_etat
         name: Fenêtre salle de bain
-      - entity: sensor.openstate_tydom_ouvrant_droit_4
+      - entity: sensor.fenetre_chambre_auguste_etat
         name: Fenêtre chambre Auguste
-      - entity: sensor.openstate_tydom_ouvrant_droit_5
+      - entity: sensor.fenetre_chambre_margaux_etat
         name: Fenêtre chambre Margaux
-      - entity: sensor.openstate_tydom_ouvrant_droit_6
+      - entity: sensor.fenetre_chambre_parentale_etat
         name: Fenêtre chambre parentale
-      - entity: sensor.openstate_tydom_ouvrant_droit_7
+      - entity: sensor.fenetre_salle_d_eau_etat
         name: Fenêtre salle d'eau
   - type: grid
     cards:

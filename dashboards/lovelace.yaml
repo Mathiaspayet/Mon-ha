@@ -406,16 +406,16 @@ views:
     hours_to_show: 72
     target:
       entity_id:
-      - sensor.openstate_tydom_fenetre_buanderie
-      - sensor.openstate_tydom_fenetre_bureau
-      - sensor.openstate_tydom_ouvrant_droit
-      - sensor.openstate_tydom_ouvrant_droit_5
-      - sensor.openstate_tydom_ouvrant_droit_4
-      - sensor.openstate_tydom_ouvrant_droit_2
-      - sensor.openstate_tydom_ouvrant_droit_3
-      - sensor.openstate_tydom_ouvrant_droit_7
-      - sensor.openstate_tydom_baie_vitree_droit
-      - sensor.openstate_tydom_baie_vitree_gauche
+      - sensor.fenetre_buanderie_etat
+      - sensor.fenetre_bureau_etat
+      - sensor.fenetre_salon_tele_etat
+      - sensor.fenetre_chambre_margaux_etat
+      - sensor.fenetre_chambre_auguste_etat
+      - sensor.fenetre_chambre_d_amis_etat
+      - sensor.fenetre_salle_de_bain_etat
+      - sensor.fenetre_salle_d_eau_etat
+      - sensor.baie_vitree_droite_etat
+      - sensor.baie_vitree_gauche_etat
       - binary_sensor.capteur_cuisine
       - binary_sensor.capteur_porche
       - binary_sensor.capteur_salon_piano
@@ -425,19 +425,19 @@ views:
       - binary_sensor.capteur_couloir_etage
   - type: entities
     entities:
-    - entity: sensor.openstate_tydom_baie_vitree_gauche
+    - entity: sensor.baie_vitree_gauche_etat
       name: 'Baie vitrée gauche '
-    - entity: sensor.openstate_tydom_baie_vitree_droit
-    - entity: sensor.openstate_tydom_fenetre_buanderie
-    - entity: sensor.openstate_tydom_fenetre_bureau
-    - entity: sensor.openstate_tydom_ouvrant_droit
-    - entity: sensor.openstate_tydom_ouvrant_droit_7
-    - entity: sensor.openstate_tydom_ouvrant_droit_3
-    - entity: sensor.openstate_tydom_ouvrant_droit_2
-    - entity: sensor.openstate_tydom_ouvrant_droit_4
-    - entity: sensor.openstate_tydom_ouvrant_droit_5
+    - entity: sensor.baie_vitree_droite_etat
+    - entity: sensor.fenetre_buanderie_etat
+    - entity: sensor.fenetre_bureau_etat
+    - entity: sensor.fenetre_salon_tele_etat
+    - entity: sensor.fenetre_salle_d_eau_etat
+    - entity: sensor.fenetre_salle_de_bain_etat
+    - entity: sensor.fenetre_chambre_d_amis_etat
+    - entity: sensor.fenetre_chambre_auguste_etat
+    - entity: sensor.fenetre_chambre_margaux_etat
       name: Fenêtre chambre Margaux
-    - entity: sensor.openstate_tydom_ouvrant_droit_6
+    - entity: sensor.fenetre_chambre_parentale_etat
   - type: entities
     entities:
     - entity: binary_sensor.capteur_cuisine

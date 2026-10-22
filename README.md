@@ -382,9 +382,13 @@ Garage, Extérieur. Le reste des pièces ira dans la vue Pièces.
 
 ### Deux points de méthode
 
-**Le vocabulaire Tydom est `LOCKED` / `UNLOCKED`**, plus `unknown` à chaque redémarrage.
-Les conditions filtrent sur `UNLOCKED` et `OPENED` — une correspondance **positive** —
-pour qu'un `unknown` transitoire ne déclenche pas de fausse alerte au démarrage.
+**⚠️ Corrigé le 22 octobre 2026 — ce paragraphe était faux.** Il affirmait que « le
+vocabulaire Tydom est `LOCKED` / `UNLOCKED` » et que les conditions filtraient sur
+`UNLOCKED` et `OPENED`. `OPENED` n'existe pas : les neuf fenêtres remontent `OPEN_FRENCH`
+ou `OPEN_HOPPER` et n'étaient donc **jamais** signalées. Vocabulaire réel et correctif :
+voir « 22 octobre 2026 — le vocabulaire des ouvrants, vérifié ». Les conditions portent
+désormais sur onze capteurs modèles en français, et gardent la correspondance
+**positive** pour qu'un état transitoire au démarrage ne déclenche pas de fausse alerte.
 
 **Deux cartes `entity-filter` remplacent une quarantaine de cartes conditionnelles.**
 Elles n'affichent que les entités correspondant à leur condition et se masquent
@@ -1750,6 +1754,153 @@ L'horodatage des messages noyau dans le journal de l'hôte est **faux au démarr
 tout apparaît daté du 25 juin 2025. Le Pi 4 n'a pas d'horloge sauvegardée et repart sur
 une date de repli avant que NTP corrige. Pour savoir de quel démarrage vient une ligne,
 lire la version du noyau qu'elle contient (`Linux 6.18.39-haos-raspi`), pas son heure.
+
+## 22 octobre 2026 — le vocabulaire des ouvrants, vérifié
+
+Mathias a demandé les états des ouvrants Tydom en français. La demande a mis au jour une
+condition d'alerte cassée depuis sa création, et une erreur de méthode que ce dépôt avait
+déjà documentée deux fois sans que je l'évite pour autant.
+
+### Le vocabulaire réel, menuiserie par menuiserie
+
+Delta Dore ne publie pas l'énumération de son champ `openState` : ni sa documentation, ni
+`tydom2mqtt`, ni l'intégration communautaire `hass-deltadore-tydom-component` ne la
+décrivent. Elle a donc été établie par l'expérience — ouvrir puis refermer chaque type de
+menuiserie, et relire le recorder :
+
+| État | Signification | Vérifié sur |
+|---|---|---|
+| `LOCKED` | fermé et verrouillé | les 11 ouvrants |
+| `UNLOCKED` | **coulissant ouvert** | baies vitrées gauche et droite |
+| `OPEN_FRENCH` | battant ouvert | fenêtre salle de bain |
+| `OPEN_HOPPER` | entrebâillé en oscillo-battant | fenêtre chambre d'amis |
+
+**`UNLOCKED` n'est pas un simple déverrouillage.** Sur un coulissant, c'est l'état ouvert,
+et il n'existe pas de variante `OPEN_SLIDING`. Le traiter comme anodin aurait sorti les
+deux baies vitrées du périmètre des alertes — l'erreur a été évitée de justesse, après que
+Mathias ait signalé que les baies se comportaient peut-être autrement que les fenêtres.
+
+### La condition d'alerte ne couvrait que 2 ouvrants sur 11
+
+`dashboards/maison.yaml` filtrait sur `UNLOCKED` **et `OPENED`**, à deux endroits : la
+visibilité de la section « Attention » de la vue Maison, et la carte `entity-filter`
+« Ouvrants ouverts ». `OPENED` n'existe pas dans le vocabulaire de la box. Les neuf
+fenêtres, qui remontent `OPEN_FRENCH` ou `OPEN_HOPPER`, n'ont donc jamais déclenché ni
+l'une ni l'autre. Seules les deux baies, sur `UNLOCKED`, fonctionnaient.
+
+Le bug venait d'une hypothèse écrite dans ce README comme un « point de méthode » acquis,
+sans avoir été vérifiée une seule fois contre l'historique.
+
+À noter : **les automatisations d'alarme n'étaient pas concernées.** `Alarme Nuit` et
+`Alarme Vacances` se déclenchent sur les détecteurs de mouvement KNX (`capteur_cuisine`,
+`capteur_salon_piano`, `capteur_patio`, `capteur_garage`), pas sur les ouvrants Tydom.
+C'était de l'affichage cassé, pas de la sécurité.
+
+### Onze capteurs modèles et une macro
+
+La traduction d'un état arbitraire n'a aucun équivalent natif dans Home Assistant : il faut
+des capteurs modèles. Onze ont été ajoutés au bloc `template:` de
+`config/configuration.yaml`, un par ouvrant, nommés `<lieu> état`.
+
+La correspondance est définie **une seule fois**, dans `config/custom_templates/tydom.jinja` :
+
+```jinja
+LOCKED                        → Fermé
+UNLOCKED                      → Ouvert
+OPEN_HOPPER                   → Oscillo-battant
+tout ce qui commence par OPEN → Ouvert
+unknown / unavailable         → Inconnu
+reste                         → la valeur brute, telle quelle
+```
+
+Deux choix délibérés :
+
+**Le filtre par préfixe plutôt qu'une énumération.** `OPEN_FRENCH`, `OPEN_SLIDING`,
+`OPENED` — peu importe ce que Delta Dore ajoute, tout tombe sur « Ouvert » sans qu'il
+faille deviner la liste. Seul `OPEN_HOPPER` garde sa nuance, puisque c'est la distinction
+demandée.
+
+**Un état inconnu est renvoyé tel quel**, et non rangé de force dans une catégorie. Il
+s'affichera en clair sur le tableau de bord au lieu de se fondre dans « Ouvert ».
+
+Le mapping a été prouvé sur neuf entrées avant livraison, y compris celles qu'on n'a jamais
+observées, via `ha_eval_template` — les crochets servaient à vérifier l'absence d'espace
+parasite :
+
+```
+LOCKED -> [Fermé]            UNLOCKED     -> [Ouvert]
+OPEN_FRENCH -> [Ouvert]      OPENED       -> [Ouvert]
+OPEN_HOPPER -> [Oscillo-battant]  OPEN_SLIDING -> [Ouvert]
+unknown -> [Inconnu]         unavailable  -> [Inconnu]
+BIDULE_INCONNU -> [BIDULE_INCONNU]
+```
+
+**Pourquoi du YAML et pas des aides d'interface.** Les bonnes pratiques recommandent le
+flux de configuration plutôt que `template:` en YAML, sauf — entre autres — pour définir
+plusieurs entités dans un même bloc, ce qui est le cas ici. Et surtout : une aide créée par
+l'interface vit dans `.storage`, donc hors de ce dépôt. Tout l'intérêt de ce projet est que
+la logique soit lisible dans un diff. L'outil d'édition YAML prévoit lui-même l'exception
+« configuration délibérément gérée en YAML, par exemple suivie par git ».
+
+Contrepartie assumée : ces onze capteurs ne sont pas modifiables depuis l'interface. Ils
+portent un `unique_id`, donc leur nom affiché reste changeable.
+
+### Ce qui a été repointé
+
+Les capteurs bruts `sensor.openstate_tydom_*` restent en place et continuent d'alimenter
+les capteurs français. Plus aucune carte ne les affiche :
+
+| Tableau | Emplacement | Changement |
+|---|---|---|
+| Maison | visibilité section « Attention » | 11 conditions → capteurs français, états `Ouvert` / `Oscillo-battant` |
+| Maison | carte `entity-filter` « Ouvrants ouverts » | 11 entités + la condition |
+| Maison | vue Sécurité, carte « Ouvrants » | 11 entités |
+| Aperçu | carte historique « fenêtres et détecteurs » | 10 entités |
+| Aperçu | carte `entities` des ouvrants | 11 entités — **⚠️ écrit dans ce dépôt, pas encore appliqué côté Home Assistant** (voir ci-dessous) |
+
+Conséquence à anticiper : **la section « Attention » va désormais s'allumer pour de vrai**
+quand une fenêtre est ouverte. Elle ne le faisait pas pour neuf ouvrants sur onze.
+
+**⚠️ Une divergence connue entre ce dépôt et l'instance.** Le serveur MCP qui pilote
+Home Assistant a renvoyé une erreur 502 au milieu de l'opération, après l'écriture des
+quatre premiers emplacements. La carte `entities` des ouvrants du tableau Aperçu est donc
+repointée **dans ce dépôt mais pas encore sur l'instance** : elle y affiche toujours les
+capteurs bruts, en anglais. À appliquer dès que la connexion revient, avec un
+`python_transform` sur `lovelace` → `views[3]`. Tant que ce paragraphe est présent, la
+divergence n'est pas résorbée.
+
+La carte historique perd l'antériorité des ouvrants : les capteurs français n'ont pas
+d'historique avant 11 h 27 ce jour-là. La carte affiche 72 h, elle se remplit donc d'
+elle-même en trois jours.
+
+### ⚠️ Lire une absence de données comme une absence de phénomène
+
+**Troisième occurrence du même piège dans ce projet.** `UNLOCKED` était absent de 17 jours
+de recorder et de 11 capteurs. J'en ai conclu — et écrit à Mathias — qu'il « n'existe pas
+dans le vocabulaire de la box ». Il existe : personne n'avait simplement ouvert une baie
+depuis le 5 octobre.
+
+Les deux précédentes :
+
+- **7 octobre** — un trou de `sensor.cpu_temperature` lu comme un Pi en bonne santé, alors
+  que la machine était plantée depuis trois semaines. Un `history_stats` compte sur une
+  fenêtre de calendrier, pas de temps de fonctionnement.
+- **22 octobre au matin** — des valeurs MQTT *retained* rejouées au démarrage, prises pour
+  des mesures fraîches. Seul `last_reported` prouve la fraîcheur, jamais la plausibilité de
+  la valeur.
+
+Le réflexe à appliquer : avant d'écrire qu'une valeur n'existe pas, vérifier que la fenêtre
+d'observation contenait une occasion de la produire.
+
+### Restes identifiés, non traités
+
+- `sensor.openstate_tydom_baie_vitree` est sur `unknown` depuis toujours et n'est référencé
+  nulle part — entité orpheline d'une ancienne configuration, sans jumeau français.
+- La carte historique de l'Aperçu ne liste que 10 ouvrants sur 11 : `Fenêtre chambre
+  parentale` y manque, et manquait déjà avant. Composition laissée telle quelle.
+- `state_color: true` sur les cartes `entities` ne colore pas un capteur textuel. Une macro
+  d'icône (`mdi:window-open-variant` / `mdi:window-closed-variant`) réglerait la lisibilité
+  d'un coup d'œil ; hors du périmètre demandé.
 
 ## Stockage et écritures disque
 
