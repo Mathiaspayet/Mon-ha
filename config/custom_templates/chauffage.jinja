@@ -1,0 +1,38 @@
+{#-
+  Moyenne d'un attribut sur les six thermostats KNX de la maison.
+
+  Utilisée par l'entité climate.chauffage_general (voir configuration.yaml), qui
+  n'est qu'une façade : elle relaie set_temperature et set_preset_mode vers les
+  six thermostats réels et ne pilote rien par elle-même. Si elle casse, les six
+  thermostats continuent de fonctionner normalement.
+
+  La liste des entités est définie ICI et nulle part ailleurs. Noter que la
+  chambre des parents porte l'entity_id « climate.thermostat » tout court —
+  résidu de la première configuration, conservé pour ne rien casser.
+
+  ATTENTION côté KNX : aucun de ces thermostats n'expose d'adresse de consigne
+  absolue en écriture. Seul setpoint_shift_address l'est. Un set_temperature
+  écrit donc un DÉCALAGE par rapport à la consigne de base du mode en cours,
+  base définie dans ETS. Conséquence à vérifier dans ETS : ce décalage n'est en
+  général pas mémorisé par mode, donc réaligner les consignes en standby décale
+  aussi le confort d'autant.
+-#}
+{%- macro moyenne_thermostats(attribut) -%}
+{%- set ids = [
+  'climate.thermostat_salle_d_eau',
+  'climate.thermostat_salle_de_bain',
+  'climate.thermostat',
+  'climate.thermostat_chambre_margaux',
+  'climate.thermostat_chambre_auguste',
+  'climate.thermostat_chambre_amis',
+] -%}
+{%- set ns = namespace(somme=0.0, n=0) -%}
+{%- for e in ids -%}
+  {%- set v = state_attr(e, attribut) -%}
+  {%- if v is not none -%}
+    {%- set ns.somme = ns.somme + (v | float(0)) -%}
+    {%- set ns.n = ns.n + 1 -%}
+  {%- endif -%}
+{%- endfor -%}
+{{- (ns.somme / ns.n) | round(1) if ns.n > 0 else '' -}}
+{%- endmacro -%}

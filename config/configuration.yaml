@@ -124,6 +124,45 @@ template:
       - name: "Fenêtre salle d'eau état"
         unique_id: ouvrant_fenetre_salle_d_eau_etat
         state: "{% from 'tydom.jinja' import etat_ouvrant %}{{ etat_ouvrant(states('sensor.openstate_tydom_ouvrant_droit_7')) | trim }}"
+  - climate:
+      - name: "Chauffage général"
+        unique_id: chauffage_general
+        temperature_unit: "°C"
+        min_temperature: 14
+        max_temperature: 26
+        target_temperature_step: 0.1
+        availability: "{{ expand('climate.thermostat_salle_d_eau', 'climate.thermostat_salle_de_bain', 'climate.thermostat', 'climate.thermostat_chambre_margaux', 'climate.thermostat_chambre_auguste', 'climate.thermostat_chambre_amis') | rejectattr('state', 'in', ['unavailable', 'unknown']) | list | count > 0 }}"
+        current_temperature: "{% from 'chauffage.jinja' import moyenne_thermostats %}{{ moyenne_thermostats('current_temperature') }}"
+        target_temperature: "{% from 'chauffage.jinja' import moyenne_thermostats %}{{ moyenne_thermostats('temperature') }}"
+        hvac_modes: "{{ ['heat'] }}"
+        hvac_mode: "{{ 'heat' }}"
+        set_hvac_mode:
+          - stop: "Les thermostats KNX ne connaissent que le mode chauffage : rien à commuter."
+        set_temperature:
+          - action: climate.set_temperature
+            target:
+              entity_id:
+                - climate.thermostat_salle_d_eau
+                - climate.thermostat_salle_de_bain
+                - climate.thermostat
+                - climate.thermostat_chambre_margaux
+                - climate.thermostat_chambre_auguste
+                - climate.thermostat_chambre_amis
+            data:
+              temperature: "{{ temperature }}"
+        preset_modes: "{{ ['standby', 'economy', 'comfort', 'auto', 'building_protection'] }}"
+        set_preset_mode:
+          - action: climate.set_preset_mode
+            target:
+              entity_id:
+                - climate.thermostat_salle_d_eau
+                - climate.thermostat_salle_de_bain
+                - climate.thermostat
+                - climate.thermostat_chambre_margaux
+                - climate.thermostat_chambre_auguste
+                - climate.thermostat_chambre_amis
+            data:
+              preset_mode: "{{ preset_mode }}"
 alarm_control_panel:
   - platform: manual
     name: Alarme_maison

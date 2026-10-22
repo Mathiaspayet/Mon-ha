@@ -1165,6 +1165,18 @@ views:
       heading: Chauffage
       heading_style: title
       icon: mdi:radiator
+    # Façade de groupe : relaie la consigne et le mode vers les six thermostats
+    # KNX d'un seul geste. Définie dans config/configuration.yaml, moyennes
+    # calculées par config/custom_templates/chauffage.jinja. Ne pilote rien
+    # elle-même : si elle casse, les six tuiles ci-dessous restent valides.
+    - type: thermostat
+      entity: climate.chauffage_general
+      name: Tous les thermostats
+      features:
+      - type: climate-preset-modes
+        style: dropdown
+      grid_options:
+        columns: full
     - type: tile
       entity: climate.thermostat
       name: Chambre parentale

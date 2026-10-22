@@ -2194,6 +2194,100 @@ la même erreur que pour les caméras, où le tableau d'origine portait déjà l
 - Aucun blocage d'armement si un ouvrant est ouvert. Devenu facile depuis que les 11 capteurs
   d'ouvrants parlent français : une condition sur `Ouvert` / `Oscillo-battant` suffirait.
 
+## 22 octobre 2026 — un réglage général pour les six thermostats
+
+Mathias voulait pouvoir réaligner les six thermostats d'un seul geste. Au moment de la demande
+les consignes avaient effectivement dérivé :
+
+| Thermostat | entity_id | Temp. | Consigne | Mode |
+|---|---|---|---|---|
+| Salle d'eau | `climate.thermostat_salle_d_eau` | 23,3 | **21** | standby |
+| Salle de bain | `climate.thermostat_salle_de_bain` | 21,7 | **21** | standby |
+| Chambre parents | **`climate.thermostat`** | 21,6 | **20** | standby |
+| Chambre Margaux | `climate.thermostat_chambre_margaux` | 21,7 | **20** | standby |
+| Chambre Auguste | `climate.thermostat_chambre_auguste` | 20,6 | **21** | standby |
+| Chambre amis | `climate.thermostat_chambre_amis` | 20,5 | **20** | standby |
+
+(La chambre des parents porte l'entity_id `climate.thermostat` tout court — résidu de la première
+configuration, conservé pour ne rien casser.)
+
+### Pas d'aide « groupe » possible
+
+Vérifié : l'aide `group` couvre `binary_sensor`, `button`, `cover`, `event`, `fan`, `light`,
+`lock`, `media_player`, `notify`, `sensor`, `switch` et `valve`. **Pas `climate`.**
+
+### Ce que le câblage KNX impose
+
+Les six thermostats sont configurés à l'identique, et aucun n'expose d'adresse de consigne
+**absolue** en écriture :
+
+```yaml
+temperature_address: "7/1/0"              # température ambiante, lecture
+setpoint_shift_address: "7/0/4"           # ← le SEUL levier en écriture
+target_temperature_state_address: "7/1/1" # consigne effective, lecture seule
+operation_mode_address: "7/0/5"           # le mode (comfort / standby / economy…)
+```
+
+`climate.set_temperature` écrit donc un **décalage** par rapport à la consigne de base du mode en
+cours, base définie dans ETS — pas une consigne absolue. **Conséquence à vérifier dans ETS :** ce
+décalage n'est en général pas mémorisé par mode, donc réaligner les consignes en `standby` décale
+aussi le confort d'autant.
+
+### La solution : une entité `climate` modèle, pure façade
+
+Un seul objet plutôt qu'un empilement `input_number` + `input_button` + automatisation :
+`climate.chauffage_general`, construite avec la plateforme `template → climate` (2026.10+).
+
+- **`current_temperature`** = moyenne des six températures ambiantes.
+- **`target_temperature`** = moyenne des six consignes. Choix délibéré plutôt qu'une valeur
+  « dernière commandée » : **le cadran révèle la dérive.** Au moment de l'installation il affichait
+  20,7 — soit trois pièces à 21 et trois à 20. Aligné, il affiche un nombre rond.
+- **`set_temperature`** relaie vers les six, **`set_preset_mode`** aussi : un seul geste pour tout
+  passer en `comfort` ou `standby`.
+- **`preset_mode` laissé en mode optimiste** (pas de template) : avec six valeurs qui peuvent
+  diverger, afficher une majorité serait un mensonge, et un septième libellé « mixte » serait
+  sélectionnable alors qu'il ne veut rien dire à l'écriture.
+
+**Propriété rassurante : ce n'est qu'une façade.** Elle ne pilote rien par elle-même, elle appelle
+les actions des six thermostats réels. Si elle casse, les six tuiles continuent de fonctionner.
+C'est ce qui a rendu acceptable l'usage d'une plateforme sortie le mois même.
+
+### Pourquoi une macro et pas une aide `min_max`
+
+Les bonnes pratiques disent : moyenne de plusieurs capteurs → aide `min_max`, pas de template. Mais
+`min_max` n'accepte que des membres `sensor`, `number` et `input_number` — **pas des attributs
+d'entités `climate`**. La voie native aurait demandé 12 capteurs modèles d'extraction plus 2 aides,
+soit 14 objets. La moyenne est donc définie une seule fois dans
+`config/custom_templates/chauffage.jinja`, appelée deux fois.
+
+### Deux pièges rencontrés en chemin
+
+**`preset_modes` doit être un template, pas une liste YAML.** La documentation officielle du
+template climate montre pourtant une liste dans son exemple complet ; c'est sa table de référence
+qui a raison. HA rejette le bloc entier avec :
+
+```
+Invalid config for 'template': template value should be a string for dictionary value
+'climate->0->preset_modes', got ['standby', 'economy', …]
+```
+
+À noter : HA n'écarte que l'entrée fautive, les onze capteurs d'ouvrants du même bloc `template:`
+ont continué de tourner. Vérifié avant de corriger.
+
+**Sans `hvac_mode`, l'état de l'entité est `unknown`.** Le `hvac_mode` est optimiste par défaut :
+tant que personne n'a tapé sur « chauffage », la carte s'affiche mal — et ça recommence à chaque
+redémarrage. Figé par `hvac_mode: "{{ 'heat' }}"`, puisque les thermostats KNX n'ont de toute façon
+que ce mode.
+
+### Note de méthode : l'aperçu de `ha_config_set_yaml`
+
+`configuration.yaml` ne peut être modifié que par clé entière — `ha_write_file` ne l'autorise pas
+(seuls `www`, `themes`, `custom_templates`, `dashboards`, `knx.yaml`, `commandline.yaml`). Il a donc
+fallu réécrire toute la clé `template`, 133 lignes. **Le premier essai contenait une faute de ma
+part** : un `"\n"` du Jinja sur-échappé, qui serait devenu `"\\n"` et aurait cassé le capteur
+« toutes ». L'aperçu en deux temps l'a attrapé et rien n'a été écrit. Ne jamais contourner ce filet
+sur un fichier de cette taille.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS
