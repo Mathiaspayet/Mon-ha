@@ -6,8 +6,13 @@
 ---
 id: '1671181697200'
 alias: Forçage chauffage salle d'eau
-description: 'Sèche-serviettes de la salle d''eau : en marche 2 min après l''allumage de la lumière (chauffe pendant
-  la douche), coupé 1 h après son extinction.
+description: 'Sèche-serviettes de la salle d''eau. En marche 2 min après l''allumage de la lumière, pour que la
+  pièce soit chaude PENDANT la douche. À l''extinction : 1 h de séchage si la lumière est restée allumée au moins
+  8 min (une vraie douche), sinon coupure immédiate.
+
+
+  Le seuil de 8 min évite qu''un passage de deux minutes aux toilettes n''offre une heure de sèche-serviettes. Il
+  porte sur le SÉCHAGE seulement, pas sur l''allumage : une douche courte bénéficie quand même d''une pièce chaude.
 
 
   ⚠️ CONDITION « simulation de présence à l''arrêt ». La simulation de présence peut allumer light.salle_d_eau alors
@@ -19,12 +24,26 @@ description: 'Sèche-serviettes de la salle d''eau : en marche 2 min après l''a
   de la lumière. Un « for: » de trigger est remis à zéro à CHAQUE redémarrage de Home Assistant, parce que le last_changed
   de l''entité est réestampillé à l''heure du démarrage. Mesuré le 22 octobre 2026 : lumière éteinte à 11:16:16,
   arrêt dû à 12:16:16, redémarrage à 11:49:52, arrêt réel à 13:00:00 — 44 minutes de sèche-serviettes en trop, dans
-  une pièce déjà à 22,2 °C. Le minuteur, lui, reprend où il en était.
+  une pièce déjà à 22,2 °C.
+
+
+  Pourquoi il n''y a PAS de déclencheur « lumière rallumée → annule le minuteur » : avec le seuil de 8 min, un aller-retour
+  de 30 s pendant le séchage ferait échouer le test de durée à l''extinction suivante et couperait le séchage en
+  cours. Le minuteur continue donc de tourner pendant un passage bref ; une vraie seconde douche (≥ 8 min) redémarre
+  l''heure à son extinction.
+
+
+  La branche « fin du séchage » exige lumière éteinte : si le minuteur arrive à échéance pendant qu''on se douche,
+  on ne coupe pas le chauffage sous la douche. L''extinction suivante redémarre une heure si la douche a duré.
+
+
+  Limite connue : le test des 8 min lit le last_changed de la lumière, donc une douche traversée par un redémarrage
+  de HA peut être mesurée trop courte et perdre son heure de séchage. Échec dans le sens prudent, on l''accepte.
 
 
   Rattrapage (démarrage de HA + toutes les 15 min) : si le forçage est actif sans séchage en cours et lumière éteinte
-  depuis 2 min, on coupe. Couvre le cas d''un minuteur arrivé à échéance pendant que HA était arrêté, et celui d''un
-  événement d''extinction manqué sur le bus KNX.
+  depuis 2 min, on coupe. Couvre un minuteur arrivé à échéance pendant que HA était arrêté, et un événement d''extinction
+  manqué sur le bus KNX.
 
 
   À savoir sur les adresses KNX : 7/1/2 est la DEMANDE envoyée à l''actionneur, 12/4/1 est sa SORTIE RÉELLE, décalée
@@ -41,11 +60,7 @@ triggers:
   to: 'on'
   trigger: state
 - entity_id: light.salle_d_eau
-  id: retour
-  to: 'on'
-  trigger: state
-- entity_id: light.salle_d_eau
-  id: debut_sechage
+  id: extinction
   to: 'off'
   trigger: state
 - id: fin_sechage
@@ -72,35 +87,40 @@ actions:
     - action: switch.turn_on
       target:
         entity_id: switch.forcage_chauffage_salle_d_eau
-  - alias: Retour dans la pièce — on annule le séchage en cours
+  - alias: Extinction après au moins 8 min de lumière — une heure de séchage
     conditions:
     - condition: trigger
-      id: retour
-    - condition: state
-      entity_id: switch.presence_simulation
-      state: 'off'
-    - condition: state
-      entity_id: timer.sechage_salle_d_eau
-      state: active
-    sequence:
-    - action: timer.cancel
-      target:
-        entity_id: timer.sechage_salle_d_eau
-  - alias: Lumière éteinte — une heure de séchage
-    conditions:
-    - condition: trigger
-      id: debut_sechage
+      id: extinction
     - condition: state
       entity_id: switch.forcage_chauffage_salle_d_eau
       state: 'on'
+    - '{{ trigger.platform == ''state'' and trigger.from_state is not none and as_timestamp(trigger.to_state.last_changed)
+      - as_timestamp(trigger.from_state.last_changed) >= 480 }}'
     sequence:
     - action: timer.start
       target:
         entity_id: timer.sechage_salle_d_eau
-  - alias: Fin du séchage — arrêt du forçage
+  - alias: Extinction après moins de 8 min, aucun séchage en cours — coupure immédiate
+    conditions:
+    - condition: trigger
+      id: extinction
+    - condition: state
+      entity_id: switch.forcage_chauffage_salle_d_eau
+      state: 'on'
+    - condition: state
+      entity_id: timer.sechage_salle_d_eau
+      state: idle
+    sequence:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.forcage_chauffage_salle_d_eau
+  - alias: Fin du séchage, personne sous la douche — arrêt du forçage
     conditions:
     - condition: trigger
       id: fin_sechage
+    - condition: state
+      entity_id: light.salle_d_eau
+      state: 'off'
     sequence:
     - action: switch.turn_off
       target:

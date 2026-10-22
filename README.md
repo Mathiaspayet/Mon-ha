@@ -2068,12 +2068,56 @@ désignait la salle d'eau depuis l'origine. **L'`entity_id` reste
 `automation.forcage_chauffage_salle_de_bain`** : le renommer ne casserait rien d'identifié dans ce
 dépôt, mais ne vaut pas le risque pour une question de cosmétique.
 
-### Non retenu
+### Le seuil de 8 minutes, ajouté dans un second temps
 
-Un seuil d'allumage relevé de 2 à 5 min, ou une heure de séchage réservée aux allumages de plus de
-8 min, pour qu'un passage de deux minutes ne déclenche pas une heure de chauffe. Hors de la
-spécification demandée ; la garde « simulation de présence » traite la cause citée. À proposer si le
-gaspillage se voit sur les relevés.
+Proposé puis demandé par Mathias : l'heure de séchage n'est accordée que si la lumière est restée
+allumée **au moins 8 minutes**, pour qu'un passage de deux minutes aux toilettes n'offre pas une
+heure de sèche-serviettes. Le seuil porte sur le séchage seulement, pas sur l'allumage — une douche
+courte bénéficie quand même d'une pièce chaude.
+
+Trois conséquences qui ne sautaient pas aux yeux :
+
+**Le déclencheur « lumière rallumée → annule le minuteur » a dû disparaître.** Avec le seuil, un
+aller-retour de 30 s pendant le séchage ferait échouer le test de durée à l'extinction suivante et
+**couperait le séchage en cours**. Le minuteur continue donc de tourner pendant un passage bref ;
+une vraie seconde douche redémarre l'heure à son extinction.
+
+**La branche « fin du séchage » exige désormais lumière éteinte.** Sans ça, un minuteur arrivant à
+échéance pendant qu'on se douche couperait le chauffage sous la douche.
+
+**Une branche de coupure immédiate** a été ajoutée pour l'extinction après moins de 8 min, plutôt
+que de laisser le rattrapage au quart d'heure s'en charger jusqu'à 15 minutes plus tard. L'ordre des
+branches d'un `choose` fait le travail : la branche « ≥ 8 min » est évaluée d'abord, donc la suivante
+n'a pas besoin de nier le test.
+
+### ⚠️ Un avertissement de bonne pratique assumé
+
+Le vérificateur a signalé la condition templatée (« Template detected in condition — if this maps to
+a native option, use that instead »). Elle est maintenue, et voici le raisonnement, pour que
+personne ne la « corrige » sans le relire.
+
+La voie native serait un `binary_sensor` modèle sur `{{ is_state('light.salle_d_eau','on') }}` avec
+`delay_on: 8 min`, lu par une `condition: state` — c'est exactement le motif que recommande
+`helper-selection.md` pour sortir une durée d'une condition. Mais au moment où la lumière s'éteint,
+ce capteur retombe à `off` **sur le même changement d'état** que celui qui déclenche
+l'automatisation, et rien ne garantit l'ordre d'évaluation. Il faudrait lui ajouter un `delay_off`
+de quelques secondes pour esquiver la course.
+
+Le template, lui, lit `trigger.from_state` et `trigger.to_state` — deux instantanés capturés avec le
+déclencheur, donc insensibles à cette course par construction. Un garde-fou explicite valait mieux
+qu'un délai réglé au doigt mouillé. Il porte le garde recommandé par la référence
+(`trigger.platform == 'state' and trigger.from_state is not none`), sans quoi le rattrapage au quart
+d'heure le ferait lever une `UndefinedError`.
+
+Vérifié à `ha_eval_template` avant livraison, sur cinq cas :
+
+```
+douche de 33 min                  -> True
+passage de 1m42                   -> False
+pile 8 min                        -> True
+7 min 59 s                        -> False
+rattrapage (pas un trigger state) -> False
+```
 
 ## Stockage et écritures disque
 
