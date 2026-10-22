@@ -1894,6 +1894,68 @@ d'observation contenait une occasion de la produire.
   d'icône (`mdi:window-open-variant` / `mdi:window-closed-variant`) réglerait la lisibilité
   d'un coup d'œil ; hors du périmètre demandé.
 
+## 22 octobre 2026 — la latence des caméras : le flux principal au lieu du sous-flux
+
+Mathias a signalé que les caméras de la vue Sécurité avaient « une grosse latence »,
+alors que l'onglet Camera du tableau d'origine est fluide. Il a demandé de reprendre les
+réglages et les types de cartes qui marchent là-bas. Comparaison des deux vues :
+
+| | Tableau d'origine (fluide) | Vue Sécurité (laggy) |
+|---|---|---|
+| Interphone | `camera.interphone_sub` | **`camera.interphone_main`** |
+| `camera_view` | `live` | **`auto`** |
+| `fit_mode` | `cover` | absent |
+
+Deux erreurs cumulées, toutes les deux de mon fait.
+
+**Le mauvais flux.** Les noms conviviaux sont en français et trompeurs si on ne connaît
+pas la convention : `camera.interphone_main` s'appelle **« Interphone Net »** et
+`camera.interphone_sub` **« Interphone Fluide »**. C'est le vocabulaire Reolink traduit —
+*clear* / *fluent* — autrement dit flux principal haute résolution contre sous-flux basse
+résolution. En choisissant `_main`, j'ai cru prendre « la vraie caméra » ; j'ai pris celle
+que le Raspberry Pi a le plus de mal à servir.
+
+**Le mauvais mode d'affichage.** `camera_view: auto` affiche une **image fixe rafraîchie
+par minuterie** : ce qu'on voit peut avoir une dizaine de secondes. `camera_view: live`
+ouvre un flux continu. Sur un sous-flux basse résolution, `live` démarre vite — c'est
+exactement le réglage du tableau d'origine.
+
+Réglages désormais alignés sur l'original : `interphone_sub` + `live` + `fit_mode: cover`
+pour l'interphone, `live` + `fit_mode: cover` pour l'entrée du garage. Les noms affichés
+(`show_name: true` avec un `name`) sont conservés : la vue Sécurité empile trois caméras
+sous un seul titre de section, l'étiquette aide à les distinguer. Sans effet sur la latence.
+
+**`camera.127_0_0_1` reste en `auto`, et ce n'est pas un oubli.** Ses
+`supported_features` valent **0** — pas de capacité de flux. C'est la dernière capture
+prise par l'automatisation `Prendre une photo en cas de mouvement ou sonnette`, donc une
+image fixe par nature. `live` n'y est pas une option. Les trois autres caméras valent `2`,
+soit `CameraEntityFeature.STREAM`.
+
+### ⚠️ Une anomalie dans le tableau d'origine, non corrigée
+
+La carte « entrée garage » de l'onglet Camera porte :
+
+```yaml
+type: picture-entity
+entity: camera.entree_garage_fluide
+camera_image: camera.interphone_sub    # ← ne désigne pas la même caméra
+camera_view: live
+```
+
+Sur une carte `picture-entity`, c'est `camera_image` qui désigne la caméra affichée quand
+il est renseigné ; `entity` ne sert alors qu'à l'état. Cette carte montre donc
+vraisemblablement **l'interphone** et non l'entrée du garage. Ça ressemble à un
+copier-coller. Non touché : c'est le tableau historique, et un coup d'œil suffit à
+confirmer ou à démentir — si les deux cartes de cet onglet affichent la même image, c'est
+ça.
+
+### La leçon
+
+Deux entités qui ne diffèrent que par un suffixe technique, avec des noms affichés en
+français qui n'en portent pas la trace évidente, méritent une vérification avant d'être
+câblées dans une carte. Le tableau d'origine contenait déjà la réponse : il suffisait de
+le lire avant d'en écrire un nouveau.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

@@ -1368,9 +1368,10 @@ views:
       heading_style: title
       icon: mdi:cctv
     - type: picture-entity
-      entity: camera.interphone_main
+      entity: camera.interphone_sub
       name: Interphone
-      camera_view: auto
+      camera_view: live
+      fit_mode: cover
       grid_options:
         columns: full
       show_state: false
@@ -1378,7 +1379,8 @@ views:
     - type: picture-entity
       entity: camera.entree_garage_fluide
       name: Entrée garage
-      camera_view: auto
+      camera_view: live
+      fit_mode: cover
       grid_options:
         columns: full
       show_state: false
