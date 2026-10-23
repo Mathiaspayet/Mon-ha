@@ -1,0 +1,52 @@
+# Helpers de type « flow » : modèle (template) et statistiques d'historique
+# (history_stats). Reconstitués depuis les options des entrées de configuration,
+# car ces aides ne vivent pas dans un fichier YAML mais dans .storage.
+# À recréer via Paramètres > Appareils et services > Aides.
+# Export Home Assistant du 2026-10-23.
+---
+template_helpers:
+  Démarrage récent du Pi:
+    entry_id: 01M5N6TJ7G2Q2663P0RHR3RCB6
+    entity_id: binary_sensor.demarrage_recent_du_pi
+    template_type: binary_sensor
+    state: "{{ states('sensor.pi_temps_de_fonctionnement') | float(99) < 0.17 }}"
+    additional_options:
+      availability: "{{ has_value('sensor.pi_temps_de_fonctionnement') }}"
+    # float(99) : la valeur de repli doit être GRANDE, pas nulle. Un float(0)
+    # rendrait le capteur « on » (0 < 0,17) chaque fois que la source est
+    # indisponible, donc à chaque redémarrage de Core — exactement les faux
+    # positifs qu'on veut éviter. L'availability est la seconde ceinture.
+    #
+    # Seuil 0,17 h = 10 min après le boot de l'hôte. Ne sert qu'à donner un
+    # front « on » comptabilisable par le history_stats ci-dessous ; l'alerte
+    # elle-même lit directement sensor.pi_temps_de_fonctionnement.
+
+history_stats_helpers:
+  Sous-tensions Pi 7 jours:
+    entry_id: 01M1PNEZA14KM84Z2A5ZV9JFYM
+    entity_id: sensor.raspberry_pi_sous_tensions_pi_7_jours
+    source: binary_sensor.rpi_power_status
+    type: count
+    state:
+    - 'on'
+    start: "{{ now() - timedelta(days=7) }}"
+    end: "{{ now() }}"
+    state_class: measurement
+
+  Démarrages du Pi 7 jours:
+    entry_id: 01M5N6ZTTEN73KY0FVHW4CCSE2
+    entity_id: sensor.demarrages_du_pi_7_jours
+    source: binary_sensor.demarrage_recent_du_pi
+    type: count
+    state:
+    - 'on'
+    start: "{{ now() - timedelta(days=7) }}"
+    end: "{{ now() }}"
+    state_class: measurement
+    # Ne compte qu'à partir de sa création (2026-10-23 au soir) : un
+    # history_stats s'appuie sur l'historique du recorder, et
+    # binary_sensor.demarrage_recent_du_pi n'existait pas avant. Le démarrage
+    # du 23 octobre 07:58 n'y figure donc pas.
+
+# Les deux capteurs « 7 jours » sont affichés côte à côte dans la section
+# « Alimentation du Pi » de la vue Technique (dashboards/maison.yaml).

@@ -1,6 +1,46 @@
-sensor:
-  name: CPU Temperature
-  command: "cat /sys/class/thermal/thermal_zone0/temp"
-  # If errors occur, make sure configuration file is encoded as UTF-8
-  unit_of_measurement: "°C"
-  value_template: "{{ value | multiply(0.001) | round(1) }}"
+# Capteurs command_line
+# Inclus par configuration.yaml :  command_line: !include commandline.yaml
+#
+# ⚠️ Le bloc historique « CPU Temperature » est laissé TEL QUEL, volontairement :
+#   ni unique_id, ni state_class. Lui en ajouter créerait une entrée de registre
+#   et risquerait de changer son entity_id, référencé à plusieurs endroits dans
+#   dashboards/maison.yaml (dont la courbe de la vue Technique). Conséquence
+#   assumée : pas de statistiques long terme sur sensor.cpu_temperature.
+#
+# Les deux capteurs ajoutés le 2026-10-23 instrumentent les redémarrages de
+# l'hôte, après la chute inexpliquée de 14 minutes du 23 octobre à 07:44 : le
+# journal de HA OS est volatile et n'en avait gardé aucune trace, la plus
+# ancienne ligne disponible étant postérieure au redémarrage lui-même.
+#
+# /proc/uptime lu depuis le conteneur Core reflète l'HÔTE, pas le conteneur :
+# c'est bien le temps depuis le boot du Raspberry Pi. Un redémarrage du seul
+# cœur de Home Assistant ne le remet donc PAS à zéro, ce qui est exactement la
+# distinction qu'on cherche à faire.
+---
+- sensor:
+    name: CPU Temperature
+    command: "cat /sys/class/thermal/thermal_zone0/temp"
+    # If errors occur, make sure configuration file is encoded as UTF-8
+    unit_of_measurement: "°C"
+    value_template: "{{ value | multiply(0.001) | round(1) }}"
+
+- sensor:
+    name: "Pi temps de fonctionnement"
+    unique_id: pi_temps_de_fonctionnement
+    command: "cat /proc/uptime"
+    unit_of_measurement: "h"
+    state_class: measurement
+    scan_interval: 300
+    value_template: "{{ (value.split()[0] | float(0) / 3600) | round(2) }}"
+
+- sensor:
+    name: "Pi dernier démarrage"
+    unique_id: pi_dernier_demarrage
+    command: "cat /proc/uptime"
+    device_class: timestamp
+    scan_interval: 300
+    # Arrondi à la minute : sans ça, now() - uptime oscille d'une seconde à
+    # chaque relève et l'entité changerait d'état toutes les 5 minutes pour rien.
+    value_template: >-
+      {{ (((as_timestamp(now()) - (value.split()[0] | float(0))) / 60) | round(0) * 60)
+         | timestamp_custom('%Y-%m-%dT%H:%M:%S%z', true) }}

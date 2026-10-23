@@ -1768,6 +1768,43 @@ views:
   - type: grid
     cards:
     - type: heading
+      heading: Redémarrages du Pi
+      heading_style: title
+      icon: mdi:restart
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        Le 23 octobre 2026 à **07:44** le Pi est tombé et est reparti seul **14 minutes** plus tard. Le journal de HA OS est volatile : la plus ancienne ligne encore disponible était postérieure au redémarrage, la cause avait donc disparu avec lui.
+
+        Ces tuiles existent pour que la prochaine fois soit connue tout de suite. Le temps de fonctionnement et l'heure du dernier démarrage lisent `/proc/uptime` **de l'hôte** : un redémarrage du seul cœur de Home Assistant ne les remet pas à zéro.
+
+        ⚠️ Le compteur « sur 7 jours » ne compte **qu'à partir du 23 octobre au soir**, date de création du capteur sur lequel il s'appuie. Le démarrage de 07:58 n'y figure pas.
+
+        *Une notification part à chaque démarrage hors du créneau programmé du mercredi 3 h.*
+    - type: tile
+      entity: sensor.pi_dernier_demarrage
+      name: Dernier démarrage
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.pi_temps_de_fonctionnement
+      name: Temps de fonctionnement
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: sensor.demarrages_du_pi_7_jours
+      name: Démarrages sur 7 jours
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: automation.systeme_alerte_demarrage_non_programme_du_pi
+      name: Alerte démarrage
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
       heading: Alertes critiques
       heading_style: title
       icon: mdi:bell-alert

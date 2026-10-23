@@ -40,3 +40,6 @@ critique_sonnette:
 critique_garage:
   name: Critique garage
   icon: mdi:garage-alert
+critique_demarrage_pi:
+  name: Critique demarrage pi
+  icon: mdi:restart-alert

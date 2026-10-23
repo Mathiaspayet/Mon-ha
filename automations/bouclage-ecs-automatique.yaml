@@ -1,45 +1,113 @@
 # bouclage ECS automatique
 # entity_id : automation.bouclage_ecs_automatique
-# Export Home Assistant du 2026-08-30 — ne pas éditer à la main sans réimport.
+# Export Home Assistant du 2026-10-23 — ne pas éditer à la main sans réimport.
 ---
 id: '1724277809608'
 alias: bouclage ECS automatique
-description: ''
+description: 'Fait tourner la pompe de bouclage ECS 4 min quand quelqu''un se leve (lumieres etage / capteur cuisine),
+  avec 15 min de repos minimum entre deux cycles. La duree est portee par timer.bouclage_ecs (restore: true) et
+  non par un delay, pour que la pompe ne reste pas allumee si HA redemarre pendant le cycle.'
 triggers:
-- entity_id:
+- enabled: true
+  entity_id:
   - light.dressing
   - light.couloir_etage
   - light.chambre_parents
   - light.salle_d_eau
   - binary_sensor.capteur_cuisine
+  id: activite
+  to: 'on'
   trigger: state
-  enabled: true
 - at: 06:00:00
-  trigger: time
   enabled: false
-conditions:
-- condition: state
-  entity_id: switch.presence_simulation
-  state: 'off'
+  id: activite
+  trigger: time
+- id: fin_pompe
+  target:
+    entity_id: timer.bouclage_ecs
+  trigger: timer.finished
+- event: start
+  id: rattrapage
+  trigger: homeassistant
+- id: rattrapage
+  minutes: /15
+  trigger: time_pattern
+conditions: []
 actions:
-- action: switch.turn_on
-  metadata: {}
-  data: {}
-  target:
-    entity_id: switch.switch_pompe_bouclage_ecs
-- delay:
-    hours: 0
-    minutes: 4
-    seconds: 0
-    milliseconds: 0
-- action: switch.turn_off
-  metadata: {}
-  data: {}
-  target:
-    entity_id: switch.switch_pompe_bouclage_ecs
-- delay:
-    hours: 0
-    minutes: 15
-    seconds: 0
-    milliseconds: 0
-mode: single
+- choose:
+  - alias: 'Activite detectee : lancer un cycle de 4 min'
+    conditions:
+    - condition: trigger
+      id: activite
+    - condition: state
+      entity_id: switch.presence_simulation
+      state: 'off'
+    - condition: state
+      entity_id: timer.bouclage_ecs
+      state: idle
+    - alias: Repos de 15 min entre deux cycles
+      condition: state
+      entity_id: switch.switch_pompe_bouclage_ecs
+      for: 00:15:00
+      state: 'off'
+    sequence:
+    - action: switch.turn_on
+      target:
+        entity_id: switch.switch_pompe_bouclage_ecs
+    - action: timer.start
+      target:
+        entity_id: timer.bouclage_ecs
+  - alias: 'Fin du minuteur : couper la pompe'
+    conditions:
+    - condition: trigger
+      id: fin_pompe
+    sequence:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.switch_pompe_bouclage_ecs
+  - alias: 'Rattrapage : pompe allumee sans minuteur en cours, on coupe'
+    conditions:
+    - condition: trigger
+      id: rattrapage
+    - condition: state
+      entity_id: switch.switch_pompe_bouclage_ecs
+      state: 'on'
+    - condition: state
+      entity_id: timer.bouclage_ecs
+      state: idle
+    sequence:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.switch_pompe_bouclage_ecs
+max: 5
+mode: queued
+
+# --- Pourquoi cette réécriture (2026-10-23) --------------------------------
+#
+# La version d'origine enchaînait  pompe ON → delay 4 min → pompe OFF →
+# delay 15 min  en mode: single. Deux défauts, le premier grave :
+#
+# 1. LA POMPE POUVAIT RESTER ALLUMÉE INDÉFINIMENT. Un delay ne survit pas à un
+#    redémarrage de Home Assistant : la séquence est abandonnée là où elle en
+#    est. Si le Pi tombe pendant les 4 minutes — et il est tombé le 23 octobre
+#    à 07:44 — plus personne n'exécute le switch.turn_off. La pompe tourne
+#    jusqu'à la prochaine intervention humaine.
+#    Correctif : la durée est portée par timer.bouclage_ecs (restore: true),
+#    qui reprend où il en était après un redémarrage, et l'arrêt est déclenché
+#    par timer.finished. Plus un rattrapage (démarrage de HA + toutes les
+#    15 min) qui coupe la pompe si elle est allumée sans minuteur en cours —
+#    le cas d'un minuteur arrivé à échéance pendant que HA était arrêté.
+#
+# 2. LE DÉCLENCHEUR RÉAGISSAIT À TOUT. Un trigger state sans « to: » se
+#    déclenche sur CHAQUE changement d'état des cinq entités surveillées,
+#    extinctions comprises. En mode single les tentatives surnuméraires sont
+#    rejetées, d'où les 1456 « Already running » en 12 h 30 relevés dans le
+#    journal le 23 octobre — un toutes les 31 s, qui noyaient tout le reste.
+#    Correctif : « to: 'on' ».
+#
+# Le repos de 15 min entre deux cycles est maintenant une condition
+# (switch éteint depuis 15 min) et non plus un delay en fin de séquence.
+# Un redémarrage remet ce compteur à zéro, donc le premier cycle après un
+# redémarrage peut être retardé de 15 min : l'échec va dans le sens prudent.
+#
+# Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.

@@ -2288,6 +2288,187 @@ part** : un `"\n"` du Jinja sur-échappé, qui serait devenu `"\\n"` et aurait c
 « toutes ». L'aperçu en deux temps l'a attrapé et rien n'a été écrit. Ne jamais contourner ce filet
 sur un fichier de cette taille.
 
+## 23 octobre 2026 — MyElectricalData : où ça en est, et ce qui casse en novembre
+
+Mathias demandait où en était l'intégration Enedis. Réponse courte : **elle marche, et elle a une
+date de péremption**.
+
+L'add-on `myelectricaldata` installé est en **0.13.4**. En amont, la dernière publication du projet
+date du **14 janvier 2025** — vingt-et-un mois sans release.
+
+### Comment il alimente le tableau Énergie
+
+Par **une seule statistique externe**, `myelectricaldata:<PDL>_base_consumption`. Il n'y a aucune
+entité `sensor.` derrière : la case « Réseau électrique » du tableau Énergie lit directement cette
+statistique. Rien d'autre dans la maison n'en dépend, et rien d'autre ne peut la remplacer sans
+reconfigurer le tableau Énergie.
+
+Volume de bruit au journal : **528 avertissements en 8 h**. Pénible, pas bloquant.
+
+### ⚠️ Ce qui casse en 2026.11
+
+Depuis **Core 2026.11**, `recorder/import_statistics` exige deux champs supplémentaires,
+`unit_class` et `mean_type`. L'add-on 0.13.4 ne les envoie pas : l'import sera **rejeté**, et le
+tableau Énergie n'aura plus de données Enedis. 2026.11 est attendue vers le **mercredi 4 novembre
+2026** (cadence du premier mercredi du mois).
+
+État en amont :
+
+| | |
+|---|---|
+| Issue **#623** | ouverte depuis le **25 avril 2026**, toujours ouverte |
+| PR **#635** | **complète** mais non fusionnée, sans activité depuis le **3 septembre 2026** |
+| Add-on successeur `myelectricaldata_new` | **inutilisable** : aucune release, aucune image publiée |
+
+### Décision
+
+**Ne pas monter en Core 2026.11** tant que #635 n'est pas fusionnée ou qu'une solution de rechange
+n'est pas en place. La version actuelle (2026.10.2) n'a aucun problème avec cet add-on.
+
+Une bonne nouvelle quand même : **une statistique externe, elle, peut être rétro-alimentée.**
+`recorder/import_statistics` accepte des points dans le passé — contrairement aux statistiques
+dérivées d'un `sensor`, qui ne se reconstruisent pas. Un trou de quelques semaines pourra donc être
+rebouché après coup si la passerelle myelectricaldata.fr a conservé les données. *(Je me suis trompé
+sur ce point plus tôt dans la conversation en affirmant qu'aucune statistique ne se rétro-alimente :
+c'est vrai pour les statistiques de capteurs, faux pour les statistiques externes.)*
+
+> Le PDL n'est pas écrit dans ce dépôt : il est **public**. Il se trouve dans les options de l'add-on,
+> dans l'interface de Home Assistant.
+
+Je n'ai **rien publié** sur le dépôt du projet. Relancer la PR #635 est possible, mais c'est un dépôt
+tiers et il faudrait décider sous quel compte — à voir avec Mathias.
+
+## 23 octobre 2026 — la chute de 14 minutes, et les trois instruments posés derrière
+
+Le vendredi 23 octobre au matin, le Pi est tombé et est reparti seul. Personne ne s'en est aperçu
+avant le soir.
+
+| Heure (Paris) | Fait |
+|---|---|
+| **07:44:24** | Dernier battement de cœur avant la chute — `sensor.cpu_temperature` à 59,4 °C, rien d'anormal |
+| *14 minutes de silence* | |
+| **07:58:21** | Démarrage de l'hôte (ligne du superviseur) |
+| **07:59:31** | Core `RUNNING` |
+
+La base sqlite porte la trace d'un **arrêt non propre** : ce n'est pas un redémarrage commandé.
+
+### Ce qui est écarté
+
+- **Pas le redémarrage programmé.** `automation.reboot_ha_host` tourne le **mercredi à 3 h**. Le 23
+  était un vendredi, à 7 h 44.
+- **Pas Mathias.** Il n'a rien touché.
+- **Pas une sous-tension.** `binary_sensor.rpi_power_status` : **0 événement sur 7 jours**. Le capteur
+  n'est pas mort — dernière remontée à 22:18:26 le même soir — donc ce zéro est fiable. *(J'ai
+  d'abord cru le capteur silencieux parce que mes recherches ne le trouvaient pas ; il va très bien.)*
+- **Pas un plantage logiciel visible.** Le `fault_log` du superviseur est vide.
+
+### ⚠️ Le journal de HA OS est volatile — un redémarrage efface sa propre cause
+
+La plus ancienne ligne encore disponible dans le journal de l'hôte est **07:59:32**, soit *après* le
+redémarrage. Les minutes qui l'ont précédé n'existent plus. C'est une propriété du journal, pas un
+réglage : il vit en mémoire et repart de zéro à chaque boot.
+
+**Conséquence de méthode : sur cette machine, une panne non instrumentée à l'avance est une panne
+définitivement inexplicable.** D'où ce qui suit.
+
+### Hypothèse retenue, faute de preuve
+
+Une **coupure de secteur d'environ 14 minutes**. Le raisonnement : un Pi figé reste figé, et son
+chien de garde matériel le relance en ~15 s, pas en 14 minutes. Une absence d'alimentation de 14
+minutes, en revanche, explique exactement la durée observée.
+
+Deux vérifications possibles, à faire par Mathias :
+
+1. **Le journal du NAS.** DSM garde un journal **persistant** : s'il a lui aussi redémarré vers
+   07:44, c'est le secteur. S'il est resté debout, non.
+2. **La courbe de charge Enedis** du créneau 07:30–08:00 du 23 octobre, visible dans un jour ou deux
+   (les données horaires du jour ne sont pas encore publiées).
+
+### Les trois instruments posés
+
+Pour que la prochaine fois soit *connue tout de suite*, pendant que les traces sont encore lisibles.
+
+**1. Deux capteurs `command_line` qui lisent `/proc/uptime`** (`config/commandline.yaml`) :
+
+| Entité | Rôle | Valeur à la pose |
+|---|---|---|
+| `sensor.pi_temps_de_fonctionnement` | heures depuis le boot de l'hôte | **14,38 h** |
+| `sensor.pi_dernier_demarrage` | horodatage du dernier boot | **07:58:00** (± 21 s de la ligne du superviseur) |
+
+Point vérifié et non supposé : **`/proc/uptime` lu depuis le conteneur Core reflète l'HÔTE.** Un
+`restart` du seul cœur de Home Assistant ne le remet donc pas à zéro — c'est précisément la
+distinction qu'il fallait pouvoir faire.
+
+Le fichier a dû passer de la forme « mapping unique » à la forme « liste » pour accueillir plusieurs
+capteurs. **Le bloc historique `CPU Temperature` est laissé tel quel**, sans `unique_id` ni
+`state_class` : lui en ajouter créerait une entrée de registre et risquerait de changer son
+`entity_id`, référencé en plusieurs endroits du tableau de bord. Coût assumé, déjà documenté plus
+haut dans ce README.
+
+**2. Un compteur de démarrages sur 7 jours** (`helpers/modeles_et_historiques.yaml`) :
+`binary_sensor.demarrage_recent_du_pi` (modèle, `uptime < 0,17 h`) donne le front, et
+`sensor.demarrages_du_pi_7_jours` (history_stats, `type: count`) le compte. ⚠️ Il ne compte **qu'à
+partir du 23 octobre au soir** : un history_stats s'appuie sur l'historique du recorder, et le
+binary_sensor n'existait pas avant. Le démarrage de 07:58 n'y figure pas.
+
+Détail qui compte : le modèle utilise `float(99)`, pas `float(0)`. Avec un repli à zéro, le capteur
+serait passé « on » (0 < 0,17) à chaque indisponibilité de la source — donc à chaque redémarrage de
+Core. La valeur de repli d'un `float()` doit tomber **du bon côté** du seuil.
+
+**3. Une notification**, `automation.systeme_alerte_demarrage_non_programme_du_pi` : au démarrage de
+HA, elle attend que les capteurs `command_line` se peuplent (`wait_template`, 3 min,
+`continue_on_timeout: false`), vérifie que l'uptime est bien inférieur à 10 min — sinon c'est un
+simple redémarrage de Core, et on ne notifie pas — puis exclut le créneau du mercredi 3 h et appelle
+`script.alerte_famille`.
+
+Les trois tuiles sont dans la vue Technique, section « Redémarrages du Pi ».
+
+### ⚠️ Et une vraie casserole trouvée au passage : la pompe de bouclage ECS
+
+`automation.bouclage_ecs_automatique` enchaînait `pompe ON → delay 4 min → pompe OFF → delay 15 min`
+en `mode: single`.
+
+**Un `delay` ne survit pas à un redémarrage : la séquence est abandonnée là où elle en est.** Si le
+Pi tombe pendant les 4 minutes — et il est tombé ce matin-là — plus personne n'exécute le
+`switch.turn_off`. **La pompe de bouclage reste allumée indéfiniment**, jusqu'à ce qu'un humain s'en
+aperçoive.
+
+Second défaut, bruyant : le déclencheur `state` n'avait pas de `to:`, donc il se déclenchait sur
+**chaque** changement d'état des cinq entités surveillées, extinctions comprises. En `mode: single`
+les tentatives surnuméraires sont rejetées, d'où **1456 « Already running » en 12 h 30** au journal —
+un toutes les 31 secondes, qui noyaient tout le reste.
+
+Correctif, exactement le même que celui du sèche-serviettes la veille :
+
+- la durée est portée par **`timer.bouclage_ecs`** (4 min, `restore: true`), qui reprend où il en
+  était après un redémarrage, et l'arrêt vient d'un déclencheur `timer.finished` ;
+- un **rattrapage** (démarrage de HA + toutes les 15 min) coupe la pompe si elle est allumée sans
+  minuteur en cours — le cas d'un minuteur arrivé à échéance pendant que HA était arrêté ;
+- **`to: 'on'`** sur le déclencheur ;
+- le repos de 15 min entre deux cycles devient une **condition** (`switch` éteint depuis 15 min) au
+  lieu d'un `delay` en fin de séquence. Un redémarrage remet ce compteur à zéro, donc le premier
+  cycle après un redémarrage peut être retardé de 15 min : l'échec va dans le sens prudent ;
+- `mode: queued`, `max: 5`.
+
+Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.
+
+### Le reste de ce que le journal a montré
+
+- **DHCP : un bail *neuf* toutes les 5 minutes.** Chaque renouvellement relance `systemd-timesyncd`
+  et reconstruit la pile réseau — **288 fois par jour**. Correctif côté box : une **réservation
+  d'adresse** pour le Pi et pour la Tydom, avec un bail de 24 h. Non fait, c'est côté box.
+- **La sonnette n'a pas de carillon.** `script.sonnette` s'arrête à son étape 2 sur 7 : le service
+  `sonos.snapshot` n'existe pas, et `media_player.salle_a_manger` a disparu (il ne reste que
+  « SHIELD »). La notification part, le son non. Proposé, pas encore corrigé.
+- 3 délais d'attente RTSP sur `interphone_main` — le flux principal, celui qu'on n'affiche plus.
+- 8 télégrammes KNX rejetés sur **`5/3/2`** : un `DPTBinary` écrit dans un objet de luminosité.
+- Erreurs `waze_travel_time` récurrentes.
+- **CPU 61,8 → 62,3 °C**, contre 52,1 °C quand le ventilateur était branché. Le ventilateur a été
+  débranché volontairement ; dossier clos, mais le chiffre est noté.
+- Sauvegarde du matin : **05:26:58, 222 Mo, ~93 s**, vers le **NAS uniquement**.
+- ⚠️ **Le volume 2 du NAS est à 98,9 %** (3,79 To), état « attention », et le disque 1 est en
+  `not_use` — donc **aucune redondance**. C'est la **seule** destination de sauvegarde.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

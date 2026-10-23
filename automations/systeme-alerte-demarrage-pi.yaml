@@ -1,0 +1,62 @@
+# Système / Alerte démarrage non programmé du Pi
+# entity_id : automation.systeme_alerte_demarrage_non_programme_du_pi
+# Export Home Assistant du 2026-10-23 — ne pas éditer à la main sans réimport.
+---
+id: '1792787158556'
+alias: Système / Alerte démarrage non programmé du Pi
+description: 'Prévient quand le Raspberry Pi a redémarré hors du créneau programmé (mercredi 3 h, automation.reboot_ha_host).
+
+
+  Pourquoi : le 23 octobre 2026 à 07:44 le Pi est tombé et est reparti seul 14 minutes plus tard. Personne ne s''en
+  est aperçu avant le soir, et le journal de HA OS étant volatile, la cause avait déjà disparu. Cette automatisation
+  existe pour que la prochaine fois soit connue tout de suite, pendant que les traces sont encore lisibles.
+
+
+  La condition sur sensor.pi_temps_de_fonctionnement distingue un VRAI démarrage de l''hôte d''un simple redémarrage
+  du cœur de Home Assistant : /proc/uptime reflète l''hôte, donc un reload ou un restart de Core laisse une durée
+  élevée et ne déclenche rien. Sans elle, chaque redémarrage de Core enverrait une notification.
+
+
+  Le wait_template laisse aux capteurs command_line le temps de se peupler : le déclencheur homeassistant.start
+  arrive avant leur première relève. continue_on_timeout: false pour ne rien envoyer plutôt qu''un message incomplet.'
+triggers:
+- event: start
+  trigger: homeassistant
+conditions: []
+actions:
+- alias: Laisser les capteurs command_line se peupler
+  continue_on_timeout: false
+  timeout: 00:03:00
+  wait_template: "{{ has_value('sensor.pi_temps_de_fonctionnement') }}"
+- alias: Un vrai démarrage de l'hôte, pas un redémarrage du seul cœur
+  below: 0.17
+  condition: numeric_state
+  entity_id: sensor.pi_temps_de_fonctionnement
+- alias: Pas le redémarrage programmé du mercredi 3 h
+  condition: not
+  conditions:
+  - after: 02:55:00
+    before: 03:25:00
+    condition: time
+    weekday:
+    - wed
+- action: script.alerte_famille
+  alias: Notification aux telephones actives
+  data:
+    alerte: demarrage_pi
+    message: "Démarrage à {{ as_timestamp(states('sensor.pi_dernier_demarrage'), 0) | timestamp_custom('%H:%M', true)\
+      \ }}, hors du créneau programmé. {{ states('sensor.demarrages_du_pi_7_jours') }} démarrage(s) sur 7 jours."
+    title: "⚠️ Le Pi a redémarré"
+mode: single
+
+# --- Dépendances ----------------------------------------------------------
+# sensor.pi_temps_de_fonctionnement et sensor.pi_dernier_demarrage :
+#   config/commandline.yaml (lecture de /proc/uptime, relève toutes les 5 min).
+# sensor.demarrages_du_pi_7_jours et binary_sensor.demarrage_recent_du_pi :
+#   helpers/modeles_et_historiques.yaml.
+# input_boolean.critique_demarrage_pi : helpers/input_boolean.yaml, lu par
+#   script.alerte_famille pour percer le silencieux (laissé OFF par défaut).
+#
+# Le seuil 0,17 h = 10 min. Marge volontairement large devant les 3 min du
+# wait_template, pour couvrir un démarrage lent de Core sans jamais confondre
+# un reload (uptime de plusieurs heures) avec un boot de l'hôte.

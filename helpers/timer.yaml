@@ -13,3 +13,13 @@ sechage_salle_d_eau:
   # automation.forcage_chauffage_salle_de_bain, qui tenait auparavant son heure
   # de séchage avec un « for: 01:00:00 » — et la rallongeait de 44 minutes à
   # chaque redémarrage. Voir README, section du 22 octobre 2026.
+
+bouclage_ecs:
+  name: Bouclage ECS
+  icon: mdi:pump
+  duration: '0:04:00'
+  restore: true
+  # Même raison que ci-dessus : porte les 4 minutes de la pompe de bouclage
+  # ECS, là où automation.bouclage_ecs_automatique utilisait un « delay » qui
+  # ne survivait pas à un redémarrage — la pompe restait alors allumée sans
+  # personne pour la couper. Voir README, section du 23 octobre 2026.
