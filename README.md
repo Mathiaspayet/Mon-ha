@@ -2611,9 +2611,10 @@ aussi, à la demande de Mathias.
 ### ⚠️ Ce que j'avais conclu à tort
 
 J'ai écrit, le 23 au soir puis le 24 au matin, que **« la sonnette n'a pas de carillon »** et qu'**« il
-n'y a plus de haut-parleur dans la maison »**. C'est faux, et Mathias l'a corrigé : **un carillon
-Reolink est relié à l'interphone.** Il sonne par sa propre liaison radio, sans passer par Home
-Assistant.
+n'y a plus de haut-parleur dans la maison »**. C'est faux, et Mathias l'a corrigé : **le carillon
+d'origine, celui livré avec l'interphone Reolink, est apparié en direct avec lui.** Il sonne par sa
+propre liaison, sans passer par Home Assistant — il n'y a rien à y configurer, et rien à y
+chercher.
 
 Mon erreur de raisonnement : j'ai inventorié les intégrations de Home Assistant et conclu de
 l'absence d'entité à l'absence de matériel. Or le bon carillon de sonnette est justement celui que

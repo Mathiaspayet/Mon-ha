@@ -3,7 +3,9 @@
 # Export Home Assistant du 2026-10-24 — ne pas éditer à la main sans réimport.
 #
 # ── LE CARILLON NE PASSE PAS PAR HOME ASSISTANT ────────────────────────────
-# Un carillon Reolink est relié à l'interphone et sonne par sa propre liaison.
+# Le carillon D'ORIGINE, celui livré avec l'interphone Reolink, est apparié en
+# direct avec lui et sonne par sa propre liaison. Il n'y a RIEN à configurer
+# dans Home Assistant, et rien à y chercher.
 # C'est la bonne architecture pour une sonnette : il sonne même Pi éteint, box
 # éteinte, Home Assistant à l'arrêt. Le Pi est tombé 14 minutes le 23 octobre
 # 2026 — un carillon qui en dépendrait n'aurait prévenu personne.
