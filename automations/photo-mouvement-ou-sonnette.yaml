@@ -30,6 +30,15 @@
 # set_options vient APRÈS la capture. Si camera.snapshot échoue, la séquence
 # s'arrête là et aucune option ne pointe sur un fichier absent.
 #
+# ── LA TUILE SAUTE TOUJOURS SUR LA NOUVELLE CAPTURE ────────────────────────
+# C'est le rôle de input_select.select_first en fin de séquence, et c'est
+# VOULU : vérifié le 24 octobre 2026, être positionné sur la capture de la
+# veille à 10:13:01 n'empêche pas la tuile de sauter sur celle de 06:12:54 dès
+# qu'elle arrive.
+# La variante « ne suivre que si on était déjà sur la plus récente » a été
+# proposée à Mathias et ÉCARTÉE par lui : il veut toujours voir la dernière.
+# Ne pas retirer select_first en croyant corriger un défaut.
+#
 # ── LE FILTRE DES 10 JOURS ─────────────────────────────────────────────────
 # La liste est reconstruite à chaque capture : nouveau nom en tête, doublons
 # retirés par « unique », et noms de plus de 10 jours écartés — la date est

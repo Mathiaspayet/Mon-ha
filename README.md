@@ -2777,6 +2777,22 @@ L'⚠️ **URL d'une image modèle doit être absolue** : la plate-forme récup�
 refuse `/local/...`. D'où `http://127.0.0.1:8123` et `verify_ssl: false` — exactement le motif de la
 caméra générique « Dernière capture », dont l'`entity_id` (`camera.127_0_0_1`) vient justement de là.
 
+### ⚠️ La tuile saute toujours sur la nouvelle capture — c'est voulu
+
+Mathias a posé la question : *« quand un screenshot est pris, il vient s'afficher et remplace le
+screen regardé même si ce n'est pas le dernier ? »* Vérifié plutôt que supposé — sélection sur la
+capture de la veille à 10:13:01, prise de vue déclenchée à 06:12:54, la tuile saute dessus,
+position 1 sur 30. C'est `input_select.select_first` en fin de séquence.
+
+Je lui ai proposé la variante « ne suivre que si on était déjà sur la plus récente », avec cet
+argument : la notification de sonnette porte déjà l'image en direct, donc faire sauter la tuile
+n'apporte rien côté sécurité et ne fait qu'interrompre. **Il l'a écartée : il veut toujours voir la
+dernière.** Décision prise, et notée ici comme dans l'en-tête de l'automatisation pour que
+`select_first` ne soit pas retiré plus tard en croyant corriger un défaut.
+
+La sélection se fait d'ailleurs **par nom de fichier**, pas par rang : sans `select_first`, une
+capture consultée resterait affichée et glisserait simplement d'une position dans la liste.
+
 ### Vérifié en direct
 
 Sélection changée à la main → l'état de `image.capture_interphone` change dans la seconde. Flèche
