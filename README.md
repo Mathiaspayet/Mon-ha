@@ -2807,6 +2807,84 @@ Le compteur, le curseur de recul et le répertoire `defilement/` du premier essa
 L'archive horodatée et sa purge à 10 jours, l'emplacement fixe `capture_interphone.jpg` et la caméra
 générique qui le lit. Rien de tout cela n'a été touché.
 
+## 24 octobre 2026 — « La sauvegarde automatique n'a pas pu être créée »
+
+Une réparation apparue dans Paramètres, rapportée par Backup. Ce n'était ni le NAS, ni un manque de
+place — l'hypothèse qui venait d'abord à l'esprit, le volume 2 étant à 98,9 %.
+
+### Ce que le journal dit exactement
+
+```
+08:03:20 ERROR [websocket_api] Error during service call to update.install:
+  Error creating backup: Backup failed: [{'type': 'HomeAssistantBackupError',
+  'message': "Preparing backup of Home Assistant Core failed. ...
+  'code': 'pre_backup_actions_failed',
+  'message': 'Error during pre-backup: Could not lock database within 30 seconds.'}}",
+  'stage': 'home_assistant'}]
+```
+
+Deux choses s'y lisent :
+
+1. **C'est `update.install` qui a échoué**, pas la sauvegarde planifiée. Mathias a lancé la mise à
+   jour de Core 2026.10.3 ; Home Assistant prend une sauvegarde obligatoire avant d'installer, cette
+   sauvegarde a échoué, **et la mise à jour a donc été annulée**. Core est resté en 2026.10.2.
+2. La cause est `Could not lock database within 30 seconds` : le *recorder* n'a pas réussi à
+   verrouiller la base sqlite dans le délai imparti.
+
+### La sauvegarde planifiée, elle, marche
+
+| Sauvegarde | Heure | Taille | Destination |
+|---|---|---|---|
+| `b9a225d8` | **24/10 à 04:50:49** | **227 Mo** | NAS |
+| `8f8545b8` | 23/10 à 05:26:58 | 222 Mo | NAS |
+| `3d2b9f1d` | 22/10 à 05:21:03 | 214 Mo | NAS |
+
+Place disponible, NAS joignable, chaîne de sauvegarde saine. **La seule différence entre 04:50 et
+08:03, c'est l'activité de la maison.**
+
+### Pourquoi le verrou échoue le matin et pas la nuit
+
+Verrouiller la base oblige le recorder à terminer sa transaction en cours. Or
+`config/configuration.yaml` porte, depuis le 2 septembre et pour ménager le SSD USB :
+
+```yaml
+recorder:
+  purge_keep_days: 30
+  commit_interval: 30    # 1 s par défaut
+  auto_repack: false
+```
+
+**`commit_interval: 30` veut dire que le recorder ne valide ses écritures que toutes les 30
+secondes.** Le délai d'attente du verrou est de 30 secondes lui aussi. À 04:50 la maison dort, rien
+n'est écrit, le verrou s'obtient instantanément. À 08:03 tout le monde est levé — lumières,
+télégrammes KNX, thermostats, pompe de bouclage — le recorder écrit en continu et la demande de
+verrou court après une transaction qui se renouvelle dans la même fenêtre que son propre délai.
+
+C'est donc un effet de bord **connu et assumé** du réglage anti-usure du SSD, pas une panne. Et il
+ne se voyait pas jusqu'ici parce que la sauvegarde planifiée tourne vers 5 h du matin.
+
+### Que faire
+
+1. **Décocher « créer une sauvegarde » dans la fenêtre de mise à jour.** C'est l'option propre :
+   la sauvegarde de 04:50 ce matin existe, elle est complète, elle est sur le NAS, et elle a trois
+   heures. Le point de restauration est là.
+2. Ou **relancer la mise à jour tôt le matin**, quand la maison dort. Elle passera.
+3. Baisser `commit_interval` n'est pas une bonne idée : c'est exactement ce qu'on avait mis en place
+   contre les resets du pont USB RTL9210 sous charge d'écriture, et un changement du bloc `recorder`
+   exige de toute façon un redémarrage.
+
+### ⚠️ Et 2026.10.3 est bien une mise à jour à faire
+
+À ne pas confondre avec l'avertissement MyElectricalData : **c'est 2026.11 qu'il ne faut pas
+installer**, pas 2026.10.3. Une version corrective de la même série ne touche pas à
+`import_statistics`.
+
+### À surveiller, au passage
+
+La base grossit : **195 Mo le 18 octobre, 227 Mo le 24** — 32 Mo en six jours. Avec
+`purge_keep_days: 30` et `auto_repack: false`, elle ne se recompacte jamais. Plus elle grossit, plus
+le verrou met de temps à s'obtenir, et plus souvent ce message reviendra.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS
