@@ -318,7 +318,7 @@ footer{
         <li>Le domaine <code>sonos</code> <b>n'est plus enregistré</b> : ses services ont disparu avec l'intégration.</li>
       </ul>
       <p>Il ne reste que trois <code>media_player</code> sur l'instance : deux SHIELD et « Deurbel », dont deux sont indisponibles.</p>
-      <p class="fix"><b>Correctif</b> Décider de la sortie audio cible. Le carillon peut repartir sur un Google Cast (l'intégration <code>cast</code> est chargée) ou en TTS via Google Cloud, déjà configuré. Voir A9.</p>
+      <p class="fix"><b>Résolu le 24 octobre 2026</b> — et le constat était incomplet. Les six actions mortes ont été retirées, et l'entrée de configuration de l'enceinte disparue supprimée. Mais il n'y avait pas de « sortie audio cible » à décider : un carillon Reolink est relié à l'interphone et sonne par sa propre liaison, sans passer par Home Assistant. A9 est sans objet. Voir la section du 24 octobre 2026 du README.</p>
     </div>
   </article>
 
@@ -603,7 +603,8 @@ footer{
     <div class="fbody">
       <h3>Reconstruire le carillon de sonnette</h3>
       <p>Suite de C2. Trois options, par ordre de simplicité : diffuser sur un Google Cast via l'intégration <code>cast</code> déjà chargée ; générer une annonce vocale avec Google Cloud TTS, également configuré ; ou remettre un Sonos si l'enceinte existe encore physiquement.</p>
-      <p>Dans tous les cas, retirer le motif <code>snapshot</code> / <code>restore</code> : il n'a de sens que sur Sonos, et il ajoute deux points de panne à une séquence qui doit surtout être fiable.</p>
+      <p>Dans tous les cas, retirer le motif <code>snapshot</code> / <code>restore</code> : il ajoute deux points de panne à une séquence qui doit surtout être fiable.</p>
+      <p class="fix"><b>Sans objet, 24 octobre 2026</b> — il n'y a pas de carillon à reconstruire : un carillon Reolink est relié à l'interphone et sonne par sa propre liaison, sans passer par Home Assistant. C'est l'architecture la plus robuste des trois proposées ici, et elle était déjà en place. Seules les six actions mortes de l'automatisation ont été retirées. Voir la section du 24 octobre 2026 du README.</p>
     </div>
   </article>
 </section>

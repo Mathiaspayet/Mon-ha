@@ -2548,11 +2548,11 @@ Correctif, exactement le même que celui du sèche-serviettes la veille :
 - **DHCP : un bail *neuf* toutes les 5 minutes.** Chaque renouvellement relance `systemd-timesyncd`
   et reconstruit la pile réseau — **288 fois par jour**. Correctif côté box : une **réservation
   d'adresse** pour le Pi et pour la Tydom, avec un bail de 24 h. Non fait, c'est côté box.
-- **La sonnette n'a pas de carillon.** `automation.sonette_quand_qqn_sonne` s'arrête à son étape 2
-  sur 7 : le service `sonos.snapshot` n'existe pas, et `media_player.salle_a_manger` a disparu (il
-  ne reste que « SHIELD »). La notification part, le son non. ✅ **Corrigé le 24 octobre** — voir la
-  section dédiée plus bas. *(Et j'avais écrit `script.sonnette` : c'est une automatisation, pas un
-  script.)*
+- **L'automatisation de la sonnette s'arrête à son étape 2 sur 7** : sa deuxième action appelle un
+  service d'une intégration absente. La notification part, les six actions suivantes non. ✅
+  **Corrigé le 24 octobre** — voir la section dédiée plus bas. *(J'avais écrit ici « la sonnette n'a
+  pas de carillon » et `script.sonnette` : deux erreurs. Il y a un carillon Reolink, et c'est une
+  automatisation, pas un script.)*
 - 3 délais d'attente RTSP sur `interphone_main` — le flux principal, celui qu'on n'affiche plus.
 - 8 télégrammes KNX rejetés sur **`5/3/2`** : un `DPTBinary` écrit dans un objet de luminosité.
 - Erreurs `waze_travel_time` récurrentes.
@@ -2597,60 +2597,69 @@ L'analyse fonctionnelle complète (organe commandé et ses adresses KNX, entrée
 table de vérité, comportement en cas d'incident, limites) vit désormais en tête de
 `automations/bouclage-ecs-automatique.yaml`.
 
-## 24 octobre 2026 — la sonnette : elle s'arrêtait à l'étape 2 sur 7
+## 24 octobre 2026 — la sonnette : une automatisation qui s'arrêtait à l'étape 2 sur 7
 
-Relevé le 23 octobre au soir, corrigé le 24. `automation.sonette_quand_qqn_sonne` enchaînait sept
-actions ; **la deuxième était une action inexistante**, et une action inexistante arrête la séquence
-sans autre trace qu'une ligne de journal.
+`automation.sonette_quand_qqn_sonne` enchaînait sept actions. **La deuxième appelait un service
+d'une intégration absente**, et une action inexistante arrête la séquence sans autre trace qu'une
+ligne de journal. La notification partait, les six actions suivantes — réglage de volume, deux coups
+de carillon sur une enceinte réseau, restauration — n'étaient jamais atteintes. Et rien ne le
+signalait.
 
-| # | Action | |
-|---|---|---|
-| 1 | `script.alerte_famille` | ✅ partait |
-| 2 | `sonos.snapshot` | ❌ **service inexistant → arrêt en erreur** |
-| 3 | `media_player.volume_set` (0,1 la nuit / 0,35 le jour) | ⬜ jamais atteinte |
-| 4 | `media_player.play_media` (`doorbell-1.mp3`) | ⬜ jamais atteinte |
-| 5 | `delay 5 s` | ⬜ jamais atteinte |
-| 6 | `media_player.play_media` (2ᵉ coup) | ⬜ jamais atteinte |
-| 7 | `sonos.restore` | ⬜ jamais atteinte |
+Les six actions mortes sont supprimées, et l'entrée de configuration de l'enceinte disparue l'a été
+aussi, à la demande de Mathias.
 
-La notification partait donc bien, le son non — et rien ne le signalait.
+### ⚠️ Ce que j'avais conclu à tort
 
-### ⚠️ Le vrai problème : il n'y a plus de haut-parleur dans la maison
+J'ai écrit, le 23 au soir puis le 24 au matin, que **« la sonnette n'a pas de carillon »** et qu'**« il
+n'y a plus de haut-parleur dans la maison »**. C'est faux, et Mathias l'a corrigé : **un carillon
+Reolink est relié à l'interphone.** Il sonne par sa propre liaison radio, sans passer par Home
+Assistant.
 
-Inventaire complet des intégrations avant de toucher à l'automatisation :
+Mon erreur de raisonnement : j'ai inventorié les intégrations de Home Assistant et conclu de
+l'absence d'entité à l'absence de matériel. Or le bon carillon de sonnette est justement celui que
+Home Assistant ne voit pas — **c'est exactement l'architecture que je recommandais deux paragraphes
+plus bas dans la même analyse**, sans voir qu'elle était déjà en place. Le Pi est tombé 14 minutes
+la veille ; un carillon qui en dépendrait n'aurait prévenu personne. Celui-là sonne Pi éteint, box
+éteinte.
 
-| Intégration | État | Ce qu'elle offre |
-|---|---|---|
-| `sonos` | **`ignore`**, non chargée, **zéro entité** | l'enceinte de la salle à manger n'existe plus |
-| `cast` | chargée | ne voit que `media_player.shield_3` — la SHIELD, un **téléviseur** |
-| `androidtv_remote` | `ignore` | — |
-| `google_cloud` | chargée | synthèse vocale… sans enceinte pour la jouer |
+C'est la quatrième fois dans ce projet que je lis une absence de données comme une absence de
+phénomène, après le trou du recorder du 7 octobre, les valeurs MQTT retenues, et `UNLOCKED` déclaré
+inexistant sur les baies vitrées. **Le symptôme est toujours le même : je consulte l'inventaire
+dont je dispose et je conclus sur le monde.**
 
-Restent `siren.interphone_siren` — une sirène d'alarme, pas un carillon — et
-`select.interphone_play_quick_reply_message`, qui joue dans le haut-parleur de l'interphone, donc
-**dehors**, pour le visiteur. `switch.interphone_doorbell_button_sound` est bien actif : le visiteur
-entend un ding à la porte. Personne ne l'entend à l'intérieur.
+### Et Home Assistant ne verra pas ce carillon
 
-L'entrée `sonos` étant à l'état `ignore`, c'est que la découverte a été **écartée volontairement** à
-un moment : l'enceinte n'a pas disparu d'elle-même d'une configuration qui marchait.
+Le diagnostic de l'intégration `reolink`, relevé le 24 octobre, explique aussi deux entités
+indisponibles qui traînaient dans mes relevés depuis des semaines :
 
-**Donc : les téléphones sont le carillon.** C'est tout ce qui est disponible, et c'est ce que
-l'automatisation fait maintenant.
+```
+"model"               : Reolink Video Doorbell PoE
+"firmware version"    : v3.0.0.6460_2605211898
+"Chimes"              : {}           ← aucun carillon connu de la caméra
+"supportDingDongCtrl" : permit 0     ← pas de gestion de carillon du tout
+```
 
-### Ce qui a été fait
+*(« DingDong » est le nom interne du carillon chez Reolink.)*
 
-Les six étapes mortes sont supprimées, et la notification devient un vrai signal de sonnette :
+Donc `number.interphone_volume_de_la_sonnette` et `number.interphone_speak_volume` sont
+`unavailable` **non pas par panne, mais parce que le micrologiciel de l'interphone ne remonte rien
+de son carillon**. Le volume et la sonnerie se règlent sur le carillon ou dans l'application
+Reolink. Inutile de recharger l'intégration pour les faire apparaître : elles n'apparaîtront pas.
+
+### Ce qui reste à la charge de Home Assistant : la notification
+
+Le carillon prévient la maison ; la notification prévient ceux qui n'y sont pas, et montre qui
+sonne. Elle est devenue un vrai signal :
 
 - **un canal Android dédié** (`channel`), c'est-à-dire l'endroit où le son se règle réellement :
-  *Paramètres > Applications > Home Assistant > Notifications > « Sonnette »*. On y met la sonnerie
-  et le volume qu'on veut ;
+  *Paramètres > Applications > Home Assistant > Notifications > « Sonnette »* ;
 - **deux canaux séparés**, « Sonnette » (`importance: high`) et « Sonnette nuit »
-  (`importance: default`), pour retrouver l'intention de la version d'origine — fort le jour,
-  discret de 21 h à 8 h. ⚠️ L'importance d'un canal Android est **figée à sa création** : un canal
-  unique avec deux valeurs d'`importance` ne marcherait pas, d'où les deux ;
-- **l'image de l'interphone** dans la notification (`camera.interphone_sub`, le sous-flux : le flux
-  principal accumule les délais d'attente RTSP, et une vignette n'a pas besoin de 2 K) ;
-- un `clickAction` vers la vue Sécurité, et `mdi:bell-ring` comme icône ;
+  (`importance: default`), pour un signal fort le jour et discret de 21 h à 8 h — l'intention des
+  réglages de volume de la version d'origine. ⚠️ L'importance d'un canal Android est **figée à sa
+  création** : un canal unique avec deux valeurs d'`importance` ne marcherait pas, d'où les deux ;
+- **l'image de l'interphone** (`camera.interphone_sub`, le sous-flux : le flux principal accumule
+  les délais d'attente RTSP, et une vignette n'a pas besoin de 2 K) ;
+- un appui ouvre la vue Sécurité, icône `mdi:bell-ring` ;
 - `mode: queued`, `max: 3`, pour qu'un double appui ne produise pas d'« Already running ».
 
 ### ⚠️ Une interaction qu'il fallait ne pas casser
@@ -2665,7 +2674,7 @@ D'où une **première branche à part** quand la criticité est demandée : elle
 sans conflit (image, icône, `clickAction`). Vérifié par rendu des trois payloads :
 
 ```
-NON CRITIQUE   → {channel: Sonnette, importance: high, image: …, notification_icon: …, clickAction: …}
+NON CRITIQUE     → {channel: Sonnette, importance: high, image: …, notification_icon: …, clickAction: …}
 CRITIQUE Android → {channel: alarm_stream, ttl: 0, priority: high, importance: high, color: red,
                     sticky: true, + image, notification_icon, clickAction}
 CRITIQUE Apple   → {push: {sound: {name: default, critical: 1, volume: 1.0}},
@@ -2674,21 +2683,6 @@ CRITIQUE Apple   → {push: {sound: {name: default, critical: 1, volume: 1.0}},
 
 Les clés critiques sont toutes conservées. Cibles résolues : `notify.iphone_marine` et
 `notify.pixel_9a` (`notify.i10_pro` est exclu en dur dans le script, comme prévu).
-
-### Ce qui manque, et qui est du matériel
-
-**Un carillon qui dépend du Raspberry Pi est une mauvaise architecture.** Le Pi est tombé 14 minutes
-le 23 octobre ; pendant ce temps, la sonnette n'aurait prévenu personne. Les trois options, de la
-plus robuste à la moins :
-
-1. **Carillon d'intérieur Reolink** (~25 €). Il se jumelle **directement** à l'interphone par sa
-   propre radio, sans passer par Home Assistant. Il sonne Pi éteint, box éteinte, Wi-Fi coupé.
-   C'est la bonne réponse pour une sonnette.
-2. **Une enceinte Google Cast** (Nest Mini, ~30 €). L'intégration `cast` est déjà chargée :
-   l'enceinte apparaîtrait seule comme `media_player`, et la forme d'origine de l'automatisation
-   redeviendrait valable (volume + deux coups de carillon). Dépend du Pi.
-3. **Remettre une Sonos.** Il suffirait de ne plus ignorer l'entrée de configuration `sonos`.
-   Dépend du Pi aussi.
 
 ### Non testé en direct
 
