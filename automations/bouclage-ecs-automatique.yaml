@@ -1,12 +1,114 @@
 # bouclage ECS automatique
 # entity_id : automation.bouclage_ecs_automatique
-# Export Home Assistant du 2026-10-23 — ne pas éditer à la main sans réimport.
+# Export Home Assistant du 2026-10-24 — ne pas éditer à la main sans réimport.
+#
+# ============================================================================
+#  ANALYSE FONCTIONNELLE
+# ============================================================================
+#
+# ── À QUOI ÇA SERT ─────────────────────────────────────────────────────────
+# La pompe de bouclage fait circuler l'eau chaude dans la boucle sanitaire
+# pour qu'elle soit déjà chaude au robinet, sans attente et sans vider des
+# litres dans l'évier. En continu elle coûte cher : la boucle perd de la
+# chaleur en permanence et le ballon la recompense. On ne la fait donc tourner
+# que quand quelqu'un va probablement ouvrir un robinet.
+#
+# ── ORGANE COMMANDÉ ────────────────────────────────────────────────────────
+# switch.switch_pompe_bouclage_ecs — KNX, commande 17/2/0, ÉTAT RELU 17/2/1.
+# L'état venant du bus, Home Assistant voit la pompe même commandée ailleurs
+# (bouton mural, autre système). Indépendant de switch.switch_ecs (chauffe du
+# ballon) et de switch.switch_mode_ete.
+#
+# ── ENTRÉES ────────────────────────────────────────────────────────────────
+#   activite    passage à « on » de light.dressing, light.couloir_etage,
+#               light.chambre_parents, light.salle_d_eau,
+#               binary_sensor.capteur_cuisine
+#               → « quelqu'un se lève / va se doucher / va à la cuisine »
+#   fin_pompe   timer.finished sur timer.bouclage_ecs — les 4 min sont écoulées
+#   rattrapage  démarrage de HA + toutes les 15 min — filet de sécurité
+#
+# Le « to: on » est essentiel : sans lui le déclencheur réagissait aussi aux
+# extinctions et à tout changement d'état des cinq entités surveillées.
+#
+# ── SÉQUENCE NOMINALE ──────────────────────────────────────────────────────
+#   07:12:04  light.couloir_etage → on          (déclencheur activite)
+#   07:12:04  pompe ON + timer.bouclage_ecs démarre (4 min)
+#   07:16:04  timer.finished                     (déclencheur fin_pompe)
+#   07:16:04  pompe OFF
+#   07:31:04  fin du repos : un nouveau cycle redevient possible
+#
+# Pas de « for: » à l'allumage, contrairement au sèche-serviettes : le but est
+# que l'eau soit chaude AVANT qu'on ouvre le robinet, donc la pompe part tout
+# de suite. Cadence maximale : 4 min de marche + 15 min de repos = au plus un
+# cycle toutes les 19 minutes, soit ~3 par heure.
+#
+# ── TABLE DE VÉRITÉ ────────────────────────────────────────────────────────
+#   Déclencheur | Heure    | Simu | Minuteur | Pompe        | Action
+#   ------------|----------|------|----------|--------------|------------------
+#   activite    | 6h-minuit| off  | idle     | off ≥ 15 min | ON + minuteur
+#   activite    | 0h-6h    |  —   |    —     |      —       | rien (nuit)
+#   activite    | 6h-minuit| ON   |    —     |      —       | rien (absents)
+#   activite    | 6h-minuit| off  | active   |      —       | rien (en cours)
+#   activite    | 6h-minuit| off  | idle     | off < 15 min | rien (repos)
+#   fin_pompe   |    —     |  —   |    —     |      —       | OFF
+#   rattrapage  |    —     |  —   | idle     | on           | OFF
+#   rattrapage  |    —     |  —   | active   | on           | rien (légitime)
+#
+# ⚠️ La plage 6 h – minuit ne gate QUE le lancement. L'arrêt en fin de minuteur
+# et le rattrapage restent actifs 24 h/24 : un cycle lancé à 23h58 doit pouvoir
+# se terminer à 00h02, et une pompe trouvée allumée sans minuteur doit être
+# coupée à n'importe quelle heure. Mettre la condition horaire ailleurs que
+# dans la première branche laisserait la pompe allumée toute la nuit.
+#
+# ── COMPORTEMENT EN CAS D'INCIDENT ─────────────────────────────────────────
+# HA redémarre pendant les 4 min
+#   timer.bouclage_ecs a restore: true : il reprend son décompte et émet son
+#   timer.finished à l'heure prévue. La pompe s'arrête normalement.
+# HA est arrêté au moment de l'échéance
+#   Aucun timer.finished n'est émis. Au redémarrage, la branche rattrapage voit
+#   « pompe allumée + minuteur idle » et coupe. Le tick des 15 min repasse
+#   derrière si l'événement est raté autrement.
+# Le repos de 15 min vient d'être remis à zéro par un redémarrage
+#   Le « for: » se mesure sur le last_changed du switch, réestampillé à l'heure
+#   du démarrage. Premier cycle possible 15 min après le boot. L'échec va dans
+#   le sens prudent : on retarde la pompe, on ne la laisse pas tourner.
+# La pompe est allumée à la main (tuile, ou bouton KNX)
+#   Le minuteur reste idle, donc le rattrapage la coupe au prochain tick, dans
+#   15 min au plus. C'est le prix du filet de sécurité : une pompe allumée sans
+#   minuteur est traitée comme une anomalie. Pour qu'une commande manuelle
+#   hérite de ses 4 min, il faudrait un déclencheur sur le passage à « on » de
+#   la pompe qui démarre le minuteur si celui-ci est idle. Non fait.
+# L'entité KNX est unavailable
+#   La branche 1 exige « off », la branche 3 exige « on » : aucune ne part.
+#   Pas de commande à l'aveugle.
+# Bavardage du bus KNX
+#   Sans effet sur le repos : last_changed ne bouge que sur un CHANGEMENT de
+#   valeur, pas sur une ré-émission du même état par l'actionneur.
+#
+# ── LIMITES CONNUES ────────────────────────────────────────────────────────
+# - Aucun lien avec la température réelle de la boucle ou du ballon : c'est du
+#   temps fixe, pas une régulation. Sans eau chaude au ballon, la pompe brasse
+#   de l'eau tiède pendant 4 minutes.
+# - Les 4 min et les 15 min sont les réglages d'origine, repris à l'identique
+#   (l'ancien « delay 4 min » et le « delay 15 min » final qui, en mode single,
+#   bloquait toute relance). Seul le mécanisme a changé, pas le comportement.
+# - Ni salle de bain du bas ni WC dans les déclencheurs : seulement l'étage et
+#   la cuisine.
+#
 ---
 id: '1724277809608'
 alias: bouclage ECS automatique
-description: 'Fait tourner la pompe de bouclage ECS 4 min quand quelqu''un se leve (lumieres etage / capteur cuisine),
-  avec 15 min de repos minimum entre deux cycles. La duree est portee par timer.bouclage_ecs (restore: true) et
-  non par un delay, pour que la pompe ne reste pas allumee si HA redemarre pendant le cycle.'
+description: 'Fait tourner la pompe de bouclage ECS 4 min quand quelqu''un se leve (lumieres etage / capteur cuisine), entre
+  6 h et minuit, avec 15 min de repos minimum entre deux cycles.
+
+
+  La plage 6 h - minuit ne porte que sur le LANCEMENT d''un cycle. L''arret en fin de minuteur et le rattrapage restent actifs
+  24 h / 24 : un cycle lance a 23h58 doit pouvoir se terminer a 00h02, et une pompe trouvee allumee sans minuteur doit etre
+  coupee a n''importe quelle heure.
+
+
+  La duree est portee par timer.bouclage_ecs (restore: true) et non par un delay, pour que la pompe ne reste pas allumee si
+  HA redemarre pendant le cycle.'
 triggers:
 - enabled: true
   entity_id:
@@ -18,10 +120,6 @@ triggers:
   id: activite
   to: 'on'
   trigger: state
-- at: 06:00:00
-  enabled: false
-  id: activite
-  trigger: time
 - id: fin_pompe
   target:
     entity_id: timer.bouclage_ecs
@@ -39,6 +137,9 @@ actions:
     conditions:
     - condition: trigger
       id: activite
+    - alias: Entre 6 h et minuit (une borne after seule s'arrete a minuit)
+      after: 06:00:00
+      condition: time
     - condition: state
       entity_id: switch.presence_simulation
       state: 'off'
@@ -82,7 +183,29 @@ actions:
 max: 5
 mode: queued
 
-# --- Pourquoi cette réécriture (2026-10-23) --------------------------------
+# ============================================================================
+#  HISTORIQUE DES CORRECTIFS
+# ============================================================================
+#
+# --- 2026-10-24 : plage horaire 6 h – minuit -------------------------------
+#
+# La pompe pouvait partir à 3 h du matin si quelqu'un allumait le couloir pour
+# aller aux toilettes : 4 minutes de circulation, et un ballon qui recompense
+# les pertes de la boucle, pour personne.
+#
+# La condition est « condition: time, after: 06:00:00 », SANS borne « before ».
+# Une borne « after » seule s'arrête à minuit — c'est la sémantique documentée
+# de Home Assistant, et c'est exactement la fenêtre voulue. Un « before:
+# 00:00:00 » explicite serait ambigu (une fenêtre ne franchit minuit que si
+# « after » est plus tard que « before »), donc on s'abstient.
+# Vérifié en direct le 24 octobre à 05:01 : la condition rend false, et la même
+# condition avec « after: 04:00:00 » rend true — elle lit bien l'horloge.
+#
+# Le déclencheur « time at 06:00:00 », conservé désactivé depuis l'origine, a
+# été SUPPRIMÉ à cette occasion : il faisait doublon avec la borne de la plage
+# et n'avait jamais servi.
+#
+# --- 2026-10-23 : le minuteur à la place des delay ------------------------
 #
 # La version d'origine enchaînait  pompe ON → delay 4 min → pompe OFF →
 # delay 15 min  en mode: single. Deux défauts, le premier grave :
@@ -105,9 +228,5 @@ mode: queued
 #    journal le 23 octobre — un toutes les 31 s, qui noyaient tout le reste.
 #    Correctif : « to: 'on' ».
 #
-# Le repos de 15 min entre deux cycles est maintenant une condition
-# (switch éteint depuis 15 min) et non plus un delay en fin de séquence.
-# Un redémarrage remet ce compteur à zéro, donc le premier cycle après un
-# redémarrage peut être retardé de 15 min : l'échec va dans le sens prudent.
-#
-# Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.
+# Le repos de 15 min entre deux cycles est devenu une condition (switch éteint
+# depuis 15 min) et non plus un delay en fin de séquence.

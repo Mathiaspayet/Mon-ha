@@ -2543,8 +2543,6 @@ Correctif, exactement le même que celui du sèche-serviettes la veille :
   cycle après un redémarrage peut être retardé de 15 min : l'échec va dans le sens prudent ;
 - `mode: queued`, `max: 5`.
 
-Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.
-
 ### Le reste de ce que le journal a montré
 
 - **DHCP : un bail *neuf* toutes les 5 minutes.** Chaque renouvellement relance `systemd-timesyncd`
@@ -2562,6 +2560,40 @@ Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.
 - ⚠️ **Le volume 2 du NAS est à 98,9 %** (3,79 To), état « attention », et le disque 1 est en
   `not_use` — donc **aucune redondance**. C'est la **seule** destination de sauvegarde. Le journal
   DSM a depuis donné la raison du `not_use` : ce disque est tombé en **mai 2024** (voir plus haut).
+
+### 24 octobre 2026 — une plage 6 h – minuit, et le déclencheur de 6 h supprimé
+
+En relisant l'analyse fonctionnelle, Mathias a relevé le point que j'y avais noté comme limite :
+**aucune plage horaire**. La pompe pouvait donc partir à 3 h du matin si quelqu'un allumait le
+couloir pour aller aux toilettes — 4 minutes de circulation, et un ballon qui recompense les pertes
+de la boucle, pour personne.
+
+La condition ajoutée à la **première branche seulement** :
+
+```yaml
+- alias: "Entre 6 h et minuit (une borne after seule s'arrête à minuit)"
+  condition: time
+  after: "06:00:00"
+```
+
+Pas de borne `before`. **Une borne `after` seule s'arrête à minuit** — c'est la sémantique
+documentée de Home Assistant, et c'est exactement la fenêtre voulue. Un `before: "00:00:00"`
+explicite serait ambigu, une fenêtre ne franchissant minuit que si `after` est plus tard que
+`before`. Vérifié en direct à **05:01** : la condition rend `false`, et la même avec
+`after: "04:00:00"` rend `true` — elle lit bien l'horloge.
+
+⚠️ **La plage ne gate que le LANCEMENT.** L'arrêt en fin de minuteur et le rattrapage restent actifs
+24 h/24 : un cycle lancé à 23h58 doit pouvoir se terminer à 00h02, et une pompe trouvée allumée sans
+minuteur doit être coupée à n'importe quelle heure. Mettre la condition horaire au niveau des
+conditions globales de l'automatisation, ou dans la branche d'arrêt, **laisserait la pompe allumée
+toute la nuit** — c'est le piège exact de ce genre de fenêtre.
+
+Le déclencheur « time at 06:00:00 », conservé désactivé depuis l'origine, a été **supprimé** à cette
+occasion : il faisait doublon avec la borne de la plage et n'avait jamais servi.
+
+L'analyse fonctionnelle complète (organe commandé et ses adresses KNX, entrées, séquence nominale,
+table de vérité, comportement en cas d'incident, limites) vit désormais en tête de
+`automations/bouclage-ecs-automatique.yaml`.
 
 ## Stockage et écritures disque
 
