@@ -2885,6 +2885,90 @@ La base grossit : **195 Mo le 18 octobre, 227 Mo le 24** — 32 Mo en six jours.
 `purge_keep_days: 30` et `auto_repack: false`, elle ne se recompacte jamais. Plus elle grossit, plus
 le verrou met de temps à s'obtenir, et plus souvent ce message reviendra.
 
+## 24 octobre 2026 — Core 2026.10.3, et un deuxième redémarrage du Pi
+
+### La mise à jour, elle, est propre
+
+| | |
+|---|---|
+| Version | **2026.10.3**, état `RUNNING` |
+| Réparations / notifications en attente | **0** — celle de la sauvegarde a disparu |
+| Journal du superviseur | 17:04:29 téléchargement → 17:09:16 démarrage → **17:10:23 « Successfully started Home Assistant 2026.10.3 »** |
+| Ancienne image | nettoyée (`2026.10.2` supprimée) |
+
+Toutes les automatisations sont revenues (15, dont 14 actives), les deux minuteurs sont `idle`, les
+11 capteurs d'ouvrants en français répondent, `climate.chauffage_général` est là,
+`image.capture_interphone` et `input_select.capture_interphone_choisie` aussi. Aucune intégration
+perdue.
+
+### ⚠️ Mais le Pi a redémarré ce matin à 07:49 — et l'alerte posée la veille l'a vu
+
+Posée le 23 au soir. Déclenchée pour la première fois le 24 au matin.
+
+| Heure | Fait |
+|---|---|
+| **07:49:03,03 → ,23** | **Toutes les entités KNX passent `unavailable`**, une par une, en 200 ms — lumières, climats, volets, vannes, états H1/H2/ECS, interface KNX. `sensor.toutes` décompte 21 → 0 en suivant. |
+| 07:49:03,23 | **Dernière écriture du recorder.** Plus rien n'est enregistré ensuite. |
+| **07:50:00** | Démarrage de l'hôte (`/proc/uptime` : 9,34 h relevées à 17:10) |
+| 07:51:28,30 | « Home Assistant started » |
+| 07:51:28,33 | `binary_sensor.demarrage_recent_du_pi` → **on** |
+| 07:51:29,35 | `automation.systeme_alerte_demarrage_non_programme_du_pi` déclenchée par « Home Assistant starting » |
+| **07:51:29,77 et ,86** | **`notify.pixel_9a` et `notify.iphone_marine`** — les deux téléphones prévenus |
+
+**L'instrument a fonctionné exactement comme prévu, dès sa première occasion réelle.** Et
+`sensor.demarrages_du_pi_7_jours` est passé à **1**.
+
+Deuxième preuve le même jour, dans l'autre sens : à **17:10:18**, l'automatisation s'est bien
+déclenchée au redémarrage de Core pour la mise à jour, et **n'a envoyé aucune notification** —
+l'horodatage des entités `notify` est resté bloqué sur 07:51:29. La condition qui distingue un
+démarrage de l'HÔTE d'un simple redémarrage du CŒUR fait son travail.
+
+### Ce que la trace dit de la cause — et ce qu'elle n'en dit pas
+
+Le 23 octobre, la base sqlite portait la trace d'un **arrêt non propre** : une chute brutale.
+Le 24, le profil est **différent et ordonné** : les entités KNX sont déchargées une par une sur
+200 ms, puis le recorder s'arrête. C'est la signature d'un **arrêt de Home Assistant**, pas d'une
+coupure d'alimentation. Les 57 secondes entre cet arrêt et le démarrage de l'hôte correspondent à
+un « arrêt propre puis redémarrage ».
+
+⚠️ **Qui l'a demandé reste inconnu.** Ce n'est pas `automation.reboot_ha_host` : elle est programmée
+le mercredi à 3 h, et **elle est en plus désactivée**. Le journal du superviseur ne remonte pas
+jusqu'au matin, et celui de l'hôte a été effacé par le redémarrage lui-même — toujours le même mur.
+**Question posée à Mathias : est-ce lui qui a redémarré le Pi vers 07:49 ?** Tant qu'il n'a pas
+répondu, on ne sait pas si c'est un deuxième incident ou une intervention humaine.
+
+Ce qui est sûr : les deux événements tombent à **sept minutes d'intervalle dans la matinée**
+(07:5x le 23, 07:49 le 24). Si le second n'est pas humain, l'heure cesse d'être une coïncidence.
+
+### ⚠️ Un défaut de mon fait, visible à chaque démarrage
+
+```
+17:10:16 ERROR [template.validators] Received invalid climate current_temperature:
+         for entity climate.chauffage_general, expected a number
+17:10:16 ERROR [template.validators] Received invalid climate target_temperature:
+         for entity climate.chauffage_general, expected a number between 14.0 and 26.0
+```
+
+La macro `moyenne_thermostats` rend une chaîne **vide** tant que les thermostats KNX n'ont pas
+publié leurs attributs, et le gabarit d'`availability` ne couvre pas ce cas : il vérifie que les
+entités ne sont ni `unavailable` ni `unknown`, mais pas que l'attribut lu est un nombre. Au
+démarrage, un thermostat peut avoir un état (`heat`) sans encore avoir son `temperature`.
+
+Transitoire — tout rentre dans l'ordre dès que le bus répond — mais deux erreurs à chaque
+redémarrage, et l'entité brièvement invalide. À corriger : l'`availability` doit exiger au moins
+une valeur **numérique**, pas seulement une entité joignable.
+
+### Le reste, mineur
+
+- **6 avertissements KNX au démarrage** : « Could not sync group address `*/1/4` (Operation mode) —
+  KNX bus did not respond in time (2.0 secs) » pour les six thermostats. Course au démarrage, le bus
+  ne répond pas aux lectures dans les 2 s. Sans conséquence visible, les modes arrivent ensuite.
+- **HACS** : `Imbuzi/meteo-france-weather-card` a été **retiré de HACS** (dépôt supprimé en amont).
+  À désinstaller un jour.
+- ⚠️ **`automation.reboot_ha_host` est désactivée.** Le redémarrage hebdomadaire du mercredi 3 h ne
+  tourne donc plus du tout. Volontaire ou oublié, à trancher.
+- CPU à **65,7 °C**, contre 62,3 la veille et 52,1 du temps du ventilateur.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS
