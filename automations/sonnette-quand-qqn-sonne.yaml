@@ -1,10 +1,85 @@
 # Sonette quand qqn sonne
 # entity_id : automation.sonette_quand_qqn_sonne
-# Export Home Assistant du 2026-09-02 — ne pas éditer à la main sans réimport.
+# Export Home Assistant du 2026-10-24 — ne pas éditer à la main sans réimport.
+#
+# ⚠️ IL N'Y A PLUS DE HAUT-PARLEUR DANS LA MAISON.
+#   Inventaire fait le 24 octobre 2026 :
+#     - sonos           : entrée de configuration à l'état « ignore », non chargée,
+#                         zéro entité. L'enceinte de la salle à manger n'existe plus.
+#     - cast            : chargée, mais ne voit que media_player.shield_3 — la SHIELD,
+#                         un téléviseur. Caster dessus l'allume et coupe ce qui joue.
+#     - androidtv_remote: « ignore » elle aussi.
+#     - google_cloud    : chargée (synthèse vocale), mais sans enceinte pour la jouer.
+#   Reste : siren.interphone_siren (une sirène d'alarme, pas un carillon) et
+#   select.interphone_play_quick_reply_message (joue dans le haut-parleur de
+#   l'interphone, donc DEHORS, pour le visiteur).
+#   → Les téléphones sont le carillon. C'est tout ce qui est disponible.
+#
+# Ce que faisait la version d'origine, et pourquoi elle ne faisait plus rien :
+#   1. script.alerte_famille                      ✅ partait
+#   2. sonos.snapshot                             ❌ service inexistant → ARRÊT EN ERREUR
+#   3. media_player.volume_set (0,1 ou 0,35)      ⬜ jamais atteinte
+#   4. media_player.play_media (doorbell-1.mp3)   ⬜ jamais atteinte
+#   5. delay 5 s                                  ⬜ jamais atteinte
+#   6. media_player.play_media (2e coup)          ⬜ jamais atteinte
+#   7. sonos.restore                              ⬜ jamais atteinte
+#   La notification partait donc, le son non, et l'échec était invisible : une
+#   action inexistante arrête la séquence sans rien dire d'autre qu'une ligne de
+#   journal. Les six étapes mortes sont supprimées.
+#
+# OÙ SE RÈGLE LE SON MAINTENANT (Android)
+#   Le champ « channel » crée un canal de notification dédié. C'est dans le
+#   téléphone qu'on lui donne sa sonnerie et son volume :
+#     Paramètres > Applications > Home Assistant > Notifications > « Sonnette »
+#   Deux canaux séparés, « Sonnette » et « Sonnette nuit », pour retrouver
+#   l'intention de la version d'origine — fort le jour, discret de 21 h à 8 h.
+#   ⚠️ L'importance d'un canal Android est FIGÉE à sa création : un seul canal
+#   avec deux valeurs d'« importance » ne marcherait pas, d'où les deux canaux.
+#   Sur iPhone, le son reste celui des notifications de l'app.
+#
+# ⚠️ POURQUOI UNE BRANCHE À PART POUR LE MODE CRITIQUE
+#   script.alerte_famille fusionne le bloc « donnees » PAR-DESSUS son payload
+#   critique (« Écrase les clés du mode critique en cas de conflit », dit sa
+#   propre description). Passer « channel » et « importance » quand
+#   input_boolean.critique_sonnette est actif écraserait le canal alarm_stream
+#   sur Android et le son critique sur Apple — donc annulerait précisément ce
+#   que le mode critique apporte. La première branche ne passe donc que les
+#   clés sans conflit : image, icône, clickAction.
+#   Vérifié par rendu des trois payloads le 24 octobre : les clés critiques
+#   (alarm_stream, ttl, priority, importance, color, sticky / push.sound) sont
+#   toutes conservées.
+#
+# L'image est le flux SOUS-RÉSOLUTION (camera.interphone_sub) : le flux
+# principal accumule les délais d'attente RTSP, et la vignette d'une
+# notification n'a pas besoin de 2 K. L'instantané archivé sur disque reste
+# l'affaire de automation.notification_si_mouvement (alias « Prendre une photo
+# en cas de mouvement ou sonnette »), qui tourne en parallèle sur le même
+# déclencheur.
+#
 ---
 id: '1681055973731'
 alias: Sonette quand qqn sonne
-description: ''
+description: 'Previent la maison quand quelqu''un sonne a l''interphone.
+
+
+  Il n''y a plus AUCUN haut-parleur pilotable dans la maison : l''enceinte Sonos de la salle a manger n''existe plus (l''integration
+  sonos est a l''etat ''ignore'', zero entite), et le seul media_player restant est la SHIELD (Google Cast), un televiseur
+  qu''on ne va pas allumer pour un carillon. Les telephones sont donc le carillon.
+
+
+  Les six etapes Sonos de la version d''origine (snapshot, volume, play_media x2, restore) ont ete SUPPRIMEES le 24 octobre
+  2026 : le service sonos.snapshot n''existant pas, l''automatisation s''arretait en erreur des l''etape 2 sur 7. Seule la
+  notification partait, et l''echec etait invisible.
+
+
+  Le canal Android (''channel'') est la ou se regle le son : Parametres > Applications > Home Assistant > Notifications >
+  Sonnette. Deux canaux distincts, jour et nuit, pour retrouver l''intention de la version d''origine (volume 0,35 le jour,
+  0,1 entre 21 h et 8 h) avec le seul materiel qui reste. L''importance d''un canal Android est figee a sa creation : c''est
+  pourquoi il faut deux canaux et non un seul avec deux importances.
+
+
+  Si input_boolean.critique_sonnette est active, on ne passe NI channel NI importance : le mode critique de script.alerte_famille
+  a son propre payload (alarm_stream sur Android, son critique sur Apple) et les cles passees dans ''donnees'' l''ecraseraient.'
 triggers:
 - entity_id:
   - binary_sensor.interphone_visitor
@@ -13,58 +88,68 @@ triggers:
   trigger: state
 conditions: []
 actions:
-- alias: Notification aux telephones actives
-  action: script.alerte_famille
-  data:
-    title: Sonnette maison
-    message: Quelqu'un sonne !
-    alerte: sonnette
-- data:
-    with_group: true
-    entity_id: media_player.salle_a_manger
-  action: sonos.snapshot
-- alias: Reglage volume en fonction de l'heure
-  if:
-  - condition: time
-    after: '21:00:00'
-    before: 08:00:00
-  then:
-  - data:
-      volume_level: 0.1
-    target:
-      entity_id: media_player.salle_a_manger
-    action: media_player.volume_set
-  else:
-  - data:
-      volume_level: 0.35
-    target:
-      entity_id: media_player.salle_a_manger
-    action: media_player.volume_set
-- data:
-    media:
-      media_content_id: https://www.soundjay.com/door/doorbell-1.mp3
-      media_content_type: music
-      metadata: {}
-  target:
-    entity_id:
-    - media_player.salle_a_manger
-  action: media_player.play_media
-- delay:
-    hours: 0
-    minutes: 0
-    seconds: 5
-    milliseconds: 0
-- data:
-    media:
-      media_content_id: https://www.soundjay.com/door/doorbell-1.mp3
-      media_content_type: music
-      metadata: {}
-  target:
-    entity_id:
-    - media_player.salle_a_manger
-  action: media_player.play_media
-- data:
-    with_group: true
-    entity_id: media_player.salle_a_manger
-  action: sonos.restore
-mode: single
+- choose:
+  - alias: 'Alerte critique demandee : laisser le mode critique intact'
+    conditions:
+    - condition: state
+      entity_id: input_boolean.critique_sonnette
+      state: 'on'
+    sequence:
+    - action: script.alerte_famille
+      data:
+        title: Sonnette maison
+        message: Quelqu'un sonne !
+        alerte: sonnette
+        donnees:
+          image: /api/camera_proxy/camera.interphone_sub
+          notification_icon: mdi:bell-ring
+          clickAction: /maison-v2/securite
+  - alias: 'Nuit (21 h - 8 h) : canal discret'
+    conditions:
+    - condition: time
+      after: '21:00:00'
+      before: 08:00:00
+    sequence:
+    - action: script.alerte_famille
+      data:
+        title: Sonnette maison
+        message: Quelqu'un sonne !
+        alerte: sonnette
+        donnees:
+          channel: Sonnette nuit
+          importance: default
+          image: /api/camera_proxy/camera.interphone_sub
+          notification_icon: mdi:bell-ring
+          clickAction: /maison-v2/securite
+  default:
+  - alias: 'Jour : canal sonore, importance haute'
+    action: script.alerte_famille
+    data:
+      title: Sonnette maison
+      message: Quelqu'un sonne !
+      alerte: sonnette
+      donnees:
+        channel: Sonnette
+        importance: high
+        image: /api/camera_proxy/camera.interphone_sub
+        notification_icon: mdi:bell-ring
+        clickAction: /maison-v2/securite
+max: 3
+mode: queued
+
+# --- CE QUI MANQUE, ET QUI EST DU MATÉRIEL --------------------------------
+#
+# Un carillon qui dépend du Raspberry Pi est une mauvaise architecture : le Pi
+# est tombé 14 minutes le 23 octobre 2026, et pendant ce temps-là la sonnette
+# n'aurait prévenu personne. Les trois options, de la plus robuste à la moins :
+#
+#   1. Carillon d'intérieur Reolink (~25 €). Il se jumelle directement à
+#      l'interphone par sa propre radio, SANS passer par Home Assistant. Il
+#      sonne même Pi éteint, box éteinte, Wi-Fi coupé. C'est la bonne réponse
+#      pour une sonnette.
+#   2. Une enceinte Google Cast (Nest Mini, ~30 €). L'intégration cast est déjà
+#      chargée : l'enceinte apparaîtrait seule comme media_player, et la forme
+#      d'origine de cette automatisation redeviendrait valable (volume + deux
+#      coups de carillon). Dépend du Pi.
+#   3. Remettre une Sonos. Il suffirait de ne plus ignorer l'entrée de
+#      configuration « sonos ». Dépend du Pi aussi.

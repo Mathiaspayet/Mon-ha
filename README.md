@@ -2548,9 +2548,11 @@ Correctif, exactement le même que celui du sèche-serviettes la veille :
 - **DHCP : un bail *neuf* toutes les 5 minutes.** Chaque renouvellement relance `systemd-timesyncd`
   et reconstruit la pile réseau — **288 fois par jour**. Correctif côté box : une **réservation
   d'adresse** pour le Pi et pour la Tydom, avec un bail de 24 h. Non fait, c'est côté box.
-- **La sonnette n'a pas de carillon.** `script.sonnette` s'arrête à son étape 2 sur 7 : le service
-  `sonos.snapshot` n'existe pas, et `media_player.salle_a_manger` a disparu (il ne reste que
-  « SHIELD »). La notification part, le son non. Proposé, pas encore corrigé.
+- **La sonnette n'a pas de carillon.** `automation.sonette_quand_qqn_sonne` s'arrête à son étape 2
+  sur 7 : le service `sonos.snapshot` n'existe pas, et `media_player.salle_a_manger` a disparu (il
+  ne reste que « SHIELD »). La notification part, le son non. ✅ **Corrigé le 24 octobre** — voir la
+  section dédiée plus bas. *(Et j'avais écrit `script.sonnette` : c'est une automatisation, pas un
+  script.)*
 - 3 délais d'attente RTSP sur `interphone_main` — le flux principal, celui qu'on n'affiche plus.
 - 8 télégrammes KNX rejetés sur **`5/3/2`** : un `DPTBinary` écrit dans un objet de luminosité.
 - Erreurs `waze_travel_time` récurrentes.
@@ -2594,6 +2596,105 @@ occasion : il faisait doublon avec la borne de la plage et n'avait jamais servi.
 L'analyse fonctionnelle complète (organe commandé et ses adresses KNX, entrées, séquence nominale,
 table de vérité, comportement en cas d'incident, limites) vit désormais en tête de
 `automations/bouclage-ecs-automatique.yaml`.
+
+## 24 octobre 2026 — la sonnette : elle s'arrêtait à l'étape 2 sur 7
+
+Relevé le 23 octobre au soir, corrigé le 24. `automation.sonette_quand_qqn_sonne` enchaînait sept
+actions ; **la deuxième était une action inexistante**, et une action inexistante arrête la séquence
+sans autre trace qu'une ligne de journal.
+
+| # | Action | |
+|---|---|---|
+| 1 | `script.alerte_famille` | ✅ partait |
+| 2 | `sonos.snapshot` | ❌ **service inexistant → arrêt en erreur** |
+| 3 | `media_player.volume_set` (0,1 la nuit / 0,35 le jour) | ⬜ jamais atteinte |
+| 4 | `media_player.play_media` (`doorbell-1.mp3`) | ⬜ jamais atteinte |
+| 5 | `delay 5 s` | ⬜ jamais atteinte |
+| 6 | `media_player.play_media` (2ᵉ coup) | ⬜ jamais atteinte |
+| 7 | `sonos.restore` | ⬜ jamais atteinte |
+
+La notification partait donc bien, le son non — et rien ne le signalait.
+
+### ⚠️ Le vrai problème : il n'y a plus de haut-parleur dans la maison
+
+Inventaire complet des intégrations avant de toucher à l'automatisation :
+
+| Intégration | État | Ce qu'elle offre |
+|---|---|---|
+| `sonos` | **`ignore`**, non chargée, **zéro entité** | l'enceinte de la salle à manger n'existe plus |
+| `cast` | chargée | ne voit que `media_player.shield_3` — la SHIELD, un **téléviseur** |
+| `androidtv_remote` | `ignore` | — |
+| `google_cloud` | chargée | synthèse vocale… sans enceinte pour la jouer |
+
+Restent `siren.interphone_siren` — une sirène d'alarme, pas un carillon — et
+`select.interphone_play_quick_reply_message`, qui joue dans le haut-parleur de l'interphone, donc
+**dehors**, pour le visiteur. `switch.interphone_doorbell_button_sound` est bien actif : le visiteur
+entend un ding à la porte. Personne ne l'entend à l'intérieur.
+
+L'entrée `sonos` étant à l'état `ignore`, c'est que la découverte a été **écartée volontairement** à
+un moment : l'enceinte n'a pas disparu d'elle-même d'une configuration qui marchait.
+
+**Donc : les téléphones sont le carillon.** C'est tout ce qui est disponible, et c'est ce que
+l'automatisation fait maintenant.
+
+### Ce qui a été fait
+
+Les six étapes mortes sont supprimées, et la notification devient un vrai signal de sonnette :
+
+- **un canal Android dédié** (`channel`), c'est-à-dire l'endroit où le son se règle réellement :
+  *Paramètres > Applications > Home Assistant > Notifications > « Sonnette »*. On y met la sonnerie
+  et le volume qu'on veut ;
+- **deux canaux séparés**, « Sonnette » (`importance: high`) et « Sonnette nuit »
+  (`importance: default`), pour retrouver l'intention de la version d'origine — fort le jour,
+  discret de 21 h à 8 h. ⚠️ L'importance d'un canal Android est **figée à sa création** : un canal
+  unique avec deux valeurs d'`importance` ne marcherait pas, d'où les deux ;
+- **l'image de l'interphone** dans la notification (`camera.interphone_sub`, le sous-flux : le flux
+  principal accumule les délais d'attente RTSP, et une vignette n'a pas besoin de 2 K) ;
+- un `clickAction` vers la vue Sécurité, et `mdi:bell-ring` comme icône ;
+- `mode: queued`, `max: 3`, pour qu'un double appui ne produise pas d'« Already running ».
+
+### ⚠️ Une interaction qu'il fallait ne pas casser
+
+`script.alerte_famille` fusionne le bloc `donnees` **par-dessus** son payload critique — sa propre
+description le dit : « Écrase les clés du mode critique en cas de conflit ». Passer `channel` et
+`importance` alors que `input_boolean.critique_sonnette` est actif aurait donc **écrasé le canal
+`alarm_stream` sur Android et le son critique sur Apple**, c'est-à-dire annulé exactement ce que le
+mode critique apporte.
+
+D'où une **première branche à part** quand la criticité est demandée : elle ne passe que les clés
+sans conflit (image, icône, `clickAction`). Vérifié par rendu des trois payloads :
+
+```
+NON CRITIQUE   → {channel: Sonnette, importance: high, image: …, notification_icon: …, clickAction: …}
+CRITIQUE Android → {channel: alarm_stream, ttl: 0, priority: high, importance: high, color: red,
+                    sticky: true, + image, notification_icon, clickAction}
+CRITIQUE Apple   → {push: {sound: {name: default, critical: 1, volume: 1.0}},
+                    + image, notification_icon, clickAction}
+```
+
+Les clés critiques sont toutes conservées. Cibles résolues : `notify.iphone_marine` et
+`notify.pixel_9a` (`notify.i10_pro` est exclu en dur dans le script, comme prévu).
+
+### Ce qui manque, et qui est du matériel
+
+**Un carillon qui dépend du Raspberry Pi est une mauvaise architecture.** Le Pi est tombé 14 minutes
+le 23 octobre ; pendant ce temps, la sonnette n'aurait prévenu personne. Les trois options, de la
+plus robuste à la moins :
+
+1. **Carillon d'intérieur Reolink** (~25 €). Il se jumelle **directement** à l'interphone par sa
+   propre radio, sans passer par Home Assistant. Il sonne Pi éteint, box éteinte, Wi-Fi coupé.
+   C'est la bonne réponse pour une sonnette.
+2. **Une enceinte Google Cast** (Nest Mini, ~30 €). L'intégration `cast` est déjà chargée :
+   l'enceinte apparaîtrait seule comme `media_player`, et la forme d'origine de l'automatisation
+   redeviendrait valable (volume + deux coups de carillon). Dépend du Pi.
+3. **Remettre une Sonos.** Il suffirait de ne plus ignorer l'entrée de configuration `sonos`.
+   Dépend du Pi aussi.
+
+### Non testé en direct
+
+L'automatisation a été réécrite à 5 h du matin : je n'ai pas déclenché de notification pour ne pas
+réveiller la maison. Les payloads sont vérifiés par rendu, les entités existent, l'automatisation
+est chargée et `on` — mais le premier vrai coup de sonnette reste à faire.
 
 ## Stockage et écritures disque
 
