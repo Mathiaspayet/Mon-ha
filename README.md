@@ -2338,7 +2338,7 @@ c'est vrai pour les statistiques de capteurs, faux pour les statistiques externe
 Je n'ai **rien publié** sur le dépôt du projet. Relancer la PR #635 est possible, mais c'est un dépôt
 tiers et il faudrait décider sous quel compte — à voir avec Mathias.
 
-## 23 octobre 2026 — la chute de 14 minutes, et les trois instruments posés derrière
+## 23–24 octobre 2026 — la chute de 14 minutes : la cause cernée, et trois instruments posés
 
 Le vendredi 23 octobre au matin, le Pi est tombé et est reparti seul. Personne ne s'en est aperçu
 avant le soir.
@@ -2371,18 +2371,111 @@ réglage : il vit en mémoire et repart de zéro à chaque boot.
 **Conséquence de méthode : sur cette machine, une panne non instrumentée à l'avance est une panne
 définitivement inexplicable.** D'où ce qui suit.
 
-### Hypothèse retenue, faute de preuve
+### Ce n'était PAS une coupure de secteur — tranché le 24 octobre
 
-Une **coupure de secteur d'environ 14 minutes**. Le raisonnement : un Pi figé reste figé, et son
-chien de garde matériel le relance en ~15 s, pas en 14 minutes. Une absence d'alimentation de 14
-minutes, en revanche, explique exactement la durée observée.
+J'avais retenu, faute de preuve, l'hypothèse d'une **coupure de secteur d'environ 14 minutes** :
+un Pi figé reste figé, son chien de garde le relance en ~15 s, et une absence d'alimentation
+expliquait exactement la durée observée. Mathias a exporté le journal système du NAS. **Il
+l'infirme.**
 
-Deux vérifications possibles, à faire par Mathias :
+Le journal DSM couvre le 18 mars 2024 → 23 octobre 2026, 8 344 lignes. Ce qui le rend décisif :
+**il enregistre chaque démarrage** — 154 « System started to boot up », dont 26 suivis de « System
+booted up from an improper shutdown ». Un NAS qui perd le courant le dit, et le dit encore au
+redémarrage suivant.
 
-1. **Le journal du NAS.** DSM garde un journal **persistant** : s'il a lui aussi redémarré vers
-   07:44, c'est le secteur. S'il est resté debout, non.
-2. **La courbe de charge Enedis** du créneau 07:30–08:00 du 23 octobre, visible dans un jour ou deux
-   (les données horaires du jour ne sont pas encore publiées).
+| | |
+|---|---|
+| Dernier démarrage du NAS avant la panne | **21 octobre 23:18:12** (après la mise à jour DSM 7.3.2-86009 Update 5) |
+| Démarrage le 23 octobre | **aucun** |
+| Lignes du 23 octobre entre 05:38:19 et 20:42:58 | **aucune** |
+| Mentions d'onduleur / batterie en 2 ans et demi | **zéro** — le NAS est sur le secteur nu |
+
+**Le NAS, branché sur le même réseau électrique et sans onduleur, n'a pas bronché pendant que le Pi
+était absent 14 minutes.** Il n'y a donc pas eu de coupure générale.
+
+> Réserve honnête : ceci suppose que le Pi et le NAS sont sur le même circuit. S'ils sont sur deux
+> disjoncteurs différents, une coupure partielle reste possible — à vérifier en regardant où chacun
+> est branché.
+
+Et la courbe de charge Enedis devient **inutile** : elle mesure la maison entière, dont on sait
+maintenant qu'elle n'a pas été coupée. Une course en moins.
+
+### Donc : l'alimentation du Pi lui-même
+
+Ce qui reste doit expliquer **14 minutes d'absence suivies d'un démarrage propre**, sans intervention
+humaine :
+
+- **Un plantage logiciel est exclu.** Un Pi figé ne se relance pas tout seul un quart d'heure plus
+  tard. Le chien de garde matériel, armé par HA OS, le relancerait en ~15 s — on aurait un démarrage
+  à 07:45, pas à 07:58. Et sans chien de garde, il serait resté figé jusqu'au soir.
+- **Seul le retrait puis le retour de l'alimentation produit ce profil.** Et comme la maison n'a pas
+  été coupée, le retrait est **local au Pi** : son bloc d'alimentation, son câble USB-C, son
+  connecteur, ou la multiprise sur laquelle il est seul.
+- Un disjoncteur qui aurait sauté demanderait un réarmement manuel, et personne n'a touché à rien.
+
+Le coupable le plus probable est donc **le bloc d'alimentation ou le connecteur USB-C du Pi**, par
+intermittence — ce qui colle à l'historique de sous-tensions documenté plus haut dans ce README
+(20 événements en ~41 h de fonctionnement début octobre, contre 1 sur une semaine entière en
+septembre). Un bloc qui se met en sécurité et revient de lui-même après quelques minutes produit
+exactement cette signature.
+
+⚠️ **Le compteur de sous-tensions à 0 sur 7 jours ne disculpe pas l'alimentation.** Lors d'une perte
+brutale, les dernières secondes ne sont jamais écrites sur le disque — l'arrêt sqlite non propre le
+prouve. Le compteur ne peut rien dire de l'instant de la panne. Il dit seulement que le rail ne
+s'affaissait pas dans les jours précédents : ce fut une **chute franche**, pas un affaissement
+progressif.
+
+**Correctif, déjà prescrit plus haut et maintenant prioritaire :** alimentation officielle
+5,1 V / 3 A, câble USB-C court et épais, et si possible un hub alimenté pour sortir le SSD du rail
+du Pi.
+
+### ⚠️ Le watchdog du NAS n'a pas alerté — alors que c'est exactement son cas d'usage
+
+`nas/watchdog-ha.sh` interroge `192.168.0.95:8123` toutes les 5 minutes et alerte au 3ᵉ échec
+consécutif, soit 15 minutes. La panne a duré de 07:44:24 à 07:59:31 — **15 minutes et 7 secondes**.
+Les relèves de 07:45, 07:50 et 07:55 auraient toutes échoué : l'alerte devait partir vers 07:55.
+
+Elle n'est jamais arrivée. Vérifié dans la boîte de Mathias :
+
+| | |
+|---|---|
+| Courriers du NAS reçus le 22 octobre | **oui** — « Des paquets sur StockageReseau sont obsolètes », 03:31 |
+| Courriers auto-envoyés le 23 octobre | **un seul**, sans rapport (« Veille CCAS », 14:11) |
+| Alerte du watchdog le 23 octobre | **aucune** |
+| Échecs d'envoi de courrier côté DSM | aucun depuis le **23 avril 2026** |
+
+Le canal fonctionne donc, et rien n'est parti. Restent trois explications, à départager dans DSM
+— ce journal-ci ne couvre que la catégorie « Système », pas le planificateur de tâches :
+
+1. la tâche planifiée n'est plus activée, ou a été supprimée ;
+2. elle tourne mais ne sort pas en code 1 (l'état vit dans `/volume2/docker/ha-watchdog/` :
+   `echecs` doit être à `0` en fonctionnement normal) ;
+3. la phase de la planification a fait passer les relèves juste à côté du seuil (par exemple
+   07:44 / 07:49 / 07:54 / 07:59, la dernière tombant après le retour de HA à 07:59:31 et remettant
+   le compteur à zéro). Marge de quelques secondes — auquel cas **`SEUIL=2` serait plus juste**.
+
+À regarder : **Planificateur de tâches → la tâche → « Afficher le résultat »**, et le journal de
+DSM, onglet des tâches planifiées.
+
+⚠️ **Second point, indépendant : les notifications auto-envoyées atterrissent à la corbeille.** Le
+courrier DSM du 22 octobre et l'alerte « Veille CCAS » du 23 octobre sont tous deux **non lus et
+dans la corbeille**. Le NAS s'envoyant les alertes depuis l'adresse de Mathias vers elle-même, un
+filtre Gmail les écarte probablement toutes. Même si le watchdog avait alerté, l'alerte aurait fini
+au même endroit. À vérifier dans les filtres Gmail.
+
+### Ce que le journal du NAS a montré par ailleurs
+
+- **Le disque 1 est mort en mai 2024.** 693 « I/O error at md2 disk [1], serial [WD-WCC7K0HL89J9] »
+  concentrés sur ce seul mois, plus aucun depuis. C'est l'explication du `not_use` et de l'absence
+  de redondance signalée plus bas : la grappe tourne sur un seul disque **depuis deux ans et demi**.
+- **L'arrêt hebdomadaire programmé ne tourne plus.** Chaque lundi à 04:00 le NAS s'arrêtait et
+  redémarrait à 04:15, de janvier au **18 mai 2026**. Puis plus rien. Désactivé, volontairement ou
+  non.
+- **Espace faible sur le volume 2** : 89 avertissements en septembre, 65 en octobre, contre 4 à 6
+  par mois jusqu'en juillet. La situation s'est dégradée d'un ordre de grandeur cet automne.
+- Le 21 octobre à 21:50, le NAS a reçu une adresse **`169.254.240.23`** (lien-local) sur LAN 1 :
+  il n'a pas obtenu de bail DHCP. Corrobore le problème de DHCP de la box relevé côté Pi.
+- Une erreur « System failed to get External IP » le 20 octobre à 14:48.
 
 ### Les trois instruments posés
 
@@ -2467,7 +2560,8 @@ Le déclencheur « 06:00 » est conservé désactivé, tel qu'il était.
   débranché volontairement ; dossier clos, mais le chiffre est noté.
 - Sauvegarde du matin : **05:26:58, 222 Mo, ~93 s**, vers le **NAS uniquement**.
 - ⚠️ **Le volume 2 du NAS est à 98,9 %** (3,79 To), état « attention », et le disque 1 est en
-  `not_use` — donc **aucune redondance**. C'est la **seule** destination de sauvegarde.
+  `not_use` — donc **aucune redondance**. C'est la **seule** destination de sauvegarde. Le journal
+  DSM a depuis donné la raison du `not_use` : ce disque est tombé en **mai 2024** (voir plus haut).
 
 ## Stockage et écritures disque
 
