@@ -131,7 +131,7 @@ template:
         min_temperature: 14
         max_temperature: 26
         target_temperature_step: 0.1
-        availability: "{{ expand('climate.thermostat_salle_d_eau', 'climate.thermostat_salle_de_bain', 'climate.thermostat', 'climate.thermostat_chambre_margaux', 'climate.thermostat_chambre_auguste', 'climate.thermostat_chambre_amis') | rejectattr('state', 'in', ['unavailable', 'unknown']) | list | count > 0 }}"
+        availability: "{% from 'chauffage.jinja' import thermostats_prets %}{{ thermostats_prets() | trim }}"
         current_temperature: "{% from 'chauffage.jinja' import moyenne_thermostats %}{{ moyenne_thermostats('current_temperature') }}"
         target_temperature: "{% from 'chauffage.jinja' import moyenne_thermostats %}{{ moyenne_thermostats('temperature') }}"
         hvac_modes: "{{ ['heat'] }}"

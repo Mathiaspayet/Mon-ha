@@ -2931,14 +2931,15 @@ Le 24, le profil est **différent et ordonné** : les entités KNX sont décharg
 coupure d'alimentation. Les 57 secondes entre cet arrêt et le démarrage de l'hôte correspondent à
 un « arrêt propre puis redémarrage ».
 
-⚠️ **Qui l'a demandé reste inconnu.** Ce n'est pas `automation.reboot_ha_host` : elle est programmée
-le mercredi à 3 h, et **elle est en plus désactivée**. Le journal du superviseur ne remonte pas
-jusqu'au matin, et celui de l'hôte a été effacé par le redémarrage lui-même — toujours le même mur.
-**Question posée à Mathias : est-ce lui qui a redémarré le Pi vers 07:49 ?** Tant qu'il n'a pas
-répondu, on ne sait pas si c'est un deuxième incident ou une intervention humaine.
+✅ **C'était Mathias.** Question posée, réponse : « oui c'est moi ce matin ». Le profil ordonné
+disait déjà la bonne chose — un arrêt de Home Assistant, pas une coupure — et il correspondait à une
+intervention humaine. Dossier clos pour le 24.
 
-Ce qui est sûr : les deux événements tombent à **sept minutes d'intervalle dans la matinée**
-(07:5x le 23, 07:49 le 24). Si le second n'est pas humain, l'heure cesse d'être une coïncidence.
+**Et la coïncidence d'horaire se dissout avec lui.** J'allais relever que les deux événements
+tombaient à sept minutes d'intervalle dans la matinée, 07:5x le 23 et 07:49 le 24, et qu'une telle
+régularité cesserait d'être un hasard. Elle n'avait pas lieu d'être : il n'y a qu'un seul incident,
+celui du **23 octobre**, dont la cause reste l'alimentation du Pi lui-même (voir plus haut). Le 24
+n'ajoute rien au dossier — sinon la preuve que l'instrument fonctionne.
 
 ### ⚠️ Un défaut de mon fait, visible à chaque démarrage
 
@@ -2955,8 +2956,32 @@ entités ne sont ni `unavailable` ni `unknown`, mais pas que l'attribut lu est u
 démarrage, un thermostat peut avoir un état (`heat`) sans encore avoir son `temperature`.
 
 Transitoire — tout rentre dans l'ordre dès que le bus répond — mais deux erreurs à chaque
-redémarrage, et l'entité brièvement invalide. À corriger : l'`availability` doit exiger au moins
-une valeur **numérique**, pas seulement une entité joignable.
+redémarrage, et l'entité brièvement invalide. Relevé aussi à **07:51:28** au redémarrage du matin :
+ça durait depuis la création de l'entité, le 22 octobre.
+
+✅ **Corrigé le 24 octobre.** Une seconde macro, `thermostats_prets()`, teste ce que les gabarits de
+valeur vont **réellement produire**, et pour les **deux** attributs — il ne suffit pas que la
+température mesurée soit là si la consigne manque encore :
+
+```jinja
+{%- macro thermostats_prets() -%}
+{{- moyenne_thermostats('current_temperature') | trim != '' and moyenne_thermostats('temperature') | trim != '' -}}
+{%- endmacro -%}
+```
+
+Elle **appelle** `moyenne_thermostats` au lieu de recopier la liste d'entités, pour que celle-ci
+reste définie à un seul endroit. L'`availability` de `climate.chauffage_general` devient
+`{% raw %}{% from 'chauffage.jinja' import thermostats_prets %}{{ thermostats_prets() | trim }}{% endraw %}`.
+
+Vérifié avant écriture : `thermostats_prets()` rend `True` en fonctionnement normal, et les deux
+branches d'échec — l'un ou l'autre attribut manquant — rendent bien `False`. Après `template.reload`,
+l'entité est revenue avec 22,6 °C mesurés et 21,5 °C de consigne, et **plus aucune erreur**.
+
+*Note de méthode :* `ha_config_set_yaml` ne prend qu'une clé de premier niveau, donc il a fallu
+réécrire les 133 lignes de la clé `template` pour changer une ligne. La transcription a été
+**vérifiée hors ligne** contre le miroir du dépôt avant envoi — comparaison de l'arbre parsé,
+une seule valeur modifiée, aucune clé ajoutée ni retirée — puis l'aperçu en deux temps a confirmé un
+diff d'exactement une ligne. C'est la deuxième fois que ce filet sert sur ce fichier.
 
 ### Le reste, mineur
 

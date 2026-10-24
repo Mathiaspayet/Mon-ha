@@ -36,3 +36,30 @@
 {%- endfor -%}
 {{- (ns.somme / ns.n) | round(1) if ns.n > 0 else '' -}}
 {%- endmacro -%}
+{#-
+  ⚠️ Disponibilité de climate.chauffage_general. Ajoutée le 2026-10-24.
+
+  La macro ci-dessus rend une CHAÎNE VIDE tant qu'aucun des six thermostats n'a
+  publié l'attribut demandé. Au démarrage de Home Assistant, un thermostat KNX
+  peut déjà avoir un état (« heat ») sans avoir encore reçu du bus ses attributs
+  temperature et current_temperature. L'ancienne disponibilité ne testait que
+  « l'entité n'est ni unavailable ni unknown » : elle rendait donc vrai pendant
+  cette fenêtre, et la plate-forme climate refusait la chaîne vide —
+
+    ERROR [template.validators] Received invalid climate current_temperature:
+          for entity climate.chauffage_general, expected a number
+
+  deux erreurs à chaque redémarrage, relevées le 24 octobre 2026 après la
+  montée en Core 2026.10.3.
+
+  Cette macro teste ce que les gabarits de valeur vont RÉELLEMENT produire, et
+  pour les DEUX attributs : il ne suffit pas que la température mesurée soit là
+  si la consigne manque encore. Elle appelle moyenne_thermostats plutôt que de
+  recopier la liste d'entités, pour que celle-ci reste définie à un seul endroit.
+
+  Rend la chaîne « True » ou « False » : Home Assistant accepte « True » comme
+  disponible et traite toute autre valeur comme indisponible.
+-#}
+{%- macro thermostats_prets() -%}
+{{- moyenne_thermostats('current_temperature') | trim != '' and moyenne_thermostats('temperature') | trim != '' -}}
+{%- endmacro -%}
