@@ -1433,19 +1433,13 @@ views:
           cycle: false
       grid_options:
         columns: 6
-    - type: entities
-      grid_options:
-        columns: full
-      entities:
-      - entity: input_select.capture_interphone_choisie
-        name: Aller directement à
     - type: markdown
       grid_options:
         columns: full
       content: |-
         {% set o = state_attr('input_select.capture_interphone_choisie','options') %}{% set s = states('input_select.capture_interphone_choisie') %}{% if o and s in o %}{% set d = strptime(s[19:], '%Hh%Mmin%Ssec_%d-%m-%Y.jpg', none) %}Capture **{{ o.index(s) + 1 }}** sur **{{ o | count }}** — {{ d.strftime('%d/%m à %H:%M:%S') if d else s }}{% else %}Aucune capture disponible.{% endif %}
 
-        Les captures de l'interphone des **10 derniers jours**, la plus récente en tête. Les flèches avancent d'une capture, la liste déroulante va directement à une heure.
+        Les captures de l'interphone des **10 derniers jours**, la plus récente en tête.
   - type: grid
     cards:
     - type: heading

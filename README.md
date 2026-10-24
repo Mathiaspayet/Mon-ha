@@ -2765,9 +2765,13 @@ Trois points qui méritent d'être notés :
 
 Vue Sécurité, section « Caméras » : l'image, puis deux flèches `shortcut` — **Plus ancienne** et
 **Plus récente**, qui appellent `input_select.select_next` / `select_previous` avec `cycle: false`
-pour s'arrêter aux extrémités — puis la liste déroulante pour aller directement à une heure, et une
-carte `markdown` qui affiche **« Capture 2 sur 30 — 23/10 à 10:14:46 »**. La rétroaction qui manquait
-au premier essai.
+pour s'arrêter aux extrémités — et une carte `markdown` qui affiche **« Capture 2 sur 30 — 23/10 à
+10:14:46 »**. La rétroaction qui manquait au premier essai.
+
+J'avais aussi posé la liste déroulante de l'`input_select`, pour sauter directement à une heure.
+Mathias l'a fait retirer : deux flèches et le compteur suffisent, et un nom de fichier brut dans une
+liste déroulante n'est pas une interface. **L'aide `input_select` reste** — elle porte les noms et
+sert d'URL à l'image ; c'est seulement sa carte qui a disparu du tableau de bord.
 
 L'⚠️ **URL d'une image modèle doit être absolue** : la plate-forme récupère l'image côté serveur et
 refuse `/local/...`. D'où `http://127.0.0.1:8123` et `verify_ssl: false` — exactement le motif de la
