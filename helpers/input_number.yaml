@@ -8,17 +8,3 @@ slide:
   step: 1
   unit_of_measurement: '%'
   mode: slider
-
-# Ajouté le 2026-10-24 : de combien de captures on recule dans le tampon
-# circulaire de l'interphone. 0 = la plus récente. Lu par image.capture_interphone
-# (helpers/modeles_et_historiques.yaml), remis à 0 par
-# automation.notification_si_mouvement à chaque nouvelle capture.
-# Pas d'« initial » : la valeur se restaure au redémarrage, et de toute façon
-# la prochaine capture la ramène à 0.
-recul_capture_interphone:
-  name: Recul capture interphone
-  icon: mdi:history
-  min: 0
-  max: 11
-  step: 1
-  mode: slider

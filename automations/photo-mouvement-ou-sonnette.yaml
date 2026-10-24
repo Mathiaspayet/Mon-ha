@@ -6,64 +6,68 @@
 #   automation.sonette_quand_qqn_sonne.
 # Export Home Assistant du 2026-10-24 — ne pas éditer à la main sans réimport.
 #
-# ── TROIS EXEMPLAIRES, TROIS USAGES ────────────────────────────────────────
+# ── DEUX FICHIERS, PUIS LA LISTE FEUILLETABLE ──────────────────────────────
 #
 #   capture/capture_interphone.jpg
 #       Emplacement fixe, écrasé à chaque fois. Lu par la caméra générique
 #       « Dernière capture » (camera.127_0_0_1).
 #
 #   capture/Archive/capture_interphone_<HHhMMminSSsec_JJ-MM-AAAA>.jpg
-#       L'historique complet, horodaté dans le nom. Purgé à 10 jours
-#       (864 000 s) par delete.files_in_folder, en fin de séquence.
+#       L'historique, horodaté dans le nom. Purgé à 10 jours (864 000 s) par
+#       delete.files_in_folder, en fin de séquence.
 #
-#   capture/defilement/capture_<0..11>.jpg
-#       Tampon circulaire de 12 emplacements, ajouté le 2026-10-24. C'est
-#       celui que la tuile de la vue Sécurité sait faire défiler, via
-#       image.capture_interphone et input_number.recul_capture_interphone.
+#   puis input_select.capture_interphone_choisie reçoit le nouveau nom en tête
+#   de ses options. C'est cette liste que la tuile de la vue Sécurité fait
+#   défiler, via image.capture_interphone dont l'URL est le nom sélectionné.
 #
-# ── POURQUOI UN TAMPON CIRCULAIRE PLUTÔT QUE L'ARCHIVE ─────────────────────
-# Parce qu'on ne peut PAS lister un répertoire depuis un modèle Jinja : Home
-# Assistant n'offre aucune fonction de système de fichiers aux templates. Les
-# noms horodatés de l'archive sont donc inaccessibles à une tuile. Des noms
-# FIXES et un compteur, eux, se calculent.
-# L'alternative — le composant « folder », qui expose la liste des fichiers —
-# exigerait un bloc allowlist_external_dirs dans configuration.yaml, donc un
-# REDÉMARRAGE. Le tampon n'exige que des aides de type storage.
+# ── POURQUOI LE NOM EST FIGÉ DANS UNE VARIABLE ─────────────────────────────
+# Il sert DEUX fois : pour écrire le fichier, puis pour l'ajouter aux options.
+# Recalculer now() une seconde fois donnerait un nom décalé d'une seconde, et
+# l'option désignerait un fichier qui n'existe pas. Même piège que n'importe
+# quelle valeur lue deux fois dans une séquence.
 #
-# ── L'EMPLACEMENT EST FIGÉ AVANT L'INCRÉMENT ───────────────────────────────
-# La première action met l'emplacement dans une variable, et le compteur n'est
-# incrémenté qu'APRÈS les captures. Lire le compteur après l'avoir incrémenté
-# dans la même séquence ferait dépendre le résultat de l'ordre de mise à jour
-# de l'état — un piège classique. Ici, rien à parier : la variable est fixée.
+# ── L'ORDRE PROTÈGE ────────────────────────────────────────────────────────
+# set_options vient APRÈS la capture. Si camera.snapshot échoue, la séquence
+# s'arrête là et aucune option ne pointe sur un fichier absent.
 #
-# ── TROIS camera.snapshot D'AFFILÉE, EST-CE RAISONNABLE ────────────────────
-# Oui. camera.snapshot passe par l'API d'instantané de la Reolink, pas par le
-# RTSP. Les délais d'attente RTSP relevés sur interphone_main viennent du
-# travailleur de flux (la vue en direct), pas des instantanés.
+# ── LE FILTRE DES 10 JOURS ─────────────────────────────────────────────────
+# La liste est reconstruite à chaque capture : nouveau nom en tête, doublons
+# retirés par « unique », et noms de plus de 10 jours écartés — la date est
+# relue DANS LE NOM du fichier, strptime rendant « none » sur un nom qui ne
+# correspond pas au format. C'est ce filtre qui évite qu'une option survive au
+# fichier que delete.files_in_folder a supprimé. Le plafond de 30 n'est là que
+# pour garder la liste déroulante utilisable.
+#
+# ── POURQUOI PAS LE COMPOSANT « folder » ───────────────────────────────────
+# Il exposerait directement la liste des fichiers du répertoire, ce qui serait
+# plus simple. Mais il exige un bloc allowlist_external_dirs dans
+# configuration.yaml, donc un REDÉMARRAGE. Ici, une aide input_select tenue à
+# jour par l'automatisation suffit, sans rien redémarrer.
 #
 ---
 id: '1680770329206'
 alias: 'Prendre une photo en cas de mouvement ou sonnette '
-description: 'Capture l''interphone à chaque personne détectée ou coup de sonnette, en trois exemplaires :
+description: 'Capture l''interphone à chaque personne détectée ou coup de sonnette, en deux exemplaires, puis met à jour la
+  liste des captures feuilletables.
 
 
-  1. capture_interphone.jpg — emplacement fixe, lu par la caméra générique « Dernière capture ».
+  1. capture_interphone.jpg — emplacement fixe, écrasé à chaque fois, lu par la caméra générique « Dernière capture ».
 
-  2. Archive/capture_interphone_<horodatage>.jpg — l''historique complet, purgé à 10 jours par delete.files_in_folder.
-
-  3. defilement/capture_<n>.jpg — un tampon circulaire de 12 emplacements, celui que la tuile sait faire défiler.
+  2. Archive/capture_interphone_<horodatage>.jpg — l''historique, purgé à 10 jours par delete.files_in_folder en fin de séquence.
 
 
-  L''emplacement du tampon est donné par counter.captures_interphone modulo 12. Il est calculé dans une variable AVANT l''incrément,
-  pour ne pas dépendre de l''ordre de mise à jour de l''état du compteur.
+  Le nom du fichier d''archive est figé dans une variable AVANT la capture, parce qu''il sert deux fois : pour écrire le fichier,
+  puis pour l''ajouter aux options de input_select.capture_interphone_choisie. Recalculer now() une seconde fois donnerait
+  un nom décalé d''une seconde, et l''option pointerait sur un fichier inexistant.
 
 
-  Après chaque capture, input_number.recul_capture_interphone est remis à 0 : la tuile revient d''elle-même sur la vue la
-  plus récente, même si quelqu''un était en train de feuilleter l''historique.
+  La liste des options est reconstruite à chaque capture : nouveau nom en tête, doublons retirés, noms de plus de 10 jours
+  écartés (la date est relue dans le nom du fichier), et plafond à 30 pour que la liste déroulante reste utilisable. Le filtre
+  sur 10 jours est ce qui évite qu''une option survive au fichier que delete.files_in_folder a supprimé.
 
 
-  Ne pas renommer ni supprimer les fichiers de defilement/ à la main : le compteur ne le saurait pas, et image.capture_interphone
-  pointerait sur une image absente.
+  L''ordre compte : set_options vient APRÈS la capture. Si camera.snapshot échouait, la séquence s''arrête avant, et aucune
+  option ne désigne un fichier absent.
 
 
   NB : l''entity_id dit « notification_si_mouvement » mais cette automatisation n''envoie aucune notification — c''est l''identifiant
@@ -81,9 +85,9 @@ triggers:
   trigger: state
 conditions: []
 actions:
-- alias: Emplacement du tampon, figé avant l'incrément
+- alias: Nom du fichier d'archive, figé une seule fois
   variables:
-    emplacement: '{{ states(''counter.captures_interphone'') | int(0) % 12 }}'
+    fichier: capture_interphone_{{ now().strftime('%Hh%Mmin%Ssec_%d-%m-%Y') }}.jpg
 - alias: Emplacement fixe, pour la caméra générique
   action: camera.snapshot
   data:
@@ -93,21 +97,19 @@ actions:
   action: camera.snapshot
   data:
     entity_id: camera.interphone_main
-    filename: /config/www/sonette/capture/Archive/capture_interphone_{{ now().strftime("%Hh%Mmin%Ssec_%d-%m-%Y") }}.jpg
-- alias: Tampon circulaire de 12, celui que la tuile fait défiler
-  action: camera.snapshot
-  data:
-    entity_id: camera.interphone_main
-    filename: /config/www/sonette/capture/defilement/capture_{{ emplacement }}.jpg
-- action: counter.increment
+    filename: /config/www/sonette/capture/Archive/{{ fichier }}
+- alias: 'Liste feuilletable : nouveau en tête, 10 jours maxi, 30 maxi'
+  action: input_select.set_options
   target:
-    entity_id: counter.captures_interphone
-- alias: Revenir sur la vue la plus récente
-  action: input_number.set_value
-  target:
-    entity_id: input_number.recul_capture_interphone
+    entity_id: input_select.capture_interphone_choisie
   data:
-    value: 0
+    options: '{% set ns = namespace(l=[]) %}{% for o in ([fichier] + (state_attr(''input_select.capture_interphone_choisie'',''options'')
+      or [])) | unique %}{% set d = strptime(o[19:], ''%Hh%Mmin%Ssec_%d-%m-%Y.jpg'', none) %}{% if d is not none and (now().date()
+      - d.date()).days < 10 %}{% set ns.l = ns.l + [o] %}{% endif %}{% endfor %}{{ ns.l[:30] }}'
+- alias: Afficher la plus récente
+  action: input_select.select_first
+  target:
+    entity_id: input_select.capture_interphone_choisie
 - delay:
     hours: 0
     minutes: 0
@@ -122,12 +124,19 @@ actions:
 mode: single
 
 # --- DÉPENDANCES ----------------------------------------------------------
-#   counter.captures_interphone               helpers/counter.yaml
-#   input_number.recul_capture_interphone     helpers/input_number.yaml
+#   input_select.capture_interphone_choisie   helpers/input_select.yaml
 #   image.capture_interphone                  helpers/modeles_et_historiques.yaml
 #   delete.files_in_folder                    intégration « delete » (HACS),
 #                                             déclarée par « delete: » dans
 #                                             configuration.yaml
 #
-# Le répertoire capture/defilement/ porte un LISEZ-MOI.txt qui redit tout ça
-# sur place, pour qui tomberait dessus par le gestionnaire de fichiers.
+# --- HISTORIQUE -----------------------------------------------------------
+#
+# 2026-10-24, deuxième essai. Le premier écrivait une TROISIÈME copie dans un
+# tampon circulaire de 12 fichiers à noms fixes (defilement/capture_0..11.jpg),
+# avec un compteur et un curseur de recul. Ça marchait, mais c'était une
+# mauvaise idée : le tampon partait vide et aurait mis une semaine à se
+# remplir, le curseur offrait 11 crans pour 2 images réellement disponibles, et
+# les noms fixes perdaient l'horodatage. Pendant ce temps, 45 captures
+# horodatées et bien différentes dormaient dans l'archive.
+# Le compteur, le curseur et le répertoire defilement/ ont été supprimés.

@@ -2691,95 +2691,101 @@ L'automatisation a été réécrite à 5 h du matin : je n'ai pas déclenché de
 réveiller la maison. Les payloads sont vérifiés par rendu, les entités existent, l'automatisation
 est chargée et `on` — mais le premier vrai coup de sonnette reste à faire.
 
-## 24 octobre 2026 — faire défiler les captures de l'interphone sur la tuile
+## 24 octobre 2026 — faire défiler les captures de l'interphone, en deux essais
 
-La tuile « Dernière capture » ne montrait que la dernière. Mathias voulait pouvoir remonter dans les
+La tuile « Dernière capture » ne montrait que la dernière. Mathias voulait remonter dans les
 précédentes, sur la tuile.
 
-### Le vrai obstacle : on ne peut pas lister un répertoire depuis un modèle
+### L'obstacle réel : on ne peut pas lister un répertoire depuis un modèle
 
-L'archive existe déjà — `www/sonette/capture/Archive/`, 45 fichiers horodatés au moment du relevé,
-purgés à 10 jours. Mais **Home Assistant n'offre aucune fonction de système de fichiers aux modèles
-Jinja** : les noms horodatés de l'archive sont donc inaccessibles à une tuile. Impossible de
-construire une galerie à partir de ce qui est sur le disque.
+L'archive existait déjà — `www/sonette/capture/Archive/`, 45 fichiers horodatés, purgés à 10 jours.
+Mais **Home Assistant n'offre aucune fonction de système de fichiers aux modèles Jinja** : les noms
+horodatés sont invisibles depuis une tuile. Et le composant `folder`, qui exposerait la liste,
+exigerait un bloc `allowlist_external_dirs` dans `configuration.yaml`, donc un **redémarrage**.
 
-Les deux contournements possibles, et pourquoi j'ai choisi le second :
+### ⚠️ Premier essai, mauvais : un tampon circulaire de 12 fichiers
 
-| | Coût |
+Noms horodatés inaccessibles → j'ai écrit des noms **fixes** : une troisième copie de chaque capture
+dans `defilement/capture_<0..11>.jpg`, l'emplacement donné par un compteur modulo 12, et un curseur
+de recul de 0 à 11.
+
+Ça marchait. Mathias a répondu : **« Ça semble figé. Le curseur ne fait rien bouger. »** Il avait
+raison, et la plomberie n'était pas en cause — vérifié : l'entité image changeait bien d'état à
+chaque mouvement du curseur. Trois défauts de **conception**, tous les miens :
+
+1. **Le tampon partait vide.** Il ne contenait que les 2 captures d'essai que je venais de prendre à
+   5 h 40 du matin — deux vues de nuit, identiques à l'œil. Il aurait fallu une semaine de passages
+   pour qu'il se remplisse.
+2. **Le curseur offrait 11 crans pour 2 images.** L'écrêtage renvoyait les crans 1 à 11 sur le même
+   fichier : bouger le curseur de 1 à 4 ne pouvait rien changer. Aucune rétroaction ne le disait.
+3. **Les noms fixes perdaient l'horodatage**, donc impossible d'afficher quand la photo avait été
+   prise.
+
+Et pendant ce temps, **45 captures horodatées et bien différentes dormaient dans l'archive**, à deux
+pas. J'avais construit un magasin vide à côté d'un magasin plein.
+
+### Deuxième essai : une aide `input_select` qui porte les noms de l'archive
+
+Un `input_select` n'a pas de limite de nombre d'options, et son contenu se **remplit par une
+action** (`input_select.set_options`). Donc : pas besoin de lister le répertoire — l'automatisation
+de capture, qui connaît le nom qu'elle vient d'écrire, l'ajoute elle-même en tête de la liste.
+
+| Pièce | Rôle |
 |---|---|
-| Le composant `folder`, qui expose la liste des fichiers d'un répertoire | exige un bloc `allowlist_external_dirs` dans `configuration.yaml`, donc un **redémarrage**, plus une carte de galerie HACS à installer |
-| Des noms de fichiers **fixes** et un compteur | trois aides de type storage, **aucun redémarrage**, aucune dépendance |
+| `input_select.capture_interphone_choisie` | les noms de fichiers de l'archive, la plus récente en tête |
+| `image.capture_interphone` | image modèle, URL = `.../Archive/{{ states('input_select...') }}` |
 
-Des noms horodatés ne se calculent pas. Des noms fixes, si.
+Et comme les 45 fichiers existaient déjà, **la liste a été amorcée avec les 30 plus récents** : la
+tuile est utilisable tout de suite, avec 8 jours de vraies captures, au lieu d'attendre une semaine.
 
-### Le tampon circulaire
-
-`automation.notification_si_mouvement` écrit maintenant une **troisième** copie de chaque capture,
-dans `www/sonette/capture/defilement/capture_<0..11>.jpg`. L'emplacement est donné par
-`counter.captures_interphone` **modulo 12** : au treizième passage, on réécrit par-dessus le
-premier. Les deux copies d'origine — l'emplacement fixe et l'archive horodatée — sont inchangées.
-
-Trois aides, toutes créées par le flux de configuration, donc modifiables depuis l'interface :
-
-| Aide | Rôle |
-|---|---|
-| `counter.captures_interphone` | compteur **monotone**, `restore: true`. Donne l'emplacement (`compteur % 12`) **et** le nombre d'emplacements remplis (`min(compteur, 12)`) |
-| `input_number.recul_capture_interphone` | 0 à 11, curseur. 0 = la plus récente |
-| `image.capture_interphone` | image modèle dont l'URL se calcule à partir des deux précédents |
-
-L'URL de l'image modèle :
+L'automatisation ne prend plus que **deux** instantanés au lieu de trois, puis :
 
 ```jinja
-{% set n = states('counter.captures_interphone') | int(0) %}
-{% set dispo = [n, 12] | min %}
-{% set recul = [states('input_number.recul_capture_interphone') | int(0), dispo - 1] | min %}
-http://127.0.0.1:8123/local/sonette/capture/defilement/capture_{{ (n - 1 - recul) % 12 }}.jpg
+{% set ns = namespace(l=[]) %}
+{% for o in ([fichier] + (state_attr('input_select.capture_interphone_choisie','options') or [])) | unique %}
+  {% set d = strptime(o[19:], '%Hh%Mmin%Ssec_%d-%m-%Y.jpg', none) %}
+  {% if d is not none and (now().date() - d.date()).days < 10 %}{% set ns.l = ns.l + [o] %}{% endif %}
+{% endfor %}
+{{ ns.l[:30] }}
 ```
 
-Trois points qui ont demandé une vérification plutôt qu'une supposition :
+Trois points qui méritent d'être notés :
 
-- ⚠️ **L'URL d'une image modèle doit être absolue.** La plate-forme récupère l'image côté serveur et
-  refuse un chemin relatif comme `/local/...`. D'où `http://127.0.0.1:8123` et `verify_ssl: false` —
-  exactement le motif de la caméra générique « Dernière capture », dont l'`entity_id`
-  (`camera.127_0_0_1`) vient justement de là.
-- **L'écrêtage `[recul, dispo - 1] | min` est ce qui évite une image cassée** tant que le tampon
-  n'est pas plein : reculer plus loin que l'historique existant s'arrête sur la plus ancienne
-  disponible, au lieu de pointer sur un fichier absent.
-- **Une entité modèle d'état recalcule son URL dès que ses sources bougent.** Vérifié en direct :
-  compteur à 2, recul 0 → `capture_1.jpg`, recul 1 → `capture_0.jpg`, recul 5 → écrêté sur
-  `capture_0.jpg` ; et l'état de `image.capture_interphone` a bien changé au moment où le curseur a
-  bougé, donc l'image affichée aussi.
-
-### Un détail qui compte : l'emplacement est figé avant l'incrément
-
-La première action de l'automatisation met l'emplacement dans une variable, et le compteur n'est
-incrémenté qu'**après** les trois captures. Lire le compteur après l'avoir incrémenté dans la même
-séquence ferait dépendre le résultat de l'ordre de mise à jour de l'état — un piège classique dont
-on se passe en figeant la valeur.
-
-Après chaque capture, `input_number.recul_capture_interphone` est remis à 0 : la tuile revient
-d'elle-même sur la vue la plus récente, même si quelqu'un était en train de feuilleter l'historique.
-Un visiteur qui arrive compte plus que la consultation en cours.
+- **Le nom du fichier est figé dans une variable** avant la capture, parce qu'il sert deux fois :
+  écrire le fichier, puis l'ajouter aux options. Recalculer `now()` une seconde fois donnerait un nom
+  décalé d'une seconde, et l'option désignerait un fichier inexistant.
+- **`set_options` vient après la capture.** Si `camera.snapshot` échoue, la séquence s'arrête avant,
+  et aucune option ne pointe sur un fichier absent.
+- **Le filtre des 10 jours relit la date dans le nom du fichier** (`strptime` rend `none` sur un nom
+  qui ne correspond pas au format, ce qui sert de garde). C'est lui qui évite qu'une option survive
+  au fichier que `delete.files_in_folder` a supprimé — le plafond de 30 ne sert qu'au confort de la
+  liste déroulante.
 
 ### La tuile
 
-Dans la vue Sécurité, section « Caméras » : la `picture-entity` pointe sur `image.capture_interphone`
-(`fit_mode: contain`, pour ne rien rogner), suivie d'une carte `entities` qui porte le curseur. J'ai
-écarté la fonctionnalité de tuile `numeric-input` faute d'avoir pu vérifier son nom exact dans cette
-version — la page de documentation des fonctionnalités a renvoyé une 404 — et une carte `entities`
-avec un `input_number` en `mode: slider` rend un curseur natif, sans rien parier.
+Vue Sécurité, section « Caméras » : l'image, puis deux flèches `shortcut` — **Plus ancienne** et
+**Plus récente**, qui appellent `input_select.select_next` / `select_previous` avec `cycle: false`
+pour s'arrêter aux extrémités — puis la liste déroulante pour aller directement à une heure, et une
+carte `markdown` qui affiche **« Capture 2 sur 30 — 23/10 à 10:14:46 »**. La rétroaction qui manquait
+au premier essai.
 
-### Ce qui n'y est pas
+L'⚠️ **URL d'une image modèle doit être absolue** : la plate-forme récupère l'image côté serveur et
+refuse `/local/...`. D'où `http://127.0.0.1:8123` et `verify_ssl: false` — exactement le motif de la
+caméra générique « Dernière capture », dont l'`entity_id` (`camera.127_0_0_1`) vient justement de là.
 
-- **Pas d'horodatage sur l'image affichée.** Les noms du tampon sont fixes, donc la date de prise de
-  vue n'est pas portée par le fichier. L'état de l'entité image est l'heure du dernier changement
-  d'URL, pas celle de la photo : c'est pourquoi `show_state` est à `false`, pour ne pas afficher une
-  date fausse. L'archive horodatée reste la référence pour « quand ». Ajouter la date demanderait un
-  capteur modèle **déclenché** qui accumule les noms — donc une réécriture de la clé `template` de
-  `configuration.yaml`, ce que je n'ai pas fait pour un confort d'affichage.
-- **Le tampon se remplit au fil des passages.** Au moment du commit il contenait 2 captures, prises
-  pour éprouver le mécanisme. Le curseur s'écrête donc à 1 pour l'instant, et s'ouvrira jusqu'à 11
-  à mesure que des gens passent devant l'interphone.
+### Vérifié en direct
+
+Sélection changée à la main → l'état de `image.capture_interphone` change dans la seconde. Flèche
+« Plus ancienne » → passage de la capture de 05:56 ce matin à celle de 10:14:46 hier, une image
+franchement différente. Automatisation déclenchée → le nouveau nom arrive en tête des options, la
+sélection le suit, la liste reste plafonnée à 30.
+
+Le compteur, le curseur de recul et le répertoire `defilement/` du premier essai ont été supprimés.
+
+### Ce qui reste comme avant
+
+L'archive horodatée et sa purge à 10 jours, l'emplacement fixe `capture_interphone.jpg` et la caméra
+générique qui le lit. Rien de tout cela n'a été touché.
 
 ## Stockage et écritures disque
 

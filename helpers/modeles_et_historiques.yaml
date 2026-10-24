@@ -26,28 +26,21 @@ template_helpers:
     entity_id: image.capture_interphone
     template_type: image
     verify_ssl: false
-    url: >-
-      {% set n = states('counter.captures_interphone') | int(0) %}{% set dispo = [n, 12] | min %}{%
-      set recul = [states('input_number.recul_capture_interphone') | int(0), dispo - 1] | min
-      %}http://127.0.0.1:8123/local/sonette/capture/defilement/capture_{{ (n - 1 - recul) % 12 }}.jpg
+    url: "http://127.0.0.1:8123/local/sonette/capture/Archive/{{ states('input_select.capture_interphone_choisie') }}"
     additional_options:
-      availability: "{{ states('counter.captures_interphone') | int(0) > 0 }}"
-    # Donne à la tuile de la vue Sécurité les 12 dernières captures de l'interphone,
-    # de la plus récente à la plus ancienne.
+      availability: "{{ has_value('input_select.capture_interphone_choisie') }}"
+    # Donne à la tuile de la vue Sécurité les captures de l'interphone des 10
+    # derniers jours, celle que désigne input_select.capture_interphone_choisie.
     #
-    # L'URL doit être ABSOLUE : la plate-forme image du modèle récupère l'image
-    # côté serveur et refuse un chemin relatif comme « /local/... ». D'où
-    # http://127.0.0.1:8123 et verify_ssl: false — même motif que la caméra
-    # générique « Dernière capture », dont l'entity_id (camera.127_0_0_1) vient
-    # de là.
+    # ⚠️ L'URL doit être ABSOLUE : la plate-forme image du modèle récupère
+    # l'image côté serveur et refuse un chemin relatif comme « /local/... ».
+    # D'où http://127.0.0.1:8123 et verify_ssl: false — même motif que la
+    # caméra générique « Dernière capture », dont l'entity_id
+    # (camera.127_0_0_1) vient de là.
     #
-    # L'écrêtage « [recul, dispo - 1] | min » est ce qui évite une image cassée
-    # tant que le tampon n'est pas plein : reculer plus loin que l'historique
-    # existant s'arrête sur la plus ancienne disponible.
-    #
-    # C'est une entité modèle d'état, donc son URL se recalcule dès que le
-    # compteur ou le curseur bougent. Vérifié le 24 octobre : passer le recul de
-    # 0 à 1 a bien fait changer l'état de l'entité, donc l'image affichée.
+    # C'est une entité modèle d'état, donc son URL se recalcule dès que la
+    # sélection change. Vérifié le 24 octobre : changer d'option a bien fait
+    # changer l'état de l'entité, donc l'image affichée.
 
 history_stats_helpers:
   Sous-tensions Pi 7 jours:

@@ -1409,19 +1409,43 @@ views:
       show_state: false
       grid_options:
         columns: full
+    - type: shortcut
+      label: Plus ancienne
+      icon: mdi:chevron-left
+      tap_action:
+        action: perform-action
+        perform_action: input_select.select_next
+        target:
+          entity_id: input_select.capture_interphone_choisie
+        data:
+          cycle: false
+      grid_options:
+        columns: 6
+    - type: shortcut
+      label: Plus récente
+      icon: mdi:chevron-right
+      tap_action:
+        action: perform-action
+        perform_action: input_select.select_previous
+        target:
+          entity_id: input_select.capture_interphone_choisie
+        data:
+          cycle: false
+      grid_options:
+        columns: 6
     - type: entities
       grid_options:
         columns: full
       entities:
-      - entity: input_number.recul_capture_interphone
-        name: Reculer dans les captures (0 = la plus récente)
+      - entity: input_select.capture_interphone_choisie
+        name: Aller directement à
     - type: markdown
       grid_options:
         columns: full
       content: |-
-        Les **12 dernières captures** de l'interphone, de la plus récente à la plus ancienne. Le curseur s'écrête tout seul sur l'historique réellement disponible, et revient à 0 dès qu'une nouvelle capture arrive.
+        {% set o = state_attr('input_select.capture_interphone_choisie','options') %}{% set s = states('input_select.capture_interphone_choisie') %}{% if o and s in o %}{% set d = strptime(s[19:], '%Hh%Mmin%Ssec_%d-%m-%Y.jpg', none) %}Capture **{{ o.index(s) + 1 }}** sur **{{ o | count }}** — {{ d.strftime('%d/%m à %H:%M:%S') if d else s }}{% else %}Aucune capture disponible.{% endif %}
 
-        *L'archive horodatée complète, 10 jours, reste sur le disque dans `www/sonette/capture/Archive/`.*
+        Les captures de l'interphone des **10 derniers jours**, la plus récente en tête. Les flèches avancent d'une capture, la liste déroulante va directement à une heure.
   - type: grid
     cards:
     - type: heading

@@ -1,0 +1,22 @@
+# Helpers input_select (mode storage).
+# Export Home Assistant du 2026-10-24.
+---
+capture_interphone_choisie:
+  name: Capture interphone choisie
+  icon: mdi:image-multiple
+  # ⚠️ Les OPTIONS ne sont pas reproduites ici : ce sont des noms de fichiers
+  # d'archive, réécrits à chaque capture par
+  # automation.notification_si_mouvement. Les mettre dans ce miroir n'aurait
+  # aucun sens, ils seraient périmés à la capture suivante.
+  #
+  # Convention : « capture_interphone_<HHhMMminSSsec_JJ-MM-AAAA>.jpg », la plus
+  # récente en tête, 10 jours maxi, 30 maxi. Les fichiers correspondants sont
+  # dans www/sonette/capture/Archive/.
+  #
+  # À la création (24 octobre 2026), la liste a été amorcée avec les 30
+  # captures les plus récentes déjà présentes dans l'archive, pour que la tuile
+  # soit utilisable tout de suite plutôt qu'au bout d'une semaine.
+  #
+  # Lu par image.capture_interphone (helpers/modeles_et_historiques.yaml), qui
+  # en fait l'URL de l'image affichée. Les flèches de la tuile appellent
+  # input_select.select_next / select_previous avec cycle: false.
