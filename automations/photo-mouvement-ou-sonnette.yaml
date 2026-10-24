@@ -1,11 +1,73 @@
-# Prendre une photo en cas de mouvement ou sonnette 
+# Prendre une photo en cas de mouvement ou sonnette
 # entity_id : automation.notification_si_mouvement
-# Export Home Assistant du 2026-09-02 — ne pas éditer à la main sans réimport.
+#   ⚠️ l'entity_id parle de « notification » mais cette automatisation n'en envoie
+#   aucune : c'est l'identifiant d'origine, conservé pour ne casser aucune
+#   référence. La notification de sonnette est dans
+#   automation.sonette_quand_qqn_sonne.
+# Export Home Assistant du 2026-10-24 — ne pas éditer à la main sans réimport.
+#
+# ── TROIS EXEMPLAIRES, TROIS USAGES ────────────────────────────────────────
+#
+#   capture/capture_interphone.jpg
+#       Emplacement fixe, écrasé à chaque fois. Lu par la caméra générique
+#       « Dernière capture » (camera.127_0_0_1).
+#
+#   capture/Archive/capture_interphone_<HHhMMminSSsec_JJ-MM-AAAA>.jpg
+#       L'historique complet, horodaté dans le nom. Purgé à 10 jours
+#       (864 000 s) par delete.files_in_folder, en fin de séquence.
+#
+#   capture/defilement/capture_<0..11>.jpg
+#       Tampon circulaire de 12 emplacements, ajouté le 2026-10-24. C'est
+#       celui que la tuile de la vue Sécurité sait faire défiler, via
+#       image.capture_interphone et input_number.recul_capture_interphone.
+#
+# ── POURQUOI UN TAMPON CIRCULAIRE PLUTÔT QUE L'ARCHIVE ─────────────────────
+# Parce qu'on ne peut PAS lister un répertoire depuis un modèle Jinja : Home
+# Assistant n'offre aucune fonction de système de fichiers aux templates. Les
+# noms horodatés de l'archive sont donc inaccessibles à une tuile. Des noms
+# FIXES et un compteur, eux, se calculent.
+# L'alternative — le composant « folder », qui expose la liste des fichiers —
+# exigerait un bloc allowlist_external_dirs dans configuration.yaml, donc un
+# REDÉMARRAGE. Le tampon n'exige que des aides de type storage.
+#
+# ── L'EMPLACEMENT EST FIGÉ AVANT L'INCRÉMENT ───────────────────────────────
+# La première action met l'emplacement dans une variable, et le compteur n'est
+# incrémenté qu'APRÈS les captures. Lire le compteur après l'avoir incrémenté
+# dans la même séquence ferait dépendre le résultat de l'ordre de mise à jour
+# de l'état — un piège classique. Ici, rien à parier : la variable est fixée.
+#
+# ── TROIS camera.snapshot D'AFFILÉE, EST-CE RAISONNABLE ────────────────────
+# Oui. camera.snapshot passe par l'API d'instantané de la Reolink, pas par le
+# RTSP. Les délais d'attente RTSP relevés sur interphone_main viennent du
+# travailleur de flux (la vue en direct), pas des instantanés.
+#
 ---
 id: '1680770329206'
 alias: 'Prendre une photo en cas de mouvement ou sonnette '
-description: ''
-mode: single
+description: 'Capture l''interphone à chaque personne détectée ou coup de sonnette, en trois exemplaires :
+
+
+  1. capture_interphone.jpg — emplacement fixe, lu par la caméra générique « Dernière capture ».
+
+  2. Archive/capture_interphone_<horodatage>.jpg — l''historique complet, purgé à 10 jours par delete.files_in_folder.
+
+  3. defilement/capture_<n>.jpg — un tampon circulaire de 12 emplacements, celui que la tuile sait faire défiler.
+
+
+  L''emplacement du tampon est donné par counter.captures_interphone modulo 12. Il est calculé dans une variable AVANT l''incrément,
+  pour ne pas dépendre de l''ordre de mise à jour de l''état du compteur.
+
+
+  Après chaque capture, input_number.recul_capture_interphone est remis à 0 : la tuile revient d''elle-même sur la vue la
+  plus récente, même si quelqu''un était en train de feuilleter l''historique.
+
+
+  Ne pas renommer ni supprimer les fichiers de defilement/ à la main : le compteur ne le saurait pas, et image.capture_interphone
+  pointerait sur une image absente.
+
+
+  NB : l''entity_id dit « notification_si_mouvement » mais cette automatisation n''envoie aucune notification — c''est l''identifiant
+  d''origine, conservé pour ne casser aucune référence. La notification de sonnette est dans automation.sonette_quand_qqn_sonne.'
 triggers:
 - entity_id:
   - binary_sensor.interphone_person
@@ -17,24 +79,55 @@ triggers:
   from: 'off'
   to: 'on'
   trigger: state
+conditions: []
 actions:
-- service: camera.snapshot
+- alias: Emplacement du tampon, figé avant l'incrément
+  variables:
+    emplacement: '{{ states(''counter.captures_interphone'') | int(0) % 12 }}'
+- alias: Emplacement fixe, pour la caméra générique
+  action: camera.snapshot
   data:
-    filename: /config/www/sonette/capture/capture_interphone.jpg
     entity_id: camera.interphone_main
-- service: camera.snapshot
+    filename: /config/www/sonette/capture/capture_interphone.jpg
+- alias: Archive horodatée, purgée à 10 jours
+  action: camera.snapshot
   data:
     entity_id: camera.interphone_main
     filename: /config/www/sonette/capture/Archive/capture_interphone_{{ now().strftime("%Hh%Mmin%Ssec_%d-%m-%Y") }}.jpg
+- alias: Tampon circulaire de 12, celui que la tuile fait défiler
+  action: camera.snapshot
+  data:
+    entity_id: camera.interphone_main
+    filename: /config/www/sonette/capture/defilement/capture_{{ emplacement }}.jpg
+- action: counter.increment
+  target:
+    entity_id: counter.captures_interphone
+- alias: Revenir sur la vue la plus récente
+  action: input_number.set_value
+  target:
+    entity_id: input_number.recul_capture_interphone
+  data:
+    value: 0
 - delay:
     hours: 0
     minutes: 0
     seconds: 2
     milliseconds: 0
-- service: delete.files_in_folder
+- action: delete.files_in_folder
   data:
     folder: /config/www/sonette/capture/Archive/
     only_extensions:
     - .jpg
     time: 864000
-conditions: []
+mode: single
+
+# --- DÉPENDANCES ----------------------------------------------------------
+#   counter.captures_interphone               helpers/counter.yaml
+#   input_number.recul_capture_interphone     helpers/input_number.yaml
+#   image.capture_interphone                  helpers/modeles_et_historiques.yaml
+#   delete.files_in_folder                    intégration « delete » (HACS),
+#                                             déclarée par « delete: » dans
+#                                             configuration.yaml
+#
+# Le répertoire capture/defilement/ porte un LISEZ-MOI.txt qui redit tout ça
+# sur place, pour qui tomberait dessus par le gestionnaire de fichiers.

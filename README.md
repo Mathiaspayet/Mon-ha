@@ -2691,6 +2691,96 @@ L'automatisation a été réécrite à 5 h du matin : je n'ai pas déclenché de
 réveiller la maison. Les payloads sont vérifiés par rendu, les entités existent, l'automatisation
 est chargée et `on` — mais le premier vrai coup de sonnette reste à faire.
 
+## 24 octobre 2026 — faire défiler les captures de l'interphone sur la tuile
+
+La tuile « Dernière capture » ne montrait que la dernière. Mathias voulait pouvoir remonter dans les
+précédentes, sur la tuile.
+
+### Le vrai obstacle : on ne peut pas lister un répertoire depuis un modèle
+
+L'archive existe déjà — `www/sonette/capture/Archive/`, 45 fichiers horodatés au moment du relevé,
+purgés à 10 jours. Mais **Home Assistant n'offre aucune fonction de système de fichiers aux modèles
+Jinja** : les noms horodatés de l'archive sont donc inaccessibles à une tuile. Impossible de
+construire une galerie à partir de ce qui est sur le disque.
+
+Les deux contournements possibles, et pourquoi j'ai choisi le second :
+
+| | Coût |
+|---|---|
+| Le composant `folder`, qui expose la liste des fichiers d'un répertoire | exige un bloc `allowlist_external_dirs` dans `configuration.yaml`, donc un **redémarrage**, plus une carte de galerie HACS à installer |
+| Des noms de fichiers **fixes** et un compteur | trois aides de type storage, **aucun redémarrage**, aucune dépendance |
+
+Des noms horodatés ne se calculent pas. Des noms fixes, si.
+
+### Le tampon circulaire
+
+`automation.notification_si_mouvement` écrit maintenant une **troisième** copie de chaque capture,
+dans `www/sonette/capture/defilement/capture_<0..11>.jpg`. L'emplacement est donné par
+`counter.captures_interphone` **modulo 12** : au treizième passage, on réécrit par-dessus le
+premier. Les deux copies d'origine — l'emplacement fixe et l'archive horodatée — sont inchangées.
+
+Trois aides, toutes créées par le flux de configuration, donc modifiables depuis l'interface :
+
+| Aide | Rôle |
+|---|---|
+| `counter.captures_interphone` | compteur **monotone**, `restore: true`. Donne l'emplacement (`compteur % 12`) **et** le nombre d'emplacements remplis (`min(compteur, 12)`) |
+| `input_number.recul_capture_interphone` | 0 à 11, curseur. 0 = la plus récente |
+| `image.capture_interphone` | image modèle dont l'URL se calcule à partir des deux précédents |
+
+L'URL de l'image modèle :
+
+```jinja
+{% set n = states('counter.captures_interphone') | int(0) %}
+{% set dispo = [n, 12] | min %}
+{% set recul = [states('input_number.recul_capture_interphone') | int(0), dispo - 1] | min %}
+http://127.0.0.1:8123/local/sonette/capture/defilement/capture_{{ (n - 1 - recul) % 12 }}.jpg
+```
+
+Trois points qui ont demandé une vérification plutôt qu'une supposition :
+
+- ⚠️ **L'URL d'une image modèle doit être absolue.** La plate-forme récupère l'image côté serveur et
+  refuse un chemin relatif comme `/local/...`. D'où `http://127.0.0.1:8123` et `verify_ssl: false` —
+  exactement le motif de la caméra générique « Dernière capture », dont l'`entity_id`
+  (`camera.127_0_0_1`) vient justement de là.
+- **L'écrêtage `[recul, dispo - 1] | min` est ce qui évite une image cassée** tant que le tampon
+  n'est pas plein : reculer plus loin que l'historique existant s'arrête sur la plus ancienne
+  disponible, au lieu de pointer sur un fichier absent.
+- **Une entité modèle d'état recalcule son URL dès que ses sources bougent.** Vérifié en direct :
+  compteur à 2, recul 0 → `capture_1.jpg`, recul 1 → `capture_0.jpg`, recul 5 → écrêté sur
+  `capture_0.jpg` ; et l'état de `image.capture_interphone` a bien changé au moment où le curseur a
+  bougé, donc l'image affichée aussi.
+
+### Un détail qui compte : l'emplacement est figé avant l'incrément
+
+La première action de l'automatisation met l'emplacement dans une variable, et le compteur n'est
+incrémenté qu'**après** les trois captures. Lire le compteur après l'avoir incrémenté dans la même
+séquence ferait dépendre le résultat de l'ordre de mise à jour de l'état — un piège classique dont
+on se passe en figeant la valeur.
+
+Après chaque capture, `input_number.recul_capture_interphone` est remis à 0 : la tuile revient
+d'elle-même sur la vue la plus récente, même si quelqu'un était en train de feuilleter l'historique.
+Un visiteur qui arrive compte plus que la consultation en cours.
+
+### La tuile
+
+Dans la vue Sécurité, section « Caméras » : la `picture-entity` pointe sur `image.capture_interphone`
+(`fit_mode: contain`, pour ne rien rogner), suivie d'une carte `entities` qui porte le curseur. J'ai
+écarté la fonctionnalité de tuile `numeric-input` faute d'avoir pu vérifier son nom exact dans cette
+version — la page de documentation des fonctionnalités a renvoyé une 404 — et une carte `entities`
+avec un `input_number` en `mode: slider` rend un curseur natif, sans rien parier.
+
+### Ce qui n'y est pas
+
+- **Pas d'horodatage sur l'image affichée.** Les noms du tampon sont fixes, donc la date de prise de
+  vue n'est pas portée par le fichier. L'état de l'entité image est l'heure du dernier changement
+  d'URL, pas celle de la photo : c'est pourquoi `show_state` est à `false`, pour ne pas afficher une
+  date fausse. L'archive horodatée reste la référence pour « quand ». Ajouter la date demanderait un
+  capteur modèle **déclenché** qui accumule les noms — donc une réécriture de la clé `template` de
+  `configuration.yaml`, ce que je n'ai pas fait pour un confort d'affichage.
+- **Le tampon se remplit au fil des passages.** Au moment du commit il contenait 2 captures, prises
+  pour éprouver le mécanisme. Le curseur s'écrête donc à 1 pour l'instant, et s'ouvrira jusqu'à 11
+  à mesure que des gens passent devant l'interphone.
+
 ## Stockage et écritures disque
 
 Le Pi démarre sur un SSD NVMe via un pont Realtek RTL9210, dont le pilote UAS

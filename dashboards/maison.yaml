@@ -1401,13 +1401,27 @@ views:
       show_state: false
       show_name: true
     - type: picture-entity
-      entity: camera.127_0_0_1
-      name: Dernière capture
+      entity: image.capture_interphone
+      name: Captures de l'interphone
       camera_view: auto
+      fit_mode: contain
+      show_name: true
+      show_state: false
       grid_options:
         columns: full
-      show_state: false
-      show_name: true
+    - type: entities
+      grid_options:
+        columns: full
+      entities:
+      - entity: input_number.recul_capture_interphone
+        name: Reculer dans les captures (0 = la plus récente)
+    - type: markdown
+      grid_options:
+        columns: full
+      content: |-
+        Les **12 dernières captures** de l'interphone, de la plus récente à la plus ancienne. Le curseur s'écrête tout seul sur l'historique réellement disponible, et revient à 0 dès qu'une nouvelle capture arrive.
+
+        *L'archive horodatée complète, 10 jours, reste sur le disque dans `www/sonette/capture/Archive/`.*
   - type: grid
     cards:
     - type: heading

@@ -21,6 +21,34 @@ template_helpers:
     # front « on » comptabilisable par le history_stats ci-dessous ; l'alerte
     # elle-même lit directement sensor.pi_temps_de_fonctionnement.
 
+  Capture interphone:
+    entry_id: 01M5NZV0PTQEC3AHBN2GK6V7CR
+    entity_id: image.capture_interphone
+    template_type: image
+    verify_ssl: false
+    url: >-
+      {% set n = states('counter.captures_interphone') | int(0) %}{% set dispo = [n, 12] | min %}{%
+      set recul = [states('input_number.recul_capture_interphone') | int(0), dispo - 1] | min
+      %}http://127.0.0.1:8123/local/sonette/capture/defilement/capture_{{ (n - 1 - recul) % 12 }}.jpg
+    additional_options:
+      availability: "{{ states('counter.captures_interphone') | int(0) > 0 }}"
+    # Donne à la tuile de la vue Sécurité les 12 dernières captures de l'interphone,
+    # de la plus récente à la plus ancienne.
+    #
+    # L'URL doit être ABSOLUE : la plate-forme image du modèle récupère l'image
+    # côté serveur et refuse un chemin relatif comme « /local/... ». D'où
+    # http://127.0.0.1:8123 et verify_ssl: false — même motif que la caméra
+    # générique « Dernière capture », dont l'entity_id (camera.127_0_0_1) vient
+    # de là.
+    #
+    # L'écrêtage « [recul, dispo - 1] | min » est ce qui évite une image cassée
+    # tant que le tampon n'est pas plein : reculer plus loin que l'historique
+    # existant s'arrête sur la plus ancienne disponible.
+    #
+    # C'est une entité modèle d'état, donc son URL se recalcule dès que le
+    # compteur ou le curseur bougent. Vérifié le 24 octobre : passer le recul de
+    # 0 à 1 a bien fait changer l'état de l'entité, donc l'image affichée.
+
 history_stats_helpers:
   Sous-tensions Pi 7 jours:
     entry_id: 01M1PNEZA14KM84Z2A5ZV9JFYM
